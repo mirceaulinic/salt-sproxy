@@ -1,0 +1,3 @@
+include requirements.txt
+include salt_sproxy/_runners/*
+include salt_sproxy/_roster/*
