@@ -1,0 +1,7 @@
+FROM mirceaulinic/salt-sproxy
+
+MAINTAINER ping@mirceaulinic.net
+
+COPY ./roster /etc/salt/roster
+
+RUN pip --no-cache-dir install ciscoconfparse jxmlease scp ansible

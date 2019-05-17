@@ -468,4 +468,4 @@ pillar_roots:
 # "states", "returners", etc.
 # Like 'extension_modules' but can take an array of paths
 
-napalm_roster: ansible
+# napalm_roster: ansible

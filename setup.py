@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 __author__ = 'Mircea Ulinic <ping@mirceaulinic.net>'
 
-with codecs.open('README.md', 'r', encoding='utf8') as file:
+with codecs.open('README.rst', 'r', encoding='utf8') as file:
     long_description = file.read()
 
 with open("requirements.txt", "r") as fs:
@@ -16,17 +16,19 @@ with open("requirements.txt", "r") as fs:
 
 setup(
     name='salt-sproxy',
-    version='2019.1.0a2',
+    version='2019.5.0b4',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
-    author_email='mircea.ulinic@gmail.com',
+    author_email='ping@mirceaulinic.net',
     description='Salt plugin for interacting with network devices, without running Minions',
     long_description=long_description,
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Topic :: Utilities',
         'Topic :: System :: Networking',
+        'Topic :: System :: Operating System',
+        'Topic :: System :: Systems Administration',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
@@ -34,12 +36,16 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        'Operating System :: POSIX :: Linux',
-        'Operating System :: POSIX :: Linux',
+        'Operating System :: POSIX',
+        'Operating System :: Microsoft :: Windows',
         'Operating System :: MacOS',
-        'Intended Audience :: Developers'
+        'Intended Audience :: Developers',
+        'Intended Audience :: Telecommunications Industry',
+        'Intended Audience :: System Administrators',
+        'Intended Audience :: Education',
+        'Intended Audience :: Science/Research',
     ],
-    url='https://github.com/napalm-automation/napalm-salt',
+    url='https://github.com/mirceaulinic/salt-sproxy',
     license="Apache License 2.0",
     keywords=('salt', 'network', 'automation', 'cli', 'proxy', 'minion'),
     include_package_data=True,
