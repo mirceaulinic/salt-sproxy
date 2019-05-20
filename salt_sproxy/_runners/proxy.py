@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 '''
-
-
 Salt Runner to invoke arbitrary commands on network devices that are not
 managed via a Proxy or regular Minion. Therefore, this Runner doesn't
 necessarily require the targets to be up and running, as it will connect to
@@ -18,8 +16,8 @@ import multiprocessing
 # Import Salt modules
 import salt.loader
 import salt.output
+import salt.version
 import salt.utils.jid
-from salt.ext import six
 from salt.minion import SMinion
 from salt.ext.six.moves import range
 import salt.defaults.exitcodes
@@ -28,11 +26,11 @@ from salt.exceptions import SaltSystemExit
 import salt.utils.napalm
 
 try:
-    from salt.utils import is_proxy
-    from salt.utils import clean_kwargs
-except ImportError:
     from salt.utils.platform import is_proxy
     from salt.utils.args import clean_kwargs
+except ImportError:
+    from salt.utils import is_proxy  # pylint: disable=unused-import
+    from salt.utils import clean_kwargs
 # ------------------------------------------------------------------------------
 # module properties
 # ------------------------------------------------------------------------------
@@ -51,6 +49,7 @@ log = logging.getLogger(__name__)
 def _napalm_is_proxy(opts):
     return opts.get('proxy', {}).get('proxytype') == 'napalm'
 
+
 # Point the native is_proxy function to the above, so it doesn't check whether
 # we're actually running under a Proxy Minion
 salt.utils.napalm.is_proxy = _napalm_is_proxy
@@ -58,6 +57,7 @@ salt.utils.napalm.is_proxy = _napalm_is_proxy
 
 def _is_proxy():
     return True
+
 
 # Same rationale as above, for any other Proxy type.
 is_proxy = _is_proxy
@@ -71,7 +71,7 @@ def _salt_call_and_return(
     ret = salt_call(minion_id, function, **opts)
     if events:
         __salt__['event.send'](
-            'napalm/runner/{jid}/ret/{minion_id}'.format(minion_id=minion_id, jid=jid),
+            'proxy/runner/{jid}/ret/{minion_id}'.format(minion_id=minion_id, jid=jid),
             {
                 'fun': function,
                 'fun_args': arg,
@@ -136,6 +136,9 @@ class SProxyMinion(SMinion):
                 saltenv=self.opts['saltenv'],
                 pillarenv=self.opts.get('pillarenv'),
             ).compile_pillar()
+        elif cached_pillar:
+            self.opts['pillar'].update(cached_pillar)
+
         if 'proxy' not in self.opts['pillar'] and 'proxy' not in self.opts:
             errmsg = (
                 'No "proxy" configuration key found in pillar or opts '
@@ -193,9 +196,7 @@ class SProxyMinion(SMinion):
         if not cached_grains and self.opts.get('proxy_load_grains', True):
             # When the Grains are loaded from the cache, no need to re-load them
             # again.
-            self.opts['grains'].update(
-                salt.loader.grains(self.opts, proxy=self.proxy)
-            )
+            self.opts['grains'].update(salt.loader.grains(self.opts, proxy=self.proxy))
         self.grains_cache = self.opts['grains']
         self.ready = True
 
@@ -211,216 +212,9 @@ class StandaloneProxy(SProxyMinion):
 # ------------------------------------------------------------------------------
 
 
-def get_connection(
-    driver,
-    hostname,
-    username,
-    password,
-    timeout=60,
-    optional_args=None,
-    provider=None,
-    minion_id=None,
-    with_pillar=False,
-    with_grains=False,
-    default_pillar=None,
-    default_grains=None,
-):
-    '''
-    Return the NAPALM connection object together with the associated Salt
-    dunders packed, i.e., ``__salt__``, ``__utils__``, ``__opts__``, etc.
-
-    This function establishes the connection to the remote device through
-    NAPALM and returns the connection object.
-
-    .. note::
-        This function is not designed for CLI usage, but rather invoked from
-        other Salt Runners.
-        Similarly, it is up to the developer to ensure that the connection is
-        closed properly.
-
-    driver
-        Specifies the network device operating system.
-        For a complete list of the supported operating systems please refer to the
-        `NAPALM Read the Docs page`_.
-
-    hostname
-        The IP Address or name server to use when connecting to the device.
-
-    username
-        The username to be used when connecting to the device.
-
-    password
-        The password needed to establish the connection.
-
-        .. note::
-            This field may not be mandatory when working with SSH-based drivers, and
-            the username has a SSH key properly configured on the device targeted to
-            be managed.
-
-    optional_args
-        Dictionary with the optional arguments.
-        Check the complete list of supported `optional arguments`_.
-
-    provider: ``napalm_base``
-        The library that provides the ``get_network_device`` function.
-        This option is useful when the user has more specific needs and requires
-        to extend the NAPALM capabilities using a private library implementation.
-        The only constraint is that the alternative library needs to have the
-        ``get_network_device`` function available.
-
-    default_grains:
-        Dictionary of the default Grains to make available within the functions
-        loaded.
-
-    with_grains: ``False``
-        Whether to load the Grains modules and collect Grains data and make it
-        available inside the Execution Functions.
-
-    default_pillar:
-        Dictionary of the default Pillar data to make it available within the
-        functions loaded.
-
-    with_pillar: ``False``
-        Whether to load the Pillar modules and compile Pillar data and make it
-        available inside the Execution Functions.
-
-    minion_id:
-        The ID of the Minion to compile Pillar data for.
-
-    .. _`NAPALM Read the Docs page`: https://napalm.readthedocs.io/en/latest/#supported-network-operating-systems
-    .. _`optional arguments`: http://napalm.readthedocs.io/en/latest/support/index.html#list-of-supported-optional-arguments
-
-    Usage Example:
-
-    .. code-block:: python
-
-        napalm_device = __salt__['napalm.get_connection']('eos', '1.2.3.4', 'test', 'test')
-    '''
-    if not optional_args:
-        optional_args = {}
-    opts = copy.deepcopy(__opts__)
-    if 'proxy' not in opts:
-        opts['proxy'] = {}
-    opts['proxy'].update(
-        {
-            'proxytype': 'napalm',
-            'driver': driver,
-            'hostname': hostname,
-            'username': username,
-            'passwd': password,
-            'timeout': timeout,
-            'optional_args': optional_args,
-            'provider': provider,
-        }
-    )
-    if 'saltenv' not in opts:
-        opts['saltenv'] = 'base'
-    if minion_id:
-        opts['id'] = minion_id
-    opts['grains'] = {}
-    if default_grains:
-        opts['grains'] = default_grains
-    if with_grains:
-        opts['grains'].update(salt.loader.grains(opts))
-    opts['pillar'] = {}
-    if default_pillar:
-        opts['pillar'] = default_pillar
-    if with_pillar:
-        opts['pillar'].update(
-            salt.pillar.get_pillar(
-                opts,
-                opts['grains'],
-                opts['id'],
-                saltenv=opts['saltenv'],
-                pillarenv=opts.get('pillarenv'),
-            ).compile_pillar()
-        )
-    __utils__ = salt.loader.utils(opts)
-    functions = salt.loader.minion_mods(opts, utils=__utils__, context=__context__)
-    napalm_device = __utils__['napalm.get_device'](opts, salt_obj=functions)
-    napalm_device.update(
-        {'__utils__': __utils__, '__opts__': opts, '__salt__': functions}
-    )
-    return napalm_device
-
-
-def call(
-    method,
-    driver,
-    hostname,
-    username,
-    password,
-    timeout=60,
-    optional_args=None,
-    provider=None,
-    **kwargs
-):
-    '''
-    Execute an arbitrary NAPALM method and return the result.
-
-    method
-        The name of the NAPALM method to invoke. Example: ``get_bgp_neighbors``.
-
-    driver
-        Specifies the network device operating system.
-        For a complete list of the supported operating systems please refer to the
-        `NAPALM Read the Docs page`_.
-
-    hostname
-        The IP Address or name server to use when connecting to the device.
-
-    username
-        The username to be used when connecting to the device.
-
-    password
-        The password needed to establish the connection.
-
-        .. note::
-            This field may not be mandatory when working with SSH-based drivers, and
-            the username has a SSH key properly configured on the device targeted to
-            be managed.
-
-    optional_args
-        Dictionary with the optional arguments.
-        Check the complete list of supported `optional arguments`_.
-
-    provider: ``napalm_base``
-        The library that provides the ``get_network_device`` function.
-        This option is useful when the user has more specific needs and requires
-        to extend the NAPALM capabilities using a private library implementation.
-        The only constraint is that the alternative library needs to have the
-        ``get_network_device`` function available.
-
-    .. _`NAPALM Read the Docs page`: https://napalm.readthedocs.io/en/latest/#supported-network-operating-systems
-    .. _`optional arguments`: http://napalm.readthedocs.io/en/latest/support/index.html#list-of-supported-optional-arguments
-
-    CLI Example:
-
-    .. code-block:: bash
-
-        salt-run napalm.call get_bgp_neighbors eos 1.2.3.4 test test123
-    '''
-    napalm_device = get_connection(
-        driver,
-        hostname,
-        username,
-        password,
-        timeout=timeout,
-        optional_args=optional_args,
-        provider=provider,
-    )
-    __utils__ = napalm_device['__utils__']
-    ret = __utils__['napalm.call'](napalm_device, method, **kwargs)
-    try:
-        __utils__['napalm.call'](napalm_device, 'close')
-    except Exception as err:
-        log.error(err)
-    return ret
-
-
 def salt_call(
     minion_id,
-    function,
+    function=None,
     with_grains=True,
     with_pillar=True,
     preload_grains=True,
@@ -502,8 +296,8 @@ def salt_call(
 
     .. code-block:: bash
 
-        salt-run napalm.salt_call bgp.neighbors junos 1.2.3.4 test test123
-        salt-run napalm.salt_call net.load_config junos 1.2.3.4 test test123 text='set system ntp peer 1.2.3.4'
+        salt-run proxy.salt_call bgp.neighbors junos 1.2.3.4 test test123
+        salt-run proxy.salt_call net.load_config junos 1.2.3.4 test test123 text='set system ntp peer 1.2.3.4'
     '''
     opts = copy.deepcopy(__opts__)
     opts['id'] = minion_id
@@ -539,14 +333,15 @@ def salt_call(
     except Exception as err:
         log.error(err, exc_info=True)
     finally:
-        sa_proxy.proxy['napalm.shutdown'](opts)
+        shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
+        sa_proxy.proxy[shut_fun](opts)
     if cache_grains:
         __salt__['cache.store'](
-            'minions/{}/data'.format(minion_id), 'grains', napalm_px.opts['grains']
+            'minions/{}/data'.format(minion_id), 'grains', sa_proxy.opts['grains']
         )
     if cache_pillar:
         __salt__['cache.store'](
-            'minions/{}/data'.format(minion_id), 'pillar', napalm_px.opts['pillar']
+            'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
         )
     return ret
 
@@ -652,12 +447,15 @@ def execute_devices(
 
     .. code-block:: bash
 
-        salt-run napalm.execute "['172.17.17.1', '172.17.17.2']" test.ping driver=eos username=test password=test123
+        salt-run proxy.execute "['172.17.17.1', '172.17.17.2']" test.ping driver=eos username=test password=test123
     '''
     __pub_user = kwargs.get('__pub_user')
     kwargs = clean_kwargs(**kwargs)
     if not jid:
-        jid = salt.utils.jid.gen_jid()
+        if salt.version.__version_info__ > (2017, 7, 0):
+            jid = salt.utils.jid.gen_jid(__opts__)
+        else:
+            jid = salt.utils.jid.gen_jid()
     event_args = list(args[:])
     if kwargs:
         event_kwargs = {'__kwarg__': True}
@@ -679,7 +477,7 @@ def execute_devices(
     opts.update(kwargs)
     if events:
         __salt__['event.send'](
-            'napalm/runner/{jid}/new'.format(jid=jid),
+            'proxy/runner/{jid}/new'.format(jid=jid),
             {
                 'fun': fun,
                 'minions': minions,
@@ -727,7 +525,7 @@ def execute_devices(
 
 def execute(
     tgt,
-    fun,
+    fun=None,
     tgt_type='glob',
     roster=None,
     preview_target=False,
@@ -767,7 +565,7 @@ def execute(
 
     roster: ``None``
         The name of the Roster to generate the targets. Alternatively, you can
-        specify the name of the Roster by configuring the ``napalm_roster``
+        specify the name of the Roster by configuring the ``proxy_roster``
         option into the Master config.
 
     preview_target: ``False``
@@ -839,14 +637,14 @@ def execute(
 
     .. code-block:: bash
 
-        salt-run napalm.execute_roster edge* test.ping
-        salt-run napalm.execute_roster junos-edges test.ping tgt_type=nodegroup
+        salt-run proxy.execute_roster edge* test.ping
+        salt-run proxy.execute_roster junos-edges test.ping tgt_type=nodegroup
     '''
     targets = []
-    roster = roster or __opts__.get('napalm_roster', __opts__.get('roster'))
+    roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
     if not roster:
         log.info(
-            'No Roster specified. Please use the ``roster`` argument, or set the ``napalm_roster`` option in the '
+            'No Roster specified. Please use the ``roster`` argument, or set the ``proxy_roster`` option in the '
             'Master configuration.'
         )
         targets = []
@@ -864,11 +662,16 @@ def execute(
         return 'No devices matched your target. Please review your tgt / tgt_type arguments, or the Roster data source'
     if preview_target:
         return targets
+    elif not fun:
+        return 'Please specify a Salt function to execute.'
     jid = kwargs.get('__pub_jid')
     if not jid:
-        jid = salt.utils.jid.gen_jid()
+        if salt.version.__version_info__ > (2017, 7, 0):
+            jid = salt.utils.jid.gen_jid(__opts__)
+        else:
+            jid = salt.utils.jid.gen_jid()
     if events:
-        __salt__['event.send'](jid, {'minions': list(targets.keys())})
+        __salt__['event.send'](jid, {'minions': targets})
     return execute_devices(
         targets,
         fun,
