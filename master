@@ -319,6 +319,7 @@ fileserver_backend:
 
 pillar_roots:
   base:
+    - /srv/salt/pillar
     - /etc/salt/pillar
 
 # ext_pillar:
