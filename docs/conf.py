@@ -21,8 +21,6 @@ import sys
 import json
 import logging
 
-import salt_sproxy
-
 sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../salt_sproxy'))
 sys.path.insert(0, os.path.abspath('_themes'))
