@@ -16,7 +16,7 @@ with open("requirements.txt", "r") as fs:
 
 setup(
     name='salt-sproxy',
-    version='2019.5.0b4',
+    version='2019.5.1b4',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
