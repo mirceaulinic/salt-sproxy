@@ -319,6 +319,7 @@ fileserver_backend:
 
 pillar_roots:
   base:
+    - /srv/salt/pillar
     - /etc/salt/pillar
 
 # ext_pillar:
@@ -468,4 +469,4 @@ pillar_roots:
 # "states", "returners", etc.
 # Like 'extension_modules' but can take an array of paths
 
-napalm_roster: ansible
+# napalm_roster: ansible
