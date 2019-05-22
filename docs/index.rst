@@ -130,10 +130,15 @@ devices, ``cr1.thn.lon`` and ``cr2.thn.lon``, respectively).
 Note that in any case (with or without the Roster), you will need to provide 
 a valid list of Minions.
 
-Navigation
-----------
+Extension Modules
+-----------------
+
+``salt-sproxy`` is delivered together with a few extension modules that are
+dynamically loaded and immediately available. Please see below the 
+documentation for these modules:
 
 .. toctree::
    :maxdepth: 1
 
+   roster/index
    runners/index
