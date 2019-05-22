@@ -211,13 +211,13 @@ Docker
 ------
 
 There are Docker images available should you need or prefer: 
-https://cloud.docker.com/u/mirceaulinic/repository/docker/mirceaulinic/salt-sproxy.
+https://hub.docker.com/r/mirceaulinic/salt-sproxy.
 
 You can see here the available tags: 
-https://cloud.docker.com/repository/docker/mirceaulinic/salt-sproxy/tags. 
-``latest`` provides the code merged into the ``master`` branch, and 
-``allinone-latest`` is the code merged into the ``master`` branch with several 
-libraries such as `NAPALM <https://github.com/napalm-automation/napalm>`__,
+https://hub.docker.com/r/mirceaulinic/salt-sproxy/tags. ``latest`` provides the
+code merged into the ``master`` branch, and ``allinone-latest`` is the code
+merged into the ``master`` branch with several libraries such as
+`NAPALM <https://github.com/napalm-automation/napalm>`__,
 `Netmiko <https://github.com/ktbyers/netmiko>`__, 
 `ciscoconfparse <http://www.pennington.net/py/ciscoconfparse/>`__, or Ansible
 which you may need for your modules or Roster (if you'd want to use the 
