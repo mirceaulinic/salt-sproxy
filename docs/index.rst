@@ -217,13 +217,12 @@ You can see here the available tags:
 https://cloud.docker.com/repository/docker/mirceaulinic/salt-sproxy/tags. 
 ``latest`` provides the code merged into the ``master`` branch, and 
 ``allinone-latest`` is the code merged into the ``master`` branch with several 
-libraries suck as [``NAPALM``](https://github.com/napalm-automation/napalm),
-[``netmiko``](https://github.com/ktbyers/netmiko), 
-[``ciscoconfparse``](http://www.pennington.net/py/ciscoconfparse/), or Ansible
+libraries such as `NAPALM <https://github.com/napalm-automation/napalm>`__,
+`Netmiko <https://github.com/ktbyers/netmiko>`__, 
+`ciscoconfparse <http://www.pennington.net/py/ciscoconfparse/>`__, or Ansible
 which you may need for your modules or Roster (if you'd want to use the 
-[Ansible 
-Roster](https://salt-sproxy.readthedocs.io/en/latest/roster/ansible.html), for 
-example).
+`Ansible Roster <https://salt-sproxy.readthedocs.io/en/latest/roster/ansible.html>`__,
+for  example).
 
 These can be used in various scenarios. For example, if you would like to use
 ``salt-proxy`` but without installing it, and prefer to use Docker instead, you
