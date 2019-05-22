@@ -26,6 +26,83 @@ Execute:
 
     pip install salt-sproxy
 
+Quick Start
+-----------
+
+See this recording for a live quick start:
+
+.. raw:: html
+
+  <script id="asciicast-247697" src="https://asciinema.org/a/247697.js" async></script>
+
+In the above, ``minion1`` is 
+a `dummy  <https://docs.saltstack.com/en/latest/ref/proxy/all/salt.proxy.dummy.html>`__
+Proxy Minion, that can be used for getting started and make the first steps 
+without connecting to an actual device, but get used to the ``salt-sproxy``
+methodology.
+
+The Master configuration file is ``/home/mircea/master``, which is why the
+command is executed using the ``-c`` option specifying the path to the directory
+with the configuration file. In this Master configuration file, the
+``pillar_roots`` option points to ``/srv/salt/pillar`` which is where 
+``salt-sproxy`` is going to load the Pillar data from. Accordingly, the Pillar 
+Top file is under that path, ``/srv/salt/pillar/top.sls``:
+
+.. code-block:: yaml
+
+  base:
+    minion1:
+      - dummy
+
+This Pillar Top file says that the Minion ``minion1`` will have the Pillar data 
+from the ``dummy.sls`` from the same directory, thus 
+``/srv/salt/pillar/dummy.sls``:
+
+.. code-block:: yaml
+
+  proxy:
+    proxytype: dummy
+
+In this case, it was sufficient to only set the ``proxytype`` field to 
+``dummy``.
+
+``salt-sproxy`` can be used in conjunction with any of the available `Salt 
+Proxy modules <https://docs.saltstack.com/en/latest/ref/proxy/all/index.html>`__,
+or others that you might have in your own environment. See 
+https://docs.saltstack.com/en/latest/topics/proxyminion/index.html to 
+understand how to write a new Proxy module if you require.
+
+For example, let's take a look at how we can manage a network device through 
+the `NAPALM Proxy <https://docs.saltstack.com/en/latest/ref/proxy/all/salt.proxy.napalm.html>`__:
+
+.. raw:: html
+
+  <script id="asciicast-247726" src="https://asciinema.org/a/247726.js" async></script>
+
+In the above, in the same Python virtual environment as previously make sure 
+you have ``NAPALM`` installed, by executing ``pip install napalm`` (see
+https://napalm.readthedocs.io/en/latest/installation/index.html for further 
+installation requirements, depending on the platform you're running on). The 
+connection credentials for the ``juniper-router`` are stored in the 
+``/srv/salt/pillar/junos.sls`` Pillar, and we can go ahead and start executing
+arbitrary Salt commands, e.g., `net.arp 
+<https://docs.saltstack.com/en/latest/ref/modules/all/salt.modules.napalm_network.html#salt.modules.napalm_network.arp>`__ 
+to retrieve the ARP table, or `net.load_config 
+<https://docs.saltstack.com/en/latest/ref/modules/all/salt.modules.napalm_network.html#salt.modules.napalm_network.load_config>`__ 
+to apply a configuration change on the router.
+
+The Pillar Top file in this example was (under the same path as previously, as 
+the Master config was the same):
+
+.. code-block:: yaml
+
+  base:
+    juniper-router:
+      - junos
+
+Thanks to `Tesuto <https://www.tesuto.com/>`__ for providing the virtual 
+machine for the demos!
+
 Usage
 -----
 
@@ -129,6 +206,47 @@ devices, ``cr1.thn.lon`` and ``cr2.thn.lon``, respectively).
 
 Note that in any case (with or without the Roster), you will need to provide 
 a valid list of Minions.
+
+Docker
+------
+
+There are Docker images available should you need or prefer: 
+https://cloud.docker.com/u/mirceaulinic/repository/docker/mirceaulinic/salt-sproxy.
+
+You can see here the available tags: 
+https://cloud.docker.com/repository/docker/mirceaulinic/salt-sproxy/tags. 
+``latest`` provides the code merged into the ``master`` branch, and 
+``allinone-latest`` is the code merged into the ``master`` branch with several 
+libraries suck as [``NAPALM``](https://github.com/napalm-automation/napalm),
+[``netmiko``](https://github.com/ktbyers/netmiko), 
+[``ciscoconfparse``](http://www.pennington.net/py/ciscoconfparse/), or Ansible
+which you may need for your modules or Roster (if you'd want to use the 
+[Ansible 
+Roster](https://salt-sproxy.readthedocs.io/en/latest/roster/ansible.html), for 
+example).
+
+These can be used in various scenarios. For example, if you would like to use
+``salt-proxy`` but without installing it, and prefer to use Docker instead, you
+can define the following convoluted alias:
+
+.. code-block:: bash
+
+  alias salt-sproxy='f(){ docker run --rm --network host -v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ -ti mirceaulinic/salt-sproxy salt-sproxy $@; }; f'
+
+And in the ``SALT_PROXY_PILLAR_DIR`` environment variable, you set the path to
+the directory where you have the Pillars, e.g.,
+
+.. code-block:: bash
+
+  export SALT_PROXY_PILLAR_DIR=/path/to/pillars/dir
+
+With this setup, you would be able to go ahead and execute "as normally" (with 
+the difference that the code is executed inside the container, however from the 
+CLI it won't look different):
+
+.. code-block:: bash
+
+  salt-sproxy minion1 test.ping
 
 Extension Modules
 -----------------
