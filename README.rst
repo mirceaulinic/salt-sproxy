@@ -78,7 +78,7 @@ See this recording for a live quick start:
 
 .. raw:: html
 
-  <a href="https://asciinema.org/a/247697?autoplay=1" target="_blank"><img src="static/247697.svg" /></a>
+  <a href="https://asciinema.org/a/247697?autoplay=1" target="_blank"><img src="static/termtosvg_3fk71t78.svg" /></a>
 
 In the above, ``minion1`` is 
 a `dummy  <https://docs.saltstack.com/en/latest/ref/proxy/all/salt.proxy.dummy.html>`__
@@ -122,7 +122,7 @@ the `NAPALM Proxy <https://docs.saltstack.com/en/latest/ref/proxy/all/salt.proxy
 
 .. raw:: html
 
-  <a href="https://asciinema.org/a/247726?autoplay=1" target="_blank"><img src="static/247726.svg" /></a>
+  <a href="https://asciinema.org/a/247726?autoplay=1" target="_blank"><img src="static/termtosvg_1cmipdbr.svg" /></a>
 
 In the same Python virtual environment as previously, make sure  you have
 ``NAPALM`` installed, by executing ``pip install napalm`` (see
