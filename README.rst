@@ -33,44 +33,6 @@ Documentation
 The complete documentation is available at 
 https://salt-sproxy.readthedocs.io/en/latest/.
 
-Usage
------
-
-First off, make sure you have the Salt `Pillar Top file 
-<https://docs.saltstack.com/en/latest/ref/states/top.html>`_ is correctly
-defined and the ``proxy`` key is available into the Pillar. For more in-depth 
-explanation and examples, check `this 
-<https://docs.saltstack.com/en/latest/topics/proxyminion/index.html>`__ tutorial 
-from the official SaltStack docs.
-
-Once you have that, you can start using ``salt-sproxy`` even without any Proxy
-Minions or Salt Master running. To check, can start by executing:
-
-.. code-block:: bash
-
-    $ salt-sproxy -L a,b,c --preview-target
-    - a
-    - b
-    - c
-
-The syntax is very similar to the widely used CLI command ``salt``, however the
-way it works is completely different under the hood:
-
-``salt-sproxy <target> <function> [<arguments>]``
-
-Usage Example:
-
-.. code-block:: bash
-
-    $ salt-sproxy cr1.thn.lon test.ping
-    cr1.thn.lon:
-        True
-
-
-You can continue reading further details at 
-https://salt-sproxy.readthedocs.io/en/latest/, for now, check out the following 
-section to see how to get started with ``salt-sproxy`` straight away.
-
 Quick Start
 -----------
 
@@ -147,3 +109,41 @@ the Master config was the same):
 
 Thanks to `Tesuto <https://www.tesuto.com/>`__ for providing the virtual 
 machine for the demos!
+
+Usage
+-----
+
+First off, make sure you have the Salt `Pillar Top file 
+<https://docs.saltstack.com/en/latest/ref/states/top.html>`_ is correctly
+defined and the ``proxy`` key is available into the Pillar. For more in-depth 
+explanation and examples, check `this 
+<https://docs.saltstack.com/en/latest/topics/proxyminion/index.html>`__ tutorial 
+from the official SaltStack docs.
+
+Once you have that, you can start using ``salt-sproxy`` even without any Proxy
+Minions or Salt Master running. To check, can start by executing:
+
+.. code-block:: bash
+
+    $ salt-sproxy -L a,b,c --preview-target
+    - a
+    - b
+    - c
+
+The syntax is very similar to the widely used CLI command ``salt``, however the
+way it works is completely different under the hood:
+
+``salt-sproxy <target> <function> [<arguments>]``
+
+Usage Example:
+
+.. code-block:: bash
+
+    $ salt-sproxy cr1.thn.lon test.ping
+    cr1.thn.lon:
+        True
+
+
+You can continue reading further details at 
+https://salt-sproxy.readthedocs.io/en/latest/, for now, check out the following 
+section to see how to get started with ``salt-sproxy`` straight away.
