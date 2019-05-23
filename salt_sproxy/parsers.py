@@ -1,12 +1,101 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import logging
 import optparse
 
+import salt_sproxy.version
+
 from salt.ext import six
+import salt.version
 import salt.utils.args
 import salt.utils.parsers
 import salt.config as config
+
+try:
+    from jnpr.junos import __version__ as jnpr_version
+    # Ain't Juniper awkward?
+except ImportError:
+    jnpr_version = None
+
+
+def salt_information():
+    '''
+    Return version of Salt and salt-sproxy.
+    '''
+    yield 'Salt', salt.version.__version__
+    yield 'Salt SProxy', salt_sproxy.version.__version__
+
+
+def dependency_information(include_salt_cloud=False):
+    '''
+    Report versions of library dependencies.
+
+    This function has been ported from
+    https://github.com/saltstack/salt/blob/develop/salt/version.py
+    and extended here to collect the version information for several more
+    libraries that may be necessary for various Proxy (or Execution) Modules.
+    '''
+    libs = [
+        ('Python', None, sys.version.rsplit('\n')[0].strip()),
+        ('NAPALM', 'napalm', '__version__'),
+        ('Netmiko', 'netmiko', '__version__'),
+        ('junos-eznc', None, jnpr_version),
+        ('ncclient', 'ncclient', '__version__'),
+        ('paramiko', 'paramiko', '__version__'),
+        ('pyeapi', 'pyeapi', '__version__'),
+        ('textfsm', 'textfsm', '__version__'),
+        ('jxmlease', 'jxmlease', '__version__'),
+        ('scp', 'scp', '__version__'),
+        ('PyNSO', 'pynso', '__version__'),
+        ('Ansible', 'ansible', '__version__'),
+        ('Jinja2', 'jinja2', '__version__'),
+        ('M2Crypto', 'M2Crypto', 'version'),
+        ('msgpack-python', 'msgpack', 'version'),
+        ('msgpack-pure', 'msgpack_pure', 'version'),
+        ('pycrypto', 'Crypto', '__version__'),
+        ('pycryptodome', 'Cryptodome', 'version_info'),
+        ('PyYAML', 'yaml', '__version__'),
+        ('PyZMQ', 'zmq', '__version__'),
+        ('ZMQ', 'zmq', 'zmq_version'),
+        ('Mako', 'mako', '__version__'),
+        ('Tornado', 'tornado', 'version'),
+        ('timelib', 'timelib', 'version'),
+        ('dateutil', 'dateutil', '__version__'),
+        ('pygit2', 'pygit2', '__version__'),
+        ('libgit2', 'pygit2', 'LIBGIT2_VERSION'),
+        ('smmap', 'smmap', '__version__'),
+        ('cffi', 'cffi', '__version__'),
+        ('pycparser', 'pycparser', '__version__'),
+        ('gitdb', 'gitdb', '__version__'),
+        ('gitpython', 'git', '__version__'),
+        ('python-gnupg', 'gnupg', '__version__'),
+        ('docker-py', 'docker', '__version__'),
+    ]
+
+    if include_salt_cloud:
+        libs.append(
+            ('Apache Libcloud', 'libcloud', '__version__'),
+        )
+
+    for name, imp, attr in libs:
+        if imp is None:
+            yield name, attr
+            continue
+        try:
+            imp = __import__(imp)
+            version = getattr(imp, attr)
+            if callable(version):
+                version = version()
+            if isinstance(version, (tuple, list)):
+                version = '.'.join(map(str, version))
+            yield name, version
+        except Exception:
+            yield name, None
+
+
+salt.version.salt_information = salt_information
+salt.version.dependency_information = dependency_information
 
 
 class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.OptionParserMeta,
@@ -32,7 +121,12 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
         'having the Proxy Minion services up and running (or the Master).'
     )
 
+    VERSION = salt_sproxy.version.__version__
+
     usage = '%prog [options] <target> <function> [arguments]'
+
+    epilog = ('You can find additional help about %prog at '
+              'https://salt-sproxy.readthedocs.io/en/latest/')
 
     # ConfigDirMixIn config filename attribute
     _config_filename_ = 'master'
@@ -115,8 +209,15 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
             '--sync-roster',
             dest='sync_roster',
             action='store_true',
-            help=('Synchronise the Roster modules (both salt-sproxy native) '
-                  'and provided by the user in their own environment.')
+            help=('Synchronise the Roster modules (both salt-sproxy native '
+                  'and provided by the user in their own environment).')
+        )
+        self.add_option(
+            '--events',
+            dest='events',
+            action='store_true',
+            help=('Whether should put the events on the Salt bus (mostly '
+                  'useful when having a Master running).')
         )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'
@@ -124,12 +225,14 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
         self.add_option_group(group)
 
         group.add_option(
-            '--quiet',
+            '-q', '--quiet',
             default=False,
             action='store_true',
             help='Do not display the results of the run.'
         )
 
+    # Everything else that follows here is verbatim copy from
+    # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
     def _mixin_after_parsed(self):
         if self.options.list:
             try:

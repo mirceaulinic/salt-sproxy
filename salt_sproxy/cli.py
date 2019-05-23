@@ -102,7 +102,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):
                 kwargs[kwarg] = False
-        kwargs['events'] = False
+        kwargs['events'] = self.config.get('events', False)
         kwargs['args'] = args
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)

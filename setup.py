@@ -16,7 +16,7 @@ with open("requirements.txt", "r") as fs:
 
 setup(
     name='salt-sproxy',
-    version='2019.5.1b4',
+    version='2019.5.1b5',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
@@ -25,11 +25,16 @@ setup(
     long_description=long_description,
     classifiers=[
         'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'License :: OSI Approved :: Apache Software License',
         'Topic :: Utilities',
         'Topic :: System :: Networking',
+        'Topic :: System :: Clustering',
         'Topic :: System :: Operating System',
+        'Topic :: System :: Distributed Computing',
         'Topic :: System :: Systems Administration',
         'Programming Language :: Python',
+        'Programming Language :: Cython',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',

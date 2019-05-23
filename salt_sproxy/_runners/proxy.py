@@ -520,8 +520,8 @@ def execute_devices(
             resp.update(ret)
         return resp
     else:
-        return {}
-
+        # TODO: Collect the exit code and exit with sys.exit() when non-zero
+        return ''
 
 def execute(
     tgt,
@@ -658,6 +658,7 @@ def execute(
             roster = '{mod}.targets'.format(mod=roster)
         rtargets = roster_modules[roster](tgt, tgt_type=tgt_type)
         targets = list(rtargets.keys())
+    log.debug('%s (type "%s") matched the following targets', tgt, tgt_type, str(targets))
     if not targets:
         return 'No devices matched your target. Please review your tgt / tgt_type arguments, or the Roster data source'
     if preview_target:
