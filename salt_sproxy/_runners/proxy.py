@@ -642,7 +642,7 @@ def execute(
     '''
     targets = []
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
-    if not roster:
+    if not roster or roster == 'None':
         log.info(
             'No Roster specified. Please use the ``roster`` argument, or set the ``proxy_roster`` option in the '
             'Master configuration.'

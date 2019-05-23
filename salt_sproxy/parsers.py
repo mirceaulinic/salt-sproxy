@@ -48,6 +48,11 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
             help='The name of the Salt Roster to use.'
         )
         self.add_option(
+            '--roster-file',
+            dest='roster_file',
+            help='Absolute path to the Roster file to use.'
+        )
+        self.add_option(
             '--sync',
             default=False,
             action='store_true',
@@ -105,6 +110,13 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
             dest='preview_target',
             action='store_true',
             help='Show the devices expected to match the target.'
+        )
+        self.add_option(
+            '--sync-roster',
+            dest='sync_roster',
+            action='store_true',
+            help=('Synchronise the Roster modules (both salt-sproxy native) '
+                  'and provided by the user in their own environment.')
         )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'

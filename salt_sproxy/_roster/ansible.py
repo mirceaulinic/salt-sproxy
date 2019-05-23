@@ -97,6 +97,14 @@ import fnmatch
 import salt.utils
 from salt.roster import get_roster_file
 
+try:
+    from salt.utils.path import which as utils_which
+    from salt.utils.stringutils import to_str as utils_to_str
+except ImportError:
+    from salt.utils import which as utils_which
+    from salt.utils import to_str as utils_to_str
+
+
 CONVERSION = {
     'ansible_ssh_host': 'host',
     'ansible_ssh_port': 'port',
@@ -110,7 +118,7 @@ __virtualname__ = 'ansible'
 
 
 def __virtual__():
-    return salt.utils.which('ansible-inventory') and __virtualname__, 'Install `ansible` to use inventory'
+    return utils_which('ansible-inventory') and __virtualname__, 'Install `ansible` to use inventory'
 
 
 def targets(tgt, tgt_type='glob', **kwargs):
@@ -119,7 +127,7 @@ def targets(tgt, tgt_type='glob', **kwargs):
     Default: /etc/salt/roster
     '''
     inventory = __runner__['salt.cmd']('cmd.run', 'ansible-inventory -i {0} --list'.format(get_roster_file(__opts__)))
-    __context__['inventory'] = json.loads(salt.utils.to_str(inventory))
+    __context__['inventory'] = json.loads(utils_to_str(inventory))
 
     if tgt_type == 'glob':
         hosts = [host for host in _get_hosts_from_group('all') if fnmatch.fnmatch(host, tgt)]
@@ -132,8 +140,8 @@ def targets(tgt, tgt_type='glob', **kwargs):
 
 def _get_hosts_from_group(group):
     inventory = __context__['inventory']
-    hosts = [host for host in inventory[group].get('hosts', [])]
-    for child in inventory[group].get('children', []):
+    hosts = [host for host in inventory.get(group, {}).get('hosts', [])]
+    for child in inventory.get(group, {}).get('children', []):
         hosts.extend(_get_hosts_from_group(child))
     return hosts
 

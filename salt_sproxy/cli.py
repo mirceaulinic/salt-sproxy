@@ -5,6 +5,8 @@ from salt_sproxy.parsers import SaltStandaloneProxyOptionParser
 
 import os
 import ast
+import logging
+
 import salt.runner
 import salt.utils.parsers
 from salt.utils.verify import check_user, verify_log
@@ -18,6 +20,8 @@ try:
 except ImportError:
     from salt.utils.profile import output_profile
     from salt.utils.profile import activate_profile
+
+log = logging.getLogger(__name__)
 
 
 class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
@@ -58,6 +62,16 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_path = os.path.join(curpath, '_runners')
         runner_dirs.append(runner_path)
         self.config['file_roots'] = file_roots
+        # Resync Roster module to load the ones we have here in the library, and
+        # potentially others provided by the user in their environment
+        if self.config.get('sync_roster', True):
+            # Sync Rosters by default
+            log.debug('Syncing roster')
+            runner_client = salt.runner.RunnerClient(self.config)
+            sync_roster = runner_client.cmd('saltutil.sync_roster',
+                                            kwarg={'saltenv': saltenv},
+                                            print_event=False)
+            log.debug(sync_roster)
         self.config['runner_dirs'] = runner_dirs
         self.config['fun'] = 'proxy.execute'
         kwargs = {}
