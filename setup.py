@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 __author__ = 'Mircea Ulinic <ping@mirceaulinic.net>'
 
-with codecs.open('README.rst', 'r', encoding='utf8') as file:
+with codecs.open('pypi.rst', 'r', encoding='utf8') as file:
     long_description = file.read()
 
 with open("requirements.txt", "r") as fs:
