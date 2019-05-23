@@ -89,6 +89,7 @@ Any of the [groups] or direct hostnames will return.  The 'all' is special, and 
 '''
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals
+import re
 import copy
 import json
 import fnmatch
@@ -133,6 +134,20 @@ def targets(tgt, tgt_type='glob', **kwargs):
         hosts = [host for host in _get_hosts_from_group('all') if fnmatch.fnmatch(host, tgt)]
     elif tgt_type == 'list':
         hosts = [host for host in _get_hosts_from_group('all') if host in tgt]
+    elif tgt_type == 'pcre':
+        rgx = re.compile(tgt)
+        hosts = [host for host in _get_hosts_from_group('all') if rgx.search(host)]
+    elif tgt_type in ['grain', 'grain_pcre']:
+        grains = __runner__['cache.grains'](tgt, tgt_type=tgt_type)
+        hosts = list(grains.keys())
+    elif tgt_type in ['pillar', 'pillar_pcre']:
+        pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
+        hosts = list(pillars.keys())
+    # elif tgt_type == 'compound':
+        # TODO: Implement the compound matcher, might need quite a bit of work,
+        # need to evaluate if it's worth pulling all this code from
+        # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
+        # or find a smarter way to achieve that.
     elif tgt_type == 'nodegroup':
         hosts = _get_hosts_from_group(tgt)
     return {host: _get_hostvars(host) for host in hosts}
