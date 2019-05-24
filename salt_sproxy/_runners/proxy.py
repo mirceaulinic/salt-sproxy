@@ -112,9 +112,12 @@ class SProxyMinion(SMinion):
 
     def gen_modules(self, initial_load=False):
         '''
-        Tell the minion to reload the execution modules
+        Tell the minion to reload the execution modules.
+
         CLI Example:
+
         .. code-block:: bash
+
             salt '*' sys.reload_modules
         '''
         cached_grains = None
