@@ -49,6 +49,7 @@ def dependency_information(include_salt_cloud=False):
         ('scp', 'scp', '__version__'),
         ('PyNSO', 'pynso', '__version__'),
         ('Ansible', 'ansible', '__version__'),
+        ('PyNetBox', 'pynetbox', '__version__'),
         ('Jinja2', 'jinja2', '__version__'),
         ('M2Crypto', 'M2Crypto', 'version'),
         ('msgpack-python', 'msgpack', 'version'),
