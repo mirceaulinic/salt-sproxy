@@ -29,6 +29,8 @@ module loads the list of devices from a file).
 
 For example, let's see how we can use the :ref:`ansible-roster`.
 
+.. _roster-example-ansible:
+
 Roster usage example: Ansible
 -----------------------------
 
@@ -165,6 +167,79 @@ Atlanta, to gather the LLDP neighbors for every device:
 
   $ salt-sproxy '*.atlanta' net.lldp
   edge1.atlanta:
-   ~~~ snip ~~~
+     ~~~ snip ~~~
   edge2.atlanta:
-   ~~~ snip ~~~
+     ~~~ snip ~~~
+
+.. _roster-example-netbox:
+
+Roster usage example: NetBox
+----------------------------
+
+The :ref:`netbox-roster` is a good example of a Roster modules that doesn't 
+work with files, rather gathers the data from
+`NetBox <https://github.com/digitalocean/netbox>`__ via the `API 
+<https://netbox.readthedocs.io/en/stable/api/overview/>`__.
+
+.. note::
+
+    The NetBox Roster module is currently not available in the official Salt 
+    releases, and it is distributed as part of the ``salt-sproxy`` package and 
+    dynamically loaded on runtime, so you don't need to worry about that, 
+    simply reference it, configured the details and documented and start using 
+    it straight away.
+
+To use the NetBox Roster, simply put the following details in the Master 
+configuration you want to use (default ``/etc/salt/master``):
+
+.. code-block:: yaml
+
+  roster: netbox
+
+  netbox:
+   url: <NETBOX_URL>
+
+You can also specify the ``token``, and the ``keyfile`` but for this Roster 
+specifically, the ``url`` is sufficient.
+
+To verify that you are indeed able to retrieve the list of devices from your 
+NetBox instance, you can, for example, execute:
+
+.. code-block:: bash
+
+  $ salt-run salt.cmd netbox.filter dcim devices
+  # ~~~ should normally return all the devices ~~~
+
+  # Or with some specific filters, e.g.:
+  $ salt-run salt.cmd netbox.filter dcim devices site=<SITE> status=<STATUS>
+
+Once confirmed this works well, you can verify that the Roster is able to pull 
+the data:
+
+.. code-block:: bash
+
+  $ salt-sproxy '*' --preview-target
+
+In the same way, you can then start executing Salt commands targeting using 
+expressions that match the name of the devices you have in NetBox:
+
+.. code-block:: bash
+
+  $ salt-sproxy '*atlanta' net.lldp
+  edge1.atlanta:
+      ~~~ snip ~~~
+  edge2.atlanta:
+      ~~~ snip ~~~
+
+.. _other-roster:
+
+Other Roster modules
+--------------------
+
+If you may need to load your data from various other data sources, that might 
+not be covered in the existing Roster modules. Roster modules are easy to 
+write, and you only need to drop them into your ``salt://_roster`` directory,
+then it would be great if you could open source them for the benefit of the 
+community (either submit them to this repository, at 
+https://github.com/mirceaulinic/salt-sproxy, or to the official
+`Salt repository <https://github.com/saltstack/salt>`__ on GitHub)
