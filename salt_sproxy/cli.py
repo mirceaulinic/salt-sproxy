@@ -58,21 +58,25 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             saltenv = 'base'
         file_roots = self.config.get('file_roots', {saltenv: []})
         file_roots[saltenv].append(curpath)
+        self.config['file_roots'] = file_roots
         runner_dirs = self.config.get('runner_dirs', [])
         runner_path = os.path.join(curpath, '_runners')
         runner_dirs.append(runner_path)
-        self.config['file_roots'] = file_roots
+        self.config['runner_dirs'] = runner_dirs
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
         if self.config.get('sync_roster', True):
             # Sync Rosters by default
             log.debug('Syncing roster')
+            roster_dirs = self.config.get('roster_dirs', [])
+            roster_path = os.path.join(curpath, '_roster')
+            roster_dirs.append(roster_path)
+            self.config['roster_dirs'] = roster_dirs
             runner_client = salt.runner.RunnerClient(self.config)
             sync_roster = runner_client.cmd('saltutil.sync_roster',
                                             kwarg={'saltenv': saltenv},
                                             print_event=False)
             log.debug(sync_roster)
-        self.config['runner_dirs'] = runner_dirs
         self.config['fun'] = 'proxy.execute'
         kwargs = {}
         tmp_args = args[:]

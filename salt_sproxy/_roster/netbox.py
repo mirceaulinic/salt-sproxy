@@ -35,7 +35,7 @@ import re
 import fnmatch
 
 try:
-    import pynetbox
+    import pynetbox  # pylint: disable=unused-import
 
     HAS_PYNETBOX = True
 except ImportError:
@@ -56,14 +56,22 @@ def targets(tgt, tgt_type='glob', **kwargs):
     '''
     netbox_filters = __opts__.get('netbox', {}).get('filters', {})
     netbox_filters.update(**kwargs)
-    netbox_devices = __runner__['salt.cmd']('netbox.filter', 'dcim', 'devices', **netbox_filters)
+    netbox_devices = __runner__['salt.cmd'](
+        'netbox.filter', 'dcim', 'devices', **netbox_filters
+    )
     if tgt_type == 'glob':
-        devices = [device['name'] for device in netbox_devices if fnmatch.fnmatch(device['name'], tgt)]
+        devices = [
+            device['name']
+            for device in netbox_devices
+            if fnmatch.fnmatch(device['name'], tgt)
+        ]
     elif tgt_type == 'list':
         devices = [device['name'] for device in netbox_devices if device['name'] in tgt]
     elif tgt_type == 'pcre':
         rgx = re.compile(tgt)
-        devices = [device['name'] for device in netbox_devices if rgx.search(device['name'])]
+        devices = [
+            device['name'] for device in netbox_devices if rgx.search(device['name'])
+        ]
     elif tgt_type in ['grain', 'grain_pcre']:
         grains = __runner__['cache.grains'](tgt, tgt_type=tgt_type)
         devices = list(grains.keys())
@@ -71,8 +79,8 @@ def targets(tgt, tgt_type='glob', **kwargs):
         pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
         devices = list(pillars.keys())
     # elif tgt_type == 'compound':
-        # TODO: Implement the compound matcher, might need quite a bit of work,
-        # need to evaluate if it's worth pulling all this code from
-        # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
-        # or find a smarter way to achieve that.
+    # TODO: Implement the compound matcher, might need quite a bit of work,
+    # need to evaluate if it's worth pulling all this code from
+    # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
+    # or find a smarter way to achieve that.
     return {device: {} for device in devices}
