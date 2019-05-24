@@ -42,11 +42,11 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         # to be invoked, and instead call ``napalm.execute``, passing the
         # function requested by the user from the CLI, as an argument.
         # The same goes with the CLI options that are sent as kwargs to the
-        # NAPALM Runner.
+        # proxy Runner.
         tgt = self.config['tgt']
         fun = self.config['fun']
         args = self.config['arg']
-        # To be able to reuse the NAPALM Runner (which is not yet available
+        # To be able to reuse the proxy Runner (which is not yet available
         # natively in Salt), we can override the ``runner_dirs`` configuration
         # option to tell Salt to load that Runner too. This way, we can also
         # load other types of modules that may be required or we provide fixes
@@ -81,10 +81,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 args.pop(index)
                 kwargs = arg
         kwargs['__kwarg__'] = True
-        tgt_types = ('list', 'grain', 'grain_pcre', 'nodegroup')
+        tgt_types = ('compound', 'list', 'grain', 'pcre', 'grain_pcre', 'pillar_pcre', 'nodegroup')
         kwargs['tgt_type'] = 'glob'
         for tgt_type in tgt_types:
-            if getattr(self.options, tgt_type):
+            if hasattr(self.options, tgt_type) and getattr(self.options, tgt_type):
                 kwargs['tgt_type'] = tgt_type
         kwargs_opts = ('preview_target', 'batch_size', 'cache_grains',
                        'cache_pillar', 'roster',
