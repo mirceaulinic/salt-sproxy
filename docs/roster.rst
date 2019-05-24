@@ -5,12 +5,12 @@ Using the Roster Interface
 
 While from the CLI perspective ``salt-sproxy`` looks like it works similar to
 the usual ``salt`` command, in fact, they work fundamentally different. One of
-the most important differences being that ``salt`` is aware what Minions are 
+the most important differences is that ``salt`` is aware of what Minions are 
 connected to the Master, therefore it is easy to know what Minions would be 
 matched by a certain target expression (see 
 https://docs.saltstack.com/en/latest/topics/targeting/ for further details). In
 contrast, by definition, ``salt-sproxy`` doesn't suppose there are any (Proxy) 
-Minions running, so it cannot possible know what Minions would be matched by an 
+Minions running, so it cannot possibly know what Minions would be matched by an 
 arbitrary expression. For this reasoning, we need to "help" it by providing 
 the list of all the devices it should be aware of. This is done through the 
 `Roster <https://docs.saltstack.com/en/latest/topics/ssh/roster.html>`__
