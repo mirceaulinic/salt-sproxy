@@ -99,6 +99,8 @@ already familiar with a vast majority of them from the `salt
      Whether should put the events on the Salt bus (mostly useful when having a
      Master running). Default: ``False``.
 
+.. _logging-opts:
+
 Logging Options
 ---------------
 
@@ -119,6 +121,8 @@ Logging options which override any settings defined on the configuration files.
 
     Logfile logging log level. One of ``all``, ``garbage``, ``trace``,
     ``debug``, ``info``, ``warning``, ``error``, ``quiet``. Default: ``error``.
+
+.. _target-selection:
 
 Target Selection
 ----------------
@@ -165,6 +169,8 @@ minion id. See https://docs.python.org/2/library/fnmatch.html#module-fnmatch.
     Using the Range option requires that a range server is set up and the
     location of the range server is referenced in the master configuration
     file.
+
+.. _output-opts:
 
 Output Options
 --------------

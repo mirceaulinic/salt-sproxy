@@ -1,3 +1,5 @@
+.. _ansible-roster:
+
 ==============
 Ansible Roster
 ==============
