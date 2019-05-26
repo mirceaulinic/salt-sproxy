@@ -1,0 +1,31 @@
+---
+all:
+  children:
+    usa:
+      children:
+        northeast: ~
+        northwest:
+          children:
+            seattle:
+              hosts:
+                edge1.seattle
+            vancouver:
+              hosts:
+                edge1.vancouver
+        southeast:
+          children:
+            atlanta:
+              hosts:
+                edge1.atlanta:
+                edge2.atlanta:
+            raleigh:
+              hosts:
+                edge1.raleigh:
+        southwest:
+          children:
+            san_francisco:
+              hosts:
+                edge1.sfo
+            los_angeles:
+              hosts:
+                edge1.la

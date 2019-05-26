@@ -1,0 +1,7 @@
+Usage Examples
+--------------
+
+- `101 
+  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/101>`__
+- `NAPALM 
+  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/napalm>`__

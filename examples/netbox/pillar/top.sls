@@ -1,0 +1,3 @@
+base:
+  juniper-device:
+    - junos

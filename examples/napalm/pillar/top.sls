@@ -1,0 +1,3 @@
+base:
+  juniper-router:
+    - junos
