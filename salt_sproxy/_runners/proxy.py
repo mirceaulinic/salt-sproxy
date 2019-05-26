@@ -526,6 +526,7 @@ def execute_devices(
         # TODO: Collect the exit code and exit with sys.exit() when non-zero
         return ''
 
+
 def execute(
     tgt,
     fun=None,

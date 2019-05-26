@@ -112,14 +112,17 @@ CONVERSION = {
     'ansible_ssh_user': 'user',
     'ansible_ssh_pass': 'passwd',
     'ansible_sudo_pass': 'sudo',
-    'ansible_ssh_private_key_file': 'priv'
+    'ansible_ssh_private_key_file': 'priv',
 }
 
 __virtualname__ = 'ansible'
 
 
 def __virtual__():
-    return utils_which('ansible-inventory') and __virtualname__, 'Install `ansible` to use inventory'
+    return (
+        utils_which('ansible-inventory') and __virtualname__,
+        'Install `ansible` to use inventory',
+    )
 
 
 def targets(tgt, tgt_type='glob', **kwargs):
@@ -127,11 +130,15 @@ def targets(tgt, tgt_type='glob', **kwargs):
     Return the targets from the ansible inventory_file
     Default: /etc/salt/roster
     '''
-    inventory = __runner__['salt.cmd']('cmd.run', 'ansible-inventory -i {0} --list'.format(get_roster_file(__opts__)))
+    inventory = __runner__['salt.cmd'](
+        'cmd.run', 'ansible-inventory -i {0} --list'.format(get_roster_file(__opts__))
+    )
     __context__['inventory'] = json.loads(utils_to_str(inventory))
 
     if tgt_type == 'glob':
-        hosts = [host for host in _get_hosts_from_group('all') if fnmatch.fnmatch(host, tgt)]
+        hosts = [
+            host for host in _get_hosts_from_group('all') if fnmatch.fnmatch(host, tgt)
+        ]
     elif tgt_type == 'list':
         hosts = [host for host in _get_hosts_from_group('all') if host in tgt]
     elif tgt_type == 'pcre':
@@ -144,10 +151,10 @@ def targets(tgt, tgt_type='glob', **kwargs):
         pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
         hosts = list(pillars.keys())
     # elif tgt_type == 'compound':
-        # TODO: Implement the compound matcher, might need quite a bit of work,
-        # need to evaluate if it's worth pulling all this code from
-        # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
-        # or find a smarter way to achieve that.
+    # TODO: Implement the compound matcher, might need quite a bit of work,
+    # need to evaluate if it's worth pulling all this code from
+    # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
+    # or find a smarter way to achieve that.
     elif tgt_type == 'nodegroup':
         hosts = _get_hosts_from_group(tgt)
     return {host: _get_hostvars(host) for host in hosts}

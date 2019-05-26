@@ -14,6 +14,7 @@ import salt.config as config
 
 try:
     from jnpr.junos import __version__ as jnpr_version
+
     # Ain't Juniper awkward?
 except ImportError:
     jnpr_version = None
@@ -75,9 +76,7 @@ def dependency_information(include_salt_cloud=False):
     ]
 
     if include_salt_cloud:
-        libs.append(
-            ('Apache Libcloud', 'libcloud', '__version__'),
-        )
+        libs.append(('Apache Libcloud', 'libcloud', '__version__'))
 
     for name, imp, attr in libs:
         if imp is None:
@@ -99,20 +98,24 @@ salt.version.salt_information = salt_information
 salt.version.dependency_information = dependency_information
 
 
-class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.OptionParserMeta,
-                                                         salt.utils.parsers.OptionParser,
-                                                         salt.utils.parsers.ConfigDirMixIn,
-                                                         salt.utils.parsers.MergeConfigMixIn,
-                                                         salt.utils.parsers.TimeoutMixIn,
-                                                         salt.utils.parsers.LogLevelMixIn,
-                                                         salt.utils.parsers.HardCrashMixin,
-                                                         salt.utils.parsers.SaltfileMixIn,
-                                                         salt.utils.parsers.TargetOptionsMixIn,
-                                                         salt.utils.parsers.OutputOptionsMixIn,
-                                                         salt.utils.parsers.ArgsStdinMixIn,
-                                                         salt.utils.parsers.ProfilingPMixIn,
-                                                         salt.utils.parsers.EAuthMixIn,
-                                                         salt.utils.parsers.NoParseMixin)):
+class SaltStandaloneProxyOptionParser(
+    six.with_metaclass(
+        salt.utils.parsers.OptionParserMeta,
+        salt.utils.parsers.OptionParser,
+        salt.utils.parsers.ConfigDirMixIn,
+        salt.utils.parsers.MergeConfigMixIn,
+        salt.utils.parsers.TimeoutMixIn,
+        salt.utils.parsers.LogLevelMixIn,
+        salt.utils.parsers.HardCrashMixin,
+        salt.utils.parsers.SaltfileMixIn,
+        salt.utils.parsers.TargetOptionsMixIn,
+        salt.utils.parsers.OutputOptionsMixIn,
+        salt.utils.parsers.ArgsStdinMixIn,
+        salt.utils.parsers.ProfilingPMixIn,
+        salt.utils.parsers.EAuthMixIn,
+        salt.utils.parsers.NoParseMixin,
+    )
+):
 
     default_timeout = 1
 
@@ -126,8 +129,10 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
 
     usage = '%prog [options] <target> <function> [arguments]'
 
-    epilog = ('You can find additional help about %prog at '
-              'https://salt-sproxy.readthedocs.io/en/latest/')
+    epilog = (
+        'You can find additional help about %prog at '
+        'https://salt-sproxy.readthedocs.io/en/latest/'
+    )
 
     # ConfigDirMixIn config filename attribute
     _config_filename_ = 'master'
@@ -138,87 +143,101 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
 
     def _mixin_setup(self):
         self.add_option(
-            '-r', '--roster',
-            default=False,
-            help='The name of the Salt Roster to use.'
+            '-r', '--roster', default=False, help='The name of the Salt Roster to use.'
         )
         self.add_option(
             '--roster-file',
             dest='roster_file',
-            help='Absolute path to the Roster file to use.'
+            help='Absolute path to the Roster file to use.',
         )
         self.add_option(
             '--sync',
             default=False,
             action='store_true',
-            help=('Return the replies from the devices immediately they are '
-                  'received, or everything at once.')
+            help=(
+                'Return the replies from the devices immediately they are '
+                'received, or everything at once.'
+            ),
         )
         self.add_option(
             '--cache-grains',
             default=False,
             action='store_true',
-            help=('Cache the collected Grains. This is going to override the '
-                  'existing cached Grains.')
+            help=(
+                'Cache the collected Grains. This is going to override the '
+                'existing cached Grains.'
+            ),
         )
         self.add_option(
             '--cache-pillar',
             default=False,
             action='store_true',
-            help=('Cache the compiled Pillar. This is going to override the '
-                  'existing cached Pillar.')
+            help=(
+                'Cache the compiled Pillar. This is going to override the '
+                'existing cached Pillar.'
+            ),
         )
         self.add_option(
             '--no-cached-grains',
             default=False,
             action='store_true',
-            help='Do not use the available cached Grains (if any).'
+            help='Do not use the available cached Grains (if any).',
         )
         self.add_option(
             '--no-cached-pillar',
             default=False,
             action='store_true',
-            help='Do not use the available cached Pillar (if any)'
+            help='Do not use the available cached Pillar (if any)',
         )
         self.add_option(
             '--no-grains',
             default=False,
             action='store_true',
-            help=('Do not attempt to collect Grains at all. Use with care, it '
-                  'may lead to unexpected results.')
+            help=(
+                'Do not attempt to collect Grains at all. Use with care, it '
+                'may lead to unexpected results.'
+            ),
         )
         self.add_option(
             '--no-pillar',
             default=False,
             action='store_true',
-            help=('Do not compile Pillar at all. Use with care, it may lead to '
-                  'unexpected results.')
+            help=(
+                'Do not compile Pillar at all. Use with care, it may lead to '
+                'unexpected results.'
+            ),
         )
         self.add_option(
-            '-b', '--batch', '--batch-size',
+            '-b',
+            '--batch',
+            '--batch-size',
             default=10,
             dest='batch_size',
-            help='The number of devices to connect to in parallel.'
+            help='The number of devices to connect to in parallel.',
         )
         self.add_option(
             '--preview-target',
             dest='preview_target',
             action='store_true',
-            help='Show the devices expected to match the target.'
+            help='Show the devices expected to match the target.',
         )
         self.add_option(
             '--sync-roster',
             dest='sync_roster',
             action='store_true',
-            help=('Synchronise the Roster modules (both salt-sproxy native '
-                  'and provided by the user in their own environment).')
+            help=(
+                'Synchronise the Roster modules (both salt-sproxy native '
+                'and provided by the user in their own environment).'
+            ),
         )
         self.add_option(
             '--events',
             dest='events',
             action='store_true',
-            help=('Whether should put the events on the Salt bus (mostly '
-                  'useful when having a Master running).')
+            help=(
+                'Whether should put the events on the Salt bus (mostly '
+                'useful when having a Master running).'
+            ),
         )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'
@@ -226,10 +245,11 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
         self.add_option_group(group)
 
         group.add_option(
-            '-q', '--quiet',
+            '-q',
+            '--quiet',
             default=False,
             action='store_true',
-            help='Do not display the results of the run.'
+            help='Do not display the results of the run.',
         )
 
     # Everything else that follows here is verbatim copy from
@@ -260,8 +280,10 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
                     self.config['fun'] = self.args[1].split(',')
                     self.config['arg'] = [[]]
                     cmd_index = 0
-                    if (self.args[2:].count(self.options.args_separator) ==
-                            len(self.config['fun']) - 1):
+                    if (
+                        self.args[2:].count(self.options.args_separator)
+                        == len(self.config['fun']) - 1
+                    ):
                         # new style parsing: standalone argument separator
                         for arg in self.args[2:]:
                             if arg == self.options.args_separator:
@@ -283,25 +305,31 @@ class SaltStandaloneProxyOptionParser(six.with_metaclass(salt.utils.parsers.Opti
                             else:
                                 self.config['arg'][cmd_index].append(arg)
                         if len(self.config['fun']) > len(self.config['arg']):
-                            self.exit(42, 'Cannot execute compound command without '
-                                          'defining all arguments.\n')
+                            self.exit(
+                                42,
+                                'Cannot execute compound command without '
+                                'defining all arguments.\n',
+                            )
                         elif len(self.config['fun']) < len(self.config['arg']):
-                            self.exit(42, 'Cannot execute compound command with more '
-                                          'arguments than commands.\n')
+                            self.exit(
+                                42,
+                                'Cannot execute compound command with more '
+                                'arguments than commands.\n',
+                            )
                     # parse the args and kwargs before sending to the publish
                     # interface
                     for i in range(len(self.config['arg'])):
                         self.config['arg'][i] = salt.utils.args.parse_input(
-                            self.config['arg'][i],
-                            no_parse=self.options.no_parse)
+                            self.config['arg'][i], no_parse=self.options.no_parse
+                        )
                 else:
                     self.config['fun'] = self.args[1]
                     self.config['arg'] = self.args[2:]
                     # parse the args and kwargs before sending to the publish
                     # interface
                     self.config['arg'] = salt.utils.args.parse_input(
-                        self.config['arg'],
-                        no_parse=self.options.no_parse)
+                        self.config['arg'], no_parse=self.options.no_parse
+                    )
             except IndexError:
                 self.exit(42, '\nIncomplete options passed.\n\n')
 
