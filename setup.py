@@ -55,9 +55,5 @@ setup(
     keywords=('salt', 'network', 'automation', 'cli', 'proxy', 'minion'),
     include_package_data=True,
     install_requires=reqs,
-    entry_points={
-        'console_scripts': [
-            'salt-sproxy=salt_sproxy.scripts:salt_sproxy'
-        ],
-    }
+    entry_points={'console_scripts': ['salt-sproxy=salt_sproxy.scripts:salt_sproxy']},
 )

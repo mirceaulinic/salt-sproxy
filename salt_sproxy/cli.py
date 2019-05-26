@@ -28,6 +28,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
     '''
     Used to execute Salt functions on a number of devices.
     '''
+
     def run(self):
         '''
         Execute salt-run
@@ -73,9 +74,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             roster_dirs.append(roster_path)
             self.config['roster_dirs'] = roster_dirs
             runner_client = salt.runner.RunnerClient(self.config)
-            sync_roster = runner_client.cmd('saltutil.sync_roster',
-                                            kwarg={'saltenv': saltenv},
-                                            print_event=False)
+            sync_roster = runner_client.cmd(
+                'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
+            )
             log.debug(sync_roster)
         self.config['fun'] = 'proxy.execute'
         kwargs = {}
@@ -85,14 +86,28 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 args.pop(index)
                 kwargs = arg
         kwargs['__kwarg__'] = True
-        tgt_types = ('compound', 'list', 'grain', 'pcre', 'grain_pcre', 'pillar_pcre', 'nodegroup')
+        tgt_types = (
+            'compound',
+            'list',
+            'grain',
+            'pcre',
+            'grain_pcre',
+            'pillar_pcre',
+            'nodegroup',
+        )
         kwargs['tgt_type'] = 'glob'
         for tgt_type in tgt_types:
             if hasattr(self.options, tgt_type) and getattr(self.options, tgt_type):
                 kwargs['tgt_type'] = tgt_type
-        kwargs_opts = ('preview_target', 'batch_size', 'cache_grains',
-                       'cache_pillar', 'roster',
-                       'timeout', 'sync')
+        kwargs_opts = (
+            'preview_target',
+            'batch_size',
+            'cache_grains',
+            'cache_pillar',
+            'roster',
+            'timeout',
+            'sync',
+        )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:
                 kwargs[kwargs_opt] = getattr(self.options, kwargs_opt)
@@ -101,7 +116,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_cached_grains': 'use_cached_grains',
             'no_cached_pillar': 'use_cached_pillar',
             'no_grains': 'with_grains',
-            'no_pillar': 'with_pillar'
+            'no_pillar': 'with_pillar',
         }
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):
@@ -130,9 +145,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                         self.exit(ret['data']['retcode'])
                 finally:
                     output_profile(
-                        pr,
-                        stats_path=self.options.profiling_path,
-                        stop=True)
+                        pr, stats_path=self.options.profiling_path, stop=True
+                    )
 
         except SaltClientError as exc:
             raise SystemExit(six.text_type(exc))

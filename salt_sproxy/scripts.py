@@ -10,6 +10,7 @@ def salt_sproxy():
     Execute a salt convenience routine.
     '''
     import salt_sproxy.cli
+
     if '' in sys.path:
         sys.path.remove('')
     client = salt_sproxy.cli.SaltStandaloneProxy()

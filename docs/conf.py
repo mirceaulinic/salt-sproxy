@@ -42,7 +42,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages'
+    'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -105,7 +105,7 @@ html_theme_options = {
     'github_user': 'mirceaulinic',
     'github_repo': 'salt-sproxy',
     'github_banner': True,
-    'show_related': False
+    'show_related': False,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -150,15 +150,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -168,8 +165,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'salt-sproxy.tex', u'salt-sproxy Documentation',
-     u'Mircea Ulinic', 'manual'),
+    (
+        master_doc,
+        'salt-sproxy.tex',
+        u'salt-sproxy Documentation',
+        u'Mircea Ulinic',
+        'manual',
+    )
 ]
 
 
@@ -177,10 +179,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'salt-sproxy', u'salt-sproxy Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, 'salt-sproxy', u'salt-sproxy Documentation', [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -189,10 +188,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'salt-sproxy', u'salt-sproxy Documentation',
-     author, 'salt-sproxy',
-     'Salt plugin for interacting with network devices, without running Minions',
-     'Miscellaneous'),
+    (
+        master_doc,
+        'salt-sproxy',
+        u'salt-sproxy Documentation',
+        author,
+        'salt-sproxy',
+        'Salt plugin for interacting with network devices, without running Minions',
+        'Miscellaneous',
+    )
 ]
 
 # -- Options for Epub output ----------------------------------------------
