@@ -4,10 +4,13 @@ Salt Super-Proxy  |Twitter|
 .. |Twitter| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
    :target: https://twitter.com/intent/tweet?text=Get+started+with+salt-sproxy+and+automate+your+network+with+all+the+Salt+benefits%2C+without+having+to+manage+thousands+of+%28Proxy%29+MInion+processes&url=https://github.com/mirceaulinic/salt-sproxy&hashtags=networkAutomation,saltstack,salt-sproxy
 
-|PyPI download month| |PyPI status| |PyPI versions| |Documentation Status| |License| |GitHub make-a-pull-requests|
+|PyPI downloads| |Docker pulls| |PyPI status| |PyPI versions| |Documentation Status| |Code style| |License| |GitHub make-a-pull-requests|
 
-.. |PyPI download month| image:: https://img.shields.io/pypi/dm/salt-sproxy.svg
+.. |PyPI downloads| image:: https://pepy.tech/badge/salt-sproxy
    :target: https://pypi.python.org/pypi/salt-sproxy/
+
+.. |Docker pulls| image:: https://img.shields.io/docker/pulls/mirceaulinic/salt-sproxy.svg
+   :target: https://hub.docker.com/r/mirceaulinic/salt-sproxy
 
 .. |PyPI status| image:: https://img.shields.io/pypi/status/salt-sproxy.svg
    :target: https://pypi.python.org/pypi/salt-sproxy/
@@ -17,6 +20,9 @@ Salt Super-Proxy  |Twitter|
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/salt-sproxy/badge/?version=latest
    :target: http://salt-sproxy.readthedocs.io/?badge=latest
+
+.. |Code style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/python/black
 
 .. |License| image:: https://img.shields.io/pypi/l/salt-sproxy.svg
    :target: https://pypi.python.org/pypi/salt-sproxy/
