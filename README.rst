@@ -231,7 +231,7 @@ backwards compatibility with older Salt versions:
   |-- scripts.py
   `-- version.py
 
-The extension modules under the `_roster` and `_runner` directories are 
+The extension modules under the ``_roster`` and ``_runner`` directories are 
 documented at https://salt-sproxy.readthedocs.io/en/latest/roster/index.html 
 and https://salt-sproxy.readthedocs.io/en/latest/runners/index.html, 
 respectively.
