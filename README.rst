@@ -1,11 +1,36 @@
-Salt Super-Proxy
+Salt Super-Proxy  |Twitter|
 ================
 
-Salt plugin for interacting with network devices, without running (Proxy) Minions.
+.. |Twitter| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
+   :target: https://twitter.com/intent/tweet?text=Get+started+with+salt-sproxy+and+automate+your+network+with+all+the+Salt+benefits%2C+without+having+to+manage+thousands+of+%28Proxy%29+MInion+processes&url=https://github.com/mirceaulinic/salt-sproxy&hashtags=networkAutomation,saltstack,salt-sproxy
+
+|PyPI download month| |PyPI status| |PyPI versions| |Documentation Status| |License| |GitHub make-a-pull-requests|
+
+.. |PyPI download month| image:: https://img.shields.io/pypi/dm/salt-sproxy.svg
+   :target: https://pypi.python.org/pypi/salt-sproxy/
+
+.. |PyPI status| image:: https://img.shields.io/pypi/status/salt-sproxy.svg
+   :target: https://pypi.python.org/pypi/salt-sproxy/
+
+.. |PyPI versions| image:: https://img.shields.io/pypi/pyversions/salt-sproxy.svg
+   :target: https://pypi.python.org/pypi/salt-sproxy/
+
+.. |Documentation Status| image:: https://readthedocs.org/projects/salt-sproxy/badge/?version=latest
+   :target: http://salt-sproxy.readthedocs.io/?badge=latest
+
+.. |License| image:: https://img.shields.io/pypi/l/salt-sproxy.svg
+   :target: https://pypi.python.org/pypi/salt-sproxy/
+
+.. |GitHub make-a-pull-requests| image:: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
+   :target: http://makeapullrequest.com
+
+`Salt <https://github.com/saltstack/salt>`__ plugin to automate the management
+and configuration of network devices at scale, without running (Proxy) Minions.
 
 Using ``salt-sproxy``, you can continue to benefit from the scalability,
-flexibility and extensibility of Salt, while you don't have to manage thousands of
-(Proxy) Minion services.
+flexibility and extensibility of Salt, while you don't have to manage thousands
+of (Proxy) Minion services. However, you are able to use both ``salt-sproxy`` 
+and your (Proxy) Minions at the same time.
 
 .. note::
 
@@ -14,6 +39,30 @@ flexibility and extensibility of Salt, while you don't have to manage thousands 
     This package may eventually be integrated in a future version of the 
     official Salt releases, in this form or slightly different.
 
+Prerequisites
+-------------
+
+The package is distributed via PyPI, under the name ``salt-sproxy``. If you 
+would like to install it on your computer, you might want to run it under a
+`virtual environment <https://docs.python-guide.org/dev/virtualenvs/>`__.
+
+Besides the CLI, the usage remains the same as when you're running a Salt 
+environment with Proxy or regular Minions. See the following documents on how
+to get started with Salt:
+
+- `Salt in 10 minutes 
+  <https://docs.saltstack.com/en/latest/topics/tutorials/walkthrough.html>`__.
+- `Salt fundamentals 
+  <https://docs.saltstack.com/en/getstarted/fundamentals/>`__.
+- `Salt configuration management 
+  <https://docs.saltstack.com/en/getstarted/config/>`__.
+- `Network Automation features available in Salt 
+  <https://docs.saltstack.com/en/develop/topics/network_automation/index.html>`__.
+- `Network Automation at Scale: up and running in 60 minutes 
+  <https://ripe74.ripe.net/presentations/18-RIPE-74-Network-automation-at-scale-up-and-running-in-60-minutes.pdf>`__.
+- `Network Automation at Scale (free e-book) 
+  <https://www.oreilly.com/library/view/network-automation-at/9781491992524/>`__.
+
 Install
 -------
 
@@ -21,14 +70,18 @@ Install this package where you would like to manage your devices from. In case
 you need a specific Salt version, make sure you install it beforehand, 
 otherwise this package will bring the latest Salt version available instead.
 
-The package is distributed via PyPI, under the name ``salt-sproxy``.
-
 Execute:
 
 .. code-block:: bash
 
     pip install salt-sproxy
 
+To install a specific Salt version, execute, e.g.,
+
+.. code-block:: bash
+
+    pip install salt==2018.3.4
+    pip install salt-sproxy
 
 Documentation
 -------------
@@ -146,7 +199,59 @@ Usage Example:
     cr1.thn.lon:
         True
 
-
 You can continue reading further details at 
 https://salt-sproxy.readthedocs.io/en/latest/, for now, check out the following 
 section to see how to get started with ``salt-sproxy`` straight away.
+
+What's included
+---------------
+
+When installing ``salt-sproxy``, besides the core files (i.e., ``cli.py``, 
+``parsers.py``, ``scripts.py``, and ``version.py``), you will find the 
+following directories and files, which provide additional features and 
+backwards compatibility with older Salt versions:
+
+.. code-block:: text
+
+  |-- cli.py
+  |-- __init__.py
+  |-- parsers.py
+  |-- _roster/
+  |   |-- ansible.py
+  |   `-- netbox.py
+  |-- _runners/
+  |   |-- __init__.py
+  |   `-- proxy.py
+  |-- scripts.py
+  `-- version.py
+
+The extension modules under the `_roster` and `_runner` directories are 
+documented at https://salt-sproxy.readthedocs.io/en/latest/roster/index.html 
+and https://salt-sproxy.readthedocs.io/en/latest/runners/index.html, 
+respectively.
+
+Community
+---------
+
+Get updates on the ``salt-sproxy`` development, and chat with the project 
+maintainer(s) and community members:
+
+- Follow `@mirceaulinic <https://twitter.com/mirceaulinic>`__
+- `Google Groups <https://groups.google.com/forum/#!forum/salt-sproxy>`__
+- Use the ``salt-sproxy`` tag on `Stack Overflow 
+  <https://stackoverflow.com/>`__.
+- The *#saltstack* channel under the `networktocode Slack 
+  <https://networktocode.slack.com/messages/C0NL8RRMX/>`__.
+
+License
+-------
+
+This project is licensed under the Apache 2.0 License - see the
+`LICENSE <https://github.com/mirceaulinic/salt-sproxy/blob/master/LICENSE>`__
+file for details.
+
+Acknowledgments
+---------------
+
+Thanks to `Daniel Wallace <https://github.com/gtmanfred>`__ for the 
+inspiration.
