@@ -4,7 +4,7 @@ Salt Super-Proxy  |Twitter|
 .. |Twitter| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
    :target: https://twitter.com/intent/tweet?text=Get+started+with+salt-sproxy+and+automate+your+network+with+all+the+Salt+benefits%2C+without+having+to+manage+thousands+of+%28Proxy%29+MInion+processes&url=https://github.com/mirceaulinic/salt-sproxy&hashtags=networkAutomation,saltstack,salt-sproxy
 
-|PyPI downloads| |Docker pulls| |PyPI status| |PyPI versions| |Documentation Status| |Code style| |License| |GitHub make-a-pull-requests|
+|PyPI downloads| |Docker pulls| |PyPI status| |PyPI versions| |Code style| |License| |GitHub make-a-pull-requests|
 
 .. |PyPI downloads| image:: https://pepy.tech/badge/salt-sproxy
    :target: https://pypi.python.org/pypi/salt-sproxy/
