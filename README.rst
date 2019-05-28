@@ -209,6 +209,9 @@ You can continue reading further details at
 https://salt-sproxy.readthedocs.io/en/latest/, for now, check out the following 
 section to see how to get started with ``salt-sproxy`` straight away.
 
+See also https://salt-sproxy.readthedocs.io/en/latest/examples/index.html for 
+more usage examples.
+
 What's included
 ---------------
 
