@@ -1,0 +1,8 @@
+FROM mirceaulinic/salt-sproxy:allinone-dev
+
+MAINTAINER ping@mirceaulinic.net
+
+COPY ./examples/101/pillar/ /srv/salt/pillar/
+
+RUN apt-get update \
+ && apt-get install -y vim
