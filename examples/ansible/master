@@ -1,0 +1,6 @@
+pillar_roots:
+  base:
+    - /srv/salt/pillar
+
+proxy_roster: ansible
+roster_file: /etc/salt/roster

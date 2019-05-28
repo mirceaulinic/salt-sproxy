@@ -251,6 +251,16 @@ CLI it won't look different):
 
   salt-sproxy minion1 test.ping
 
+More usage examples
+-------------------
+
+See the following examples to help getting started with salt-sproxy:
+
+.. toctree::
+   :maxdepth: 1
+
+   examples/index
+
 Extension Modules
 -----------------
 

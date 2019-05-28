@@ -20,6 +20,9 @@ import os
 import sys
 import json
 import logging
+from shutil import copyfile
+
+import jinja2
 
 sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../salt_sproxy'))
@@ -218,3 +221,27 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+curdir = os.path.abspath(os.path.dirname(__file__))
+doc_examples_dir = os.path.join(curdir, 'examples')
+try:
+    os.mkdir(doc_examples_dir)
+except OSError:
+    pass
+examples_path = os.path.abspath(os.path.join(curdir, os.path.pardir, 'examples'))
+examples_dirs = [name for name in os.listdir(examples_path) if os.path.isdir(os.path.join(examples_path, name))]
+examples = []
+
+for example_dir in examples_dirs:
+    example_readme = os.path.join(examples_path, example_dir, 'README.rst')
+    example_doc = os.path.join(doc_examples_dir, '{}.rst'.format(example_dir))
+    if os.path.exists(example_readme):
+        copyfile(example_readme, example_doc)
+        examples.append(example_dir)
+
+env = jinja2.Environment(loader=jinja2.FileSystemLoader('.'))
+examples_template = env.get_template('examples_index.jinja')
+rendered_template = examples_template.render(examples=examples)
+examples_index = os.path.join(doc_examples_dir, 'index.rst')
+with open(examples_index, 'w') as rst_fh:
+    rst_fh.write(rendered_template)

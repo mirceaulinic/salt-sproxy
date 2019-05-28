@@ -1,0 +1,8 @@
+pillar_roots:
+  base:
+    - /srv/salt/pillar
+
+proxy_roster: netbox
+
+netbox:
+  url: https://url-to-your-netbox

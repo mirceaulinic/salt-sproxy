@@ -54,7 +54,7 @@ would like to install it on your computer, you might want to run it under a
 
 Besides the CLI, the usage remains the same as when you're running a Salt 
 environment with Proxy or regular Minions. See the following documents on how
-to get started with Salt:
+to get started and fully unleash the power of Salt:
 
 - `Salt in 10 minutes 
   <https://docs.saltstack.com/en/latest/topics/tutorials/walkthrough.html>`__.
@@ -209,6 +209,9 @@ You can continue reading further details at
 https://salt-sproxy.readthedocs.io/en/latest/, for now, check out the following 
 section to see how to get started with ``salt-sproxy`` straight away.
 
+See also https://salt-sproxy.readthedocs.io/en/latest/examples/index.html for 
+more usage examples.
+
 What's included
 ---------------
 
@@ -235,6 +238,15 @@ The extension modules under the ``_roster`` and ``_runner`` directories are
 documented at https://salt-sproxy.readthedocs.io/en/latest/roster/index.html 
 and https://salt-sproxy.readthedocs.io/en/latest/runners/index.html, 
 respectively.
+
+Docker
+------
+
+A Docker image is available at 
+https://hub.docker.com/r/mirceaulinic/salt-sproxy, and you can pull it, e.g.,
+``docker pull mirceaulinic/salt-sproxy``. See 
+https://salt-sproxy.readthedocs.io/en/latest/#docker for further usage 
+instructions and examples.
 
 Community
 ---------
