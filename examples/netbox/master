@@ -5,4 +5,4 @@ pillar_roots:
 proxy_roster: netbox
 
 netbox:
-  url: https://internal-netbox-url
+  url: https://url-to-your-netbox

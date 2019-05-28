@@ -1,3 +1,5 @@
 base:
-  juniper-device:
+  'edge1*':
     - junos
+  'edge2*':
+    - eos
