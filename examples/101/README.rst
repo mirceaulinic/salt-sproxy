@@ -7,7 +7,7 @@ section of the documentation.
 
 .. raw:: html
 
-  <a href="https://asciinema.org/a/247697?autoplay=1" target="_blank"><img src="../../static/247697.svg" /></a>
+  <a href="https://asciinema.org/a/247697" target="_blank"><img src="https://asciinema.org/a/247697.svg" /></a>
 
 Using the Master configuration file under `examples/master 
 <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/master>`__:

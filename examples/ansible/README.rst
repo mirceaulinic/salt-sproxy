@@ -80,7 +80,7 @@ For example, if you just cloned this repository:
   $ cp salt-sproxy/examples/ansible/roster /etc/salt/roster
   $ cp salt-sproxy/examples/ansible/pillar/*.sls /srv/salt/pillar/
 
-The contents of these two files:
+The contents of these files:
 
 ``/srv/salt/pillar/top.sls``:
 

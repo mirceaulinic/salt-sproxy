@@ -10,8 +10,8 @@ complete installation notes from
 https://napalm.readthedocs.io/en/latest/installation/index.html.
 
 .. raw:: html
-
-  <a href="https://asciinema.org/a/247726?autoplay=1" target="_blank"><img src="../../static/247726.svg" /></a>
+  
+  <a href="https://asciinema.org/a/247726" target="_blank"><img src="https://asciinema.org/a/247726.svg" /></a>
 
 Using the Master configuration file under `examples/master 
 <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/master>`__:
