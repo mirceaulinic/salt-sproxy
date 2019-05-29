@@ -137,7 +137,8 @@ class SProxyMinion(SMinion):
         if self.opts.get('proxy_use_cached_grains', True):
             cached_grains = self.opts.pop('proxy_cached_grains', None)
         if not cached_grains and self.opts.get('proxy_preload_grains', True):
-            self.opts['grains'].update(salt.loader.grains(self.opts))
+            loaded_grains = salt.loader.grains(self.opts)
+            self.opts['grains'].update(loaded_grains)
         elif cached_grains:
             self.opts['grains'].update(cached_grains)
 
@@ -174,6 +175,7 @@ class SProxyMinion(SMinion):
         self.functions = salt.loader.minion_mods(
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
+        self.functions.pack['__grains__'] = self.opts['grains']
         self.returners = salt.loader.returners(
             self.opts, self.functions, proxy=self.proxy
         )
@@ -212,8 +214,10 @@ class SProxyMinion(SMinion):
         if not cached_grains and self.opts.get('proxy_load_grains', True):
             # When the Grains are loaded from the cache, no need to re-load them
             # again.
-            self.opts['grains'].update(salt.loader.grains(self.opts, proxy=self.proxy))
-        self.grains_cache = self.opts['grains']
+            loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
+            self.opts['grains'].update(loaded_grains)
+        self.functions.pack['__grains__'] = self.opts['grains']
+        self.grains_cache = copy.deepcopy(self.opts['grains'])
         self.ready = True
 
 
