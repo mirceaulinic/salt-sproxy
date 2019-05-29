@@ -1,5 +1,5 @@
-salt-sproxy wth network devices
-===============================
+salt-sproxy with network devices
+================================
 
 This is the second example from the
 `Quick Start <https://salt-sproxy.readthedocs.io/en/latest/#quick-start>`__

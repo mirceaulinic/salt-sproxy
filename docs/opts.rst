@@ -99,6 +99,10 @@ already familiar with a vast majority of them from the `salt
      Whether should put the events on the Salt bus (mostly useful when having a
      Master running). Default: ``False``.
 
+     .. important::
+
+        See :ref:`events` for further details.
+
 .. _logging-opts:
 
 Logging Options

@@ -283,3 +283,4 @@ See Also
 
    opts
    roster
+   events
