@@ -229,7 +229,11 @@ try:
 except OSError:
     pass
 examples_path = os.path.abspath(os.path.join(curdir, os.path.pardir, 'examples'))
-examples_dirs = [name for name in os.listdir(examples_path) if os.path.isdir(os.path.join(examples_path, name))]
+examples_dirs = [
+    name
+    for name in os.listdir(examples_path)
+    if os.path.isdir(os.path.join(examples_path, name))
+]
 examples = []
 
 for example_dir in examples_dirs:
