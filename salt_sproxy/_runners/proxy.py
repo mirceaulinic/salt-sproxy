@@ -27,6 +27,7 @@ import threading
 import multiprocessing
 
 # Import Salt modules
+import salt.wheel
 import salt.loader
 import salt.output
 import salt.version
@@ -44,6 +45,7 @@ try:
 except ImportError:
     from salt.utils import is_proxy  # pylint: disable=unused-import
     from salt.utils import clean_kwargs
+
 # ------------------------------------------------------------------------------
 # module properties
 # ------------------------------------------------------------------------------
@@ -81,6 +83,7 @@ def _salt_call_and_return(
 ):
     '''
     '''
+    opts['jid'] = jid
     ret = salt_call(minion_id, function, **opts)
     if events:
         __salt__['event.send'](
@@ -245,6 +248,8 @@ def salt_call(
     cache_pillar=False,
     use_cached_grains=True,
     use_cached_pillar=True,
+    use_existing_proxy=False,
+    jid=None,
     args=(),
     **kwargs
 ):
@@ -306,6 +311,13 @@ def salt_call(
             This option may be dangerous when targeting a device that already
             has a Proxy Minion associated, however recommended otherwise.
 
+    use_existing_proxy: ``False``
+        Use the existing Proxy Minions when they are available (say on an
+        already running Master).
+
+    jid: ``None``
+        The JID to pass on, when executing.
+
     arg
         The list of arguments to send to the Salt function.
 
@@ -319,6 +331,13 @@ def salt_call(
         salt-run proxy.salt_call bgp.neighbors junos 1.2.3.4 test test123
         salt-run proxy.salt_call net.load_config junos 1.2.3.4 test test123 text='set system ntp peer 1.2.3.4'
     '''
+    if use_existing_proxy:
+        # When using the existing Proxies, simply send the command to the
+        # Minion through the ``salt.execute`` Runner.
+        ret = __salt__['salt.execute'](
+            minion_id, function, arg=args, kwarg=kwargs, jid=jid
+        )
+        return ret.get(minion_id)
     opts = copy.deepcopy(__opts__)
     opts['id'] = minion_id
     opts['pillarenv'] = __opts__.get('pillarenv', 'base')
@@ -386,6 +405,7 @@ def execute_devices(
     cache_pillar=False,
     use_cached_grains=True,
     use_cached_pillar=True,
+    use_existing_proxy=False,
     **kwargs
 ):
     '''
@@ -463,6 +483,10 @@ def execute_devices(
             This option may be dangerous when targeting a device that already
             has a Proxy Minion associated, however recommended otherwise.
 
+    use_existing_proxy: ``False``
+        Use the existing Proxy Minions when they are available (say on an
+        already running Master).
+
     CLI Example:
 
     .. code-block:: bash
@@ -470,9 +494,11 @@ def execute_devices(
         salt-run proxy.execute "['172.17.17.1', '172.17.17.2']" test.ping driver=eos username=test password=test123
     '''
     __pub_user = kwargs.get('__pub_user')
+    if not __pub_user:
+        __pub_user = __utils__['user.get_specific_user']()
     kwargs = clean_kwargs(**kwargs)
     if not jid:
-        if salt.version.__version_info__ > (2017, 7, 0):
+        if salt.version.__version_info__ >= (2018, 3, 0):
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
             jid = salt.utils.jid.gen_jid()
@@ -493,6 +519,7 @@ def execute_devices(
         'cache_pillar': cache_pillar,
         'use_cached_grains': use_cached_grains,
         'use_cached_pillar': use_cached_pillar,
+        'use_existing_proxy': use_existing_proxy,
     }
     opts.update(kwargs)
     if events:
@@ -566,6 +593,7 @@ def execute(
     cache_pillar=False,
     use_cached_grains=True,
     use_cached_pillar=True,
+    use_existing_proxy=False,
     **kwargs
 ):
     '''
@@ -654,6 +682,10 @@ def execute(
             This option may be dangerous when targeting a device that already
             has a Proxy Minion associated, however recommended otherwise.
 
+    use_existing_proxy: ``False``
+        Use the existing Proxy Minions when they are available (say on an
+        already running Master).
+
     CLI Example:
 
     .. code-block:: bash
@@ -669,16 +701,44 @@ def execute(
             'Master configuration.'
         )
         targets = []
-        if tgt_type == 'list':
-            targets = tgt[:]
-        elif tgt_type == 'glob' and tgt != '*':
-            targets = [tgt]
+        if use_existing_proxy:
+            # When targeting exiting Proxies, we're going to look and match the
+            # accepted keys
+            log.debug('Requested to match the target based on the existing Minions')
+            wheel = salt.wheel.WheelClient(__opts__)
+            if tgt_type == 'list':
+                accepted_minions = wheel.cmd(
+                    'key.list', ['accepted'], print_event=False
+                ).get('minions', [])
+                log.debug('This Master has the following Minions accepted:')
+                log.debug(accepted_minions)
+                targets = [accepted for accepted in accepted_minions if accepted in tgt]
+            elif tgt_type == 'glob':
+                targets = wheel.cmd('key.name_match', [tgt], print_event=False).get(
+                    'minions', []
+                )
+        else:
+            # Try a fuzzy match based on the exact target the user requested
+            # only when not attempting to match an existing Proxy. If you do
+            # want however, it won't be of much use, as the command is going to
+            # be spread out to non-existing minions, so better turn off that
+            # feature.
+            log.debug('Trying a fuzzy match on the target')
+            if tgt_type == 'list':
+                targets = tgt[:]
+            elif tgt_type == 'glob' and tgt != '*':
+                targets = [tgt]
     else:
+        log.debug('Computing the target using the %s Roster', roster)
         roster_modules = salt.loader.roster(__opts__, runner=__salt__)
         if '.targets' not in roster:
             roster = '{mod}.targets'.format(mod=roster)
         rtargets = roster_modules[roster](tgt, tgt_type=tgt_type)
         targets = list(rtargets.keys())
+    log.debug(
+        'The target expression "%s" (%s) matched the following:', str(tgt), tgt_type
+    )
+    log.debug(targets)
     if not targets:
         return 'No devices matched your target. Please review your tgt / tgt_type arguments, or the Roster data source'
     if preview_target:
@@ -687,7 +747,7 @@ def execute(
         return 'Please specify a Salt function to execute.'
     jid = kwargs.get('__pub_jid')
     if not jid:
-        if salt.version.__version_info__ > (2017, 7, 0):
+        if salt.version.__version_info__ >= (2018, 3, 0):
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
             jid = salt.utils.jid.gen_jid()
@@ -696,6 +756,8 @@ def execute(
     return execute_devices(
         targets,
         fun,
+        tgt=tgt,
+        tgt_type=tgt_type,
         with_grains=with_grains,
         preload_grains=preload_grains,
         with_pillar=with_pillar,
@@ -710,5 +772,6 @@ def execute(
         cache_pillar=cache_pillar,
         use_cached_grains=use_cached_grains,
         use_cached_pillar=use_cached_pillar,
+        use_existing_proxy=use_existing_proxy,
         **kwargs
     )
