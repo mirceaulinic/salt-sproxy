@@ -334,10 +334,29 @@ def salt_call(
     if use_existing_proxy:
         # When using the existing Proxies, simply send the command to the
         # Minion through the ``salt.execute`` Runner.
-        ret = __salt__['salt.execute'](
-            minion_id, function, arg=args, kwarg=kwargs, jid=jid
+        # But first, check if the Minion ID is accepted, otherwise, continue
+        # and execute the function withing this Runner.
+        wheel = salt.wheel.WheelClient(__opts__)
+        accepted_minions = wheel.cmd('key.list', ['accepted'], print_event=False).get(
+            'minions', []
         )
-        return ret.get(minion_id)
+        if minion_id in accepted_minions:
+            log.debug(
+                '%s seems to be a valid Minion, trying to spread out the command',
+                minion_id,
+            )
+            log.info(
+                'If %s is not responding, you might want to run without --use-existing-proxy'
+            )
+            ret = __salt__['salt.execute'](
+                minion_id, function, arg=args, kwarg=kwargs, jid=jid
+            )
+            return ret.get(minion_id)
+        else:
+            log.debug(
+                '%s doesn\'t seem to be a valid existing Minion, executing locally',
+                minion_id,
+            )
     opts = copy.deepcopy(__opts__)
     opts['id'] = minion_id
     opts['pillarenv'] = __opts__.get('pillarenv', 'base')
@@ -707,12 +726,19 @@ def execute(
             log.debug('Requested to match the target based on the existing Minions')
             wheel = salt.wheel.WheelClient(__opts__)
             if tgt_type == 'list':
-                accepted_minions = wheel.cmd(
-                    'key.list', ['accepted'], print_event=False
-                ).get('minions', [])
-                log.debug('This Master has the following Minions accepted:')
-                log.debug(accepted_minions)
-                targets = [accepted for accepted in accepted_minions if accepted in tgt]
+                # accepted_minions = wheel.cmd(
+                #     'key.list', ['accepted'], print_event=False
+                # ).get('minions', [])
+                # log.debug('This Master has the following Minions accepted:')
+                # log.debug(accepted_minions)
+                # targets = [accepted for accepted in accepted_minions if accepted in tgt]
+                # TODO: temporarily deactivated the above, as I thought it might
+                # make more sense to try to execute best efforts on any of the
+                # Minions listed, and later it will be checked if it's possible
+                # to execute on an existing Minion or withing this Runner.
+                # TBD if that's the right decision, re-evaluate while it's still
+                # in beta release.
+                targets = tgt[:]
             elif tgt_type == 'glob':
                 targets = wheel.cmd('key.name_match', [tgt], print_event=False).get(
                     'minions', []
