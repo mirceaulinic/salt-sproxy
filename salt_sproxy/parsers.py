@@ -239,6 +239,16 @@ class SaltStandaloneProxyOptionParser(
                 'useful when having a Master running).'
             ),
         )
+        self.add_option(
+            '--use-proxy',
+            '--use-existing-proxy',
+            dest='use_existing_proxy',
+            action='store_true',
+            help=(
+                'Use the existing Proxy Minions to execute the commands, '
+                'whenever available.'
+            ),
+        )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'
         )

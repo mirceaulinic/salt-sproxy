@@ -1,3 +1,5 @@
+.. _example-netbox:
+
 Using the NetBox Roster
 =======================
 

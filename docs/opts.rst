@@ -103,6 +103,18 @@ already familiar with a vast majority of them from the `salt
 
         See :ref:`events` for further details.
 
+.. option:: --use-existing-proxy
+
+    Execute the commands on an existing Proxy Minion whenever available. If one
+    or more Minions matched by the target don't exist (or the key is not 
+    accepted by the Master), salt-sproxy will fallback and execute the command
+    locally, and, implicitly, initiate the connection to the device locally.
+
+    .. note::
+
+        This option requires a Master to be up and running. See 
+        :ref:`mixed-environments` for more information.
+
 .. _logging-opts:
 
 Logging Options

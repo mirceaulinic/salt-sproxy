@@ -138,6 +138,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             if getattr(self.options, opt):
                 kwargs[kwarg] = False
         kwargs['events'] = self.config.get('events', False)
+        kwargs['use_existing_proxy'] = self.config.get('use_existing_proxy', False)
         kwargs['args'] = args
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)

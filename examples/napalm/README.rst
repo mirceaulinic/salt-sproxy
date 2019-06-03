@@ -1,3 +1,5 @@
+.. _example-napalm:
+
 salt-sproxy with network devices
 ================================
 

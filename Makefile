@@ -12,5 +12,12 @@ release:
 docker-build%:
 	docker build -f Dockerfile$($(@:build.o=):build=) . -t $(TAG) --build-arg SALT_VERSION=$(SALT_VERSION)
 
+black:
+	black --check --skip-string-normalization .
+
+
+format:
+	black --skip-string-normalization .
+
 test:
 	echo 'Test'

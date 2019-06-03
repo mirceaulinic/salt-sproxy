@@ -1,3 +1,5 @@
+.. _example-ansible:
+
 Using the Ansible Roster
 ========================
 
