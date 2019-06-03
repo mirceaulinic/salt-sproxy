@@ -560,6 +560,7 @@ def execute_devices(
         thread = threading.Thread(target=_receive_replies_async, args=(queue,))
         thread.start()
     ret = {}
+    batch_size = int(batch_size)
     batch_count = int(len(minions) / batch_size) + 1
     for batch_index in range(batch_count):
         processes = []
