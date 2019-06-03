@@ -63,7 +63,7 @@ def targets(tgt, tgt_type='glob', **kwargs):
         devices = [
             device['name']
             for device in netbox_devices
-            if fnmatch.fnmatch(device['name'], tgt)
+            if fnmatch.fnmatch(str(device['name']), tgt)
         ]
     elif tgt_type == 'list':
         devices = [device['name'] for device in netbox_devices if device['name'] in tgt]

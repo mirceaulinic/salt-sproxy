@@ -346,7 +346,8 @@ def salt_call(
                 minion_id,
             )
             log.info(
-                'If %s is not responding, you might want to run without --use-existing-proxy'
+                'If %s is not responding, you might want to run without --use-existing-proxy',
+                minion_id,
             )
             ret = __salt__['salt.execute'](
                 minion_id, function, arg=args, kwarg=kwargs, jid=jid
