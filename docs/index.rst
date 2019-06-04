@@ -30,6 +30,8 @@ Execute:
 
     pip install salt-sproxy
 
+See :ref:`install` for more detailed installation notes.
+
 Quick Start
 -----------
 
@@ -282,6 +284,7 @@ See Also
    :maxdepth: 1
 
    opts
+   install
    roster
    events
    mixed_envs
