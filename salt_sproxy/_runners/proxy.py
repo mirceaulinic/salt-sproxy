@@ -407,7 +407,7 @@ def salt_call(
 
 def execute_devices(
     minions,
-    fun,
+    function,
     with_grains=True,
     with_pillar=True,
     preload_grains=True,
@@ -433,9 +433,9 @@ def execute_devices(
     Minion ID, as listed under the ``minions`` argument.
 
     minions
-        A list of Minion IDs to invoke ``fun`` on.
+        A list of Minion IDs to invoke ``function`` on.
 
-    fun
+    function
         The name of the Salt function to invoke.
 
     preload_grains: ``True``
@@ -546,7 +546,7 @@ def execute_devices(
         __salt__['event.send'](
             'proxy/runner/{jid}/new'.format(jid=jid),
             {
-                'fun': fun,
+                'fun': function,
                 'minions': minions,
                 'arg': event_args,
                 'jid': jid,
@@ -571,7 +571,7 @@ def execute_devices(
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
-                args=(minion_id, fun, queue, event_args, jid, events),
+                args=(minion_id, function, queue, event_args, jid, events),
                 kwargs=opts,
             )
             device_proc.start()
@@ -594,7 +594,7 @@ def execute_devices(
 
 def execute(
     tgt,
-    fun=None,
+    function=None,
     tgt_type='glob',
     roster=None,
     preview_target=False,
@@ -626,7 +626,7 @@ def execute(
         for a list, etc. The ``tgt_list`` argument must be used accordingly,
         depending on the type of this expression.
 
-    fun
+    function
         The name of the Salt function to invoke.
 
     tgt_type: ``glob``
@@ -771,7 +771,7 @@ def execute(
         return 'No devices matched your target. Please review your tgt / tgt_type arguments, or the Roster data source'
     if preview_target:
         return targets
-    elif not fun:
+    elif not function:
         return 'Please specify a Salt function to execute.'
     jid = kwargs.get('__pub_jid')
     if not jid:
@@ -783,7 +783,7 @@ def execute(
         __salt__['event.send'](jid, {'minions': targets})
     return execute_devices(
         targets,
-        fun,
+        function,
         tgt=tgt,
         tgt_type=tgt_type,
         with_grains=with_grains,
