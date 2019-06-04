@@ -89,6 +89,9 @@ To install a specific Salt version, execute, e.g.,
     pip install salt==2018.3.4
     pip install salt-sproxy
 
+See https://salt-sproxy.readthedocs.io/en/latest/install.html for more 
+installation details.
+
 Documentation
 -------------
 
