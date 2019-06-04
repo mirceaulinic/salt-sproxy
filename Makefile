@@ -9,15 +9,11 @@ release:
 	python3 setup.py sdist
 	twine upload dist/* --skip
 
-docker-build%:
-	docker build -f Dockerfile$($(@:build.o=):build=) . -t $(TAG) --build-arg SALT_VERSION=$(SALT_VERSION)
+build:
+	docker build -f Dockerfile . -t $(TAG) --build-arg SALT_VERSION=$(SALT_VERSION)
 
 black:
 	black --check --skip-string-normalization .
 
-
 format:
 	black --skip-string-normalization .
-
-test:
-	echo 'Test'
