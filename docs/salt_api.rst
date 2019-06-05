@@ -27,6 +27,12 @@ Suppose we have the following configuration:
     ssl_crt: /etc/pki/tls/certs/localhost.crt
     ssl_key: /etc/pki/tls/certs/localhost.key
 
+.. hint::
+
+    Consider looking at the :ref:`example-salt-api` example for a more complete
+    example on configuring the Salt API, however the official Salt 
+    documentation should always be used as the reference.
+
 After starting the salt-api process, we should get the following:
 
 .. code-block:: bash
