@@ -65,8 +65,11 @@ One liner:
 
     $ curl -L https://raw.githubusercontent.com/mirceaulinic/salt-sproxy/master/install.sh | sudo sh
 
+See https://gist.github.com/mirceaulinic/bdbbbcfbc3588b1c8b1ec7ef63931ac6 for 
+a sample one-line installation on a fresh Fedora server.
+
 The script ensures Python 3 is installed on your system, together with the 
-virtualenv package, and others required for Salt, under a virtual 
+virtualenv package, and others required for Salt, in a virtual 
 environment under the ``$HOME/venvs/salt-sproxy`` path. In fact, when 
 executing, you will see that the script will tell where it's going to try to 
 install, e.g.,
