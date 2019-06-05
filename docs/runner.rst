@@ -4,7 +4,7 @@ The Proxy Runner
 ================
 
 The :ref:`proxy-runner` is the core functionality of ``salt-sproxy`` and can be
-used to trigger jobs in response to :ref:`events`, or invoked when
+used to trigger jobs as :ref:`events-reactions`, or invoked when
 :ref:`salt-api`.
 
 In both cases mentioned above you are going to need to have a Salt Master 

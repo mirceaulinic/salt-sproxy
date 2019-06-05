@@ -151,3 +151,65 @@ In the exact same way with other Engine types -- if you already have Engines
 exporting events, they should be able to export salt-sproxy events as well, 
 which is a great easy win for PCI compliance, and generally to monitor who 
 executes what.
+
+.. _events-reactions:
+
+Reactions to external events
+----------------------------
+
+Using the :ref:`runner`, you can configure a Reactor to execute a Salt function 
+on a (network) device in response to an event.
+
+For example, let's consider network events from
+`napalm-logs <http://napalm-logs.com/en/latest/>`__. To import the napalm-logs 
+events on the Salt bus, simply enable the `napalm_syslog 
+<https://docs.saltstack.com/en/latest/ref/engines/all/salt.engines.napalm_syslog.html>`__ 
+Salt Engine on the Master.
+
+In response to an `INTERFACE_DOWN 
+<http://napalm-logs.com/en/latest/messages/INTERFACE_DOWN.html>`__ 
+notification, say we define the following reaction, in response to events with 
+the ``napalm/syslog/*/INTERFACE_DOWN/*`` pattern (i.e., matching events such 
+as ``napalm/syslog/iosxr/INTERFACE_DOWN/edge-router1``, 
+``napalm/syslog/junos/INTERFACE_DOWN/edge-router2``, etc.):
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+    reactor:
+      - 'napalm/syslog/*/INTERFACE_DOWN/*':
+        - salt://reactor/if_down_shutdown.sls
+
+The ``salt://reactor/if_down_shutdown.sls`` translates to 
+``/etc/salt/reactor/if_down_shutdown.sls`` when ``/etc/salt`` is one of the 
+configured ``file_roots``. To apply a configuration change on the device with 
+the interface down, we can use the :func:`_runner.proxy.execute` Runner 
+function:
+
+.. code-block:: yaml
+
+  shutdown_interface:
+    runner.proxy.execute:
+      - tgt: {{ data.host }}
+      - function: net.load_template
+      - kwarg:
+          template_name: salt://templates/shut_interface.jinja
+          interface_name: {{ data.yang_message.interfaces.interface.keys()[0] }}
+
+This Reactor would apply a configuration change as rendered in the Jinja 
+template ``salt://templates/shut_interface.jinja`` (physical path 
+``/etc/salt/templates/shut_interface.jinja``). Or, to have an end-to-end 
+overview of the system: when the device sends a notification that one interface 
+is down, in response, Salt is automatically going to try and remediate the 
+problem (in the ``shut_interface.jinja`` template you can define the business 
+logic you need). Similarly, you can have other concurrent reactions to the 
+same, e.g. to send a Slack notification, and email and so on.
+
+For reactions to ``napalm-logs`` events specifically, you can continue reading 
+more at https://mirceaulinic.net/2017-10-19-event-driven-network-automation/ 
+for a more extensive introduction and the napalm-logs documentation available 
+at https://napalm-logs.readthedocs.io/en/latest/, with the difference that 
+instead of calling a Salt function directly, you go through the 
+:func:`_runner.proxy.execute` or :func:`_runner.proxy.execute_devices` Runner 
+functions.
