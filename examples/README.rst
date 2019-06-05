@@ -9,3 +9,5 @@ Usage Examples
   <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/ansible>`__
 - `NetBox 
   <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/netbox>`__
+- `Salt API 
+  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/netbox>`__
