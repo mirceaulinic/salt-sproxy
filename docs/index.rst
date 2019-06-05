@@ -286,5 +286,7 @@ See Also
    opts
    install
    roster
+   runner
    events
+   salt_api
    mixed_envs
