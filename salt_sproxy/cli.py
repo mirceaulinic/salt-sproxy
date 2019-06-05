@@ -55,6 +55,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         self.setup_logfile_logger()
         verify_log(self.config)
         profiling_enabled = self.options.profiling_enabled
+        curpath = os.path.dirname(os.path.realpath(__file__))
+        if self.config.get('display_file_roots'):
+            print('salt-sproxy is installed at:', curpath)
+            print('\nYou can configure the file_roots on the Master, e.g.,\n')
+            print('file_roots:\n  base:\n    -', curpath)
+            print('\n\nOr only for the Runners:\n')
+            print('runner_dirs:\n  - %s/_runners' % curpath)
+            return
         # The code below executes the Runner sequence, but it swaps the function
         # to be invoked, and instead call ``napalm.execute``, passing the
         # function requested by the user from the CLI, as an argument.
@@ -69,7 +77,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         # load other types of modules that may be required or we provide fixes
         # or backports - for example the Ansible Roster which doesn't work fine
         # pre Salt 2018.3 (in case anyone would like to use it).
-        curpath = os.path.dirname(os.path.realpath(__file__))
         saltenv = self.config.get('saltenv')
         if not saltenv:
             saltenv = 'base'

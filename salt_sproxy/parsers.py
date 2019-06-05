@@ -249,6 +249,16 @@ class SaltStandaloneProxyOptionParser(
                 'whenever available.'
             ),
         )
+        self.add_option(
+            '--file-roots',
+            '--display-file-roots',
+            dest='display_file_roots',
+            action='store_true',
+            help=(
+                'Display the file_roots option one would need to configure '
+                'in order to use the salt-sproxy extension modules directly '
+            ),
+        )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'
         )
@@ -265,6 +275,10 @@ class SaltStandaloneProxyOptionParser(
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
     def _mixin_after_parsed(self):
+        if self.options.display_file_roots:
+            # Insert dummy arg when displaying the file_roots
+            self.args.append('not_a_valid_target')
+            self.args.append('not_a_valid_command')
         if self.options.list:
             try:
                 if ',' in self.args[0]:

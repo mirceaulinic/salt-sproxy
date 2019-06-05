@@ -115,6 +115,13 @@ already familiar with a vast majority of them from the `salt
         This option requires a Master to be up and running. See 
         :ref:`mixed-environments` for more information.
 
+.. option:: --file-roots, --display-file-roots
+
+    Display the location of the salt-sproxy installation, where you can point 
+    your ``file_roots`` on the Master, to use the :ref:`proxy-runner` and other
+    extension modules included in the salt-sproxy package. See also 
+    :ref:`runner`.
+
 .. _logging-opts:
 
 Logging Options
