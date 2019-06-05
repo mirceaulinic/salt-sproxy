@@ -1,3 +1,5 @@
+.. _proxy-runner:
+
 ============
 Proxy Runner
 ============

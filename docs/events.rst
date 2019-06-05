@@ -1,7 +1,12 @@
 .. _events:
 
+Event-Driven Automation and Orchestration
+=========================================
+
+.. _execution-events:
+
 Execution Events
-================
+----------------
 
 Even though ``salt-sproxy`` has been designed to be an on-demand executed
 process  (as in opposite to an always running service), you still have the
