@@ -122,6 +122,14 @@ already familiar with a vast majority of them from the `salt
     extension modules included in the salt-sproxy package. See also 
     :ref:`runner`.
 
+.. option:: --save-file-roots
+
+    Save the configuration for the ``file_roots`` in the Master configuration
+    file, in order to start using the :ref:`proxy-runner` and other extension
+    modules included in the salt-sproxy package. See also :ref:`runner`.
+    This option is going to add the salt-sproxy installation path to your
+    existing ``file_roots``.
+
 .. _logging-opts:
 
 Logging Options
