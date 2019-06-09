@@ -31,11 +31,17 @@ from salt.ext import six
 import salt.defaults.exitcodes  # pylint: disable=W0611
 
 try:
-    from salt.utils import output_profile
-    from salt.utils import activate_profile
-except ImportError:
+    from salt.utils.file import fopen
+    from salt.utils.yamldumper import safe_dump
+    from salt.utils.yamlloader import safe_load
     from salt.utils.profile import output_profile
     from salt.utils.profile import activate_profile
+except ImportError:
+    from salt.utils import fopen
+    from salt.utils.yamldumper import safe_dump
+    from salt.utils.yamlloader import load as safe_load
+    from salt.utils import output_profile
+    from salt.utils import activate_profile
 
 log = logging.getLogger(__name__)
 
@@ -56,12 +62,45 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         verify_log(self.config)
         profiling_enabled = self.options.profiling_enabled
         curpath = os.path.dirname(os.path.realpath(__file__))
+        saltenv = self.config.get('saltenv')
+        if not saltenv:
+            saltenv = 'base'
         if self.config.get('display_file_roots'):
             print('salt-sproxy is installed at:', curpath)
             print('\nYou can configure the file_roots on the Master, e.g.,\n')
-            print('file_roots:\n  base:\n    -', curpath)
+            print('file_roots:\n  %s:\n    -' % saltenv, curpath)
             print('\n\nOr only for the Runners:\n')
             print('runner_dirs:\n  - %s/_runners' % curpath)
+            return
+        if self.config.get('save_file_roots'):
+            with fopen(self.config['conf_file'], 'r+') as master_fp:
+                master_cfg = safe_load(master_fp)
+                if not master_cfg:
+                    master_cfg = {}
+                file_roots = master_cfg.get('file_roots', {saltenv: []}).get(
+                    saltenv, []
+                )
+                if curpath not in file_roots:
+                    file_roots.append(curpath)
+                    master_cfg['file_roots'] = {saltenv: file_roots}
+                    master_fp.seek(0)
+                    safe_dump(master_cfg, master_fp, default_flow_style=False)
+                    print('%s added to the file_roots:\n' % curpath)
+                    print(
+                        'file_roots:\n  %s:\n    -' % saltenv,
+                        '\n    - '.join([fr for fr in file_roots]),
+                    )
+                else:
+                    print(
+                        'The %s path is already included into the file_roots' % curpath
+                    )
+                print(
+                    '\nNow you can start using salt-sproxy for '
+                    'event-driven automation, and the Salt REST API.\n'
+                    'See https://salt-sproxy.readthedocs.io/en/latest/salt_api.rst'
+                    '\nand https://salt-sproxy.readthedocs.io/en/latest/events.rst '
+                    'for more details.'
+                )
             return
         # The code below executes the Runner sequence, but it swaps the function
         # to be invoked, and instead call ``napalm.execute``, passing the
@@ -77,9 +116,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         # load other types of modules that may be required or we provide fixes
         # or backports - for example the Ansible Roster which doesn't work fine
         # pre Salt 2018.3 (in case anyone would like to use it).
-        saltenv = self.config.get('saltenv')
-        if not saltenv:
-            saltenv = 'base'
         file_roots = self.config.get('file_roots', {saltenv: []})
         file_roots[saltenv].append(curpath)
         self.config['file_roots'] = file_roots

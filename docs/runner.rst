@@ -37,6 +37,22 @@ As suggested in the output, you can directly reference the salt-sproxy
 installation path to start using the ``proxy`` Runner (and other extension 
 modules included in the package).
 
+A simpler alternative is executing with ``--save-file-roots`` which adds the 
+path for you, e.g.,
+
+.. code-block:: bash
+
+    $ salt-sproxy --save-file-roots
+    /home/mircea/venvs/salt-sproxy/lib/python3.6/site-packages/salt_sproxy added to the file_roots:
+
+    file_roots:
+      base:
+        - /home/mircea/venvs/salt-sproxy/lib/python3.6/site-packages/salt_sproxy
+
+    Now you can start using salt-sproxy for event-driven automation, and the Salt REST API.
+    See https://salt-sproxy.readthedocs.io/en/latest/salt_api.rst
+    and https://salt-sproxy.readthedocs.io/en/latest/events.rst for more details.
+
 2. Copy the source file
 -----------------------
 
