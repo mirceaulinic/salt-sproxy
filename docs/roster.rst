@@ -171,6 +171,40 @@ Atlanta, to gather the LLDP neighbors for every device:
   edge2.atlanta:
      ~~~ snip ~~~
 
+Targeting using groups
+~~~~~~~~~~~~~~~~~~~~~~
+
+Another very important detail here is that, depending on the structure of the 
+inventory, and how the devices are grouped, you can use these groups to target 
+using the ``-N`` target type (nodegroup). For example, based on the 
+hierarchical inventory file above, we can use these targets:
+
+.. code-block:: bash
+
+  # All devices in the USA:
+  $ salt-sproxy -N usa --preview-target
+  - edge1.seattle
+  - edge1.vancouver
+  - edge1.atlanta
+  - edge2.atlanta
+  - edge1.raleigh
+  - edge1.la
+  - edge1.sfo
+
+  # All devices in the North-West region:
+  $ salt-sproxy -N northwest --preview-target
+  - edge1.seattle
+  - edge1.vancouver
+
+  # All devices in the Atlanta area:
+  $ salt-sproxy -N atlanta --preview-target
+  - edge1.atlanta
+  - edge2.atlanta
+
+The nodegroups you can use for targeting depend on the names you've assigned 
+in your inventory, and sometimes may be more useful to use them vs. the device 
+name (which may not contain the area / region / country name).
+
 .. _roster-example-netbox:
 
 Roster usage example: NetBox
