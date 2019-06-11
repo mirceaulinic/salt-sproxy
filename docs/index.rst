@@ -2,11 +2,13 @@
 Salt Super-Proxy
 ================
 
-Salt plugin for interacting with network devices, without running Minions.
+Salt plugin to automate the management and configuration of network devices at
+scale, without running (Proxy) Minions.
 
 Using ``salt-sproxy``, you can continue to benefit from the scalability,
 flexibility and extensibility of Salt, while you don't have to manage thousands
-of (Proxy) Minion services.
+of (Proxy) Minion services. However, you are able to use both ``salt-sproxy``
+and your (Proxy) Minions at the same time.
 
 .. note::
 
