@@ -3,14 +3,14 @@
 Pillar Roster
 =============
 
-Lost the list of devices from the Pillar.
+Load the list of devices from the Pillar.
 
-Simply configure ``roster`` option to point to this module, while making sure
-that the data is available. As the Pillar is data associated with a specific
-Minion ID, you may need to ensure that the Pillar is correctly associated with
-the Minion configured (default ``*``), under the exact key required (default
-``devices``). To adjust these options, you can provide the following under the
-``roster_pillar`` option in the Master configuration:
+Simply configure the ``roster`` option to point to this module, while making
+sure that the data is available. As the Pillar is data associated with a
+specific Minion ID, you may need to ensure that the Pillar is correctly
+associated with the Minion configured (default ``*``), under the exact key
+required (default ``devices``). To adjust these options, you can provide the
+following under the ``roster_pillar`` option in the Master configuration:
 
 minion_id: ``*``
     The ID of the Minion to compile the data for. Default: ``*`` (any Minion).
