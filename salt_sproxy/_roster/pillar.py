@@ -64,7 +64,9 @@ def targets(tgt, tgt_type='glob', **kwargs):
     pillar_key = roster_opts.get('pillar_key', kwargs.get('pillar_key', 'devices'))
     saltenv = roster_opts.get('saltenv', kwargs.get('saltenv', 'base'))
     pillarenv = roster_opts.get('pillarenv', kwargs.get('pillarenv'))
-    pillar = __runner__['pillar.show_pillar'](minion=minion_id, saltenv=saltenv, pillarenv=pillarenv)
+    pillar = __runner__['pillar.show_pillar'](
+        minion=minion_id, saltenv=saltenv, pillarenv=pillarenv
+    )
     devices = pillar[pillar_key]
     log.debug('Compiled the following list of devices from the Pillar')
     log.debug(devices)
@@ -76,7 +78,9 @@ def targets(tgt, tgt_type='glob', **kwargs):
             if fnmatch.fnmatch(str(device['name']), tgt)
         ]
     elif tgt_type == 'list':
-        matched_devices = [device['name'] for device in devices if device['name'] in tgt]
+        matched_devices = [
+            device['name'] for device in devices if device['name'] in tgt
+        ]
     elif tgt_type == 'pcre':
         rgx = re.compile(tgt)
         matched_devices = [

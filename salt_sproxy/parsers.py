@@ -23,6 +23,7 @@ except ImportError:
 
 CPU_COUNT = multiprocessing.cpu_count()
 
+
 def salt_information():
     '''
     Return version of Salt and salt-sproxy.
@@ -123,7 +124,7 @@ class SaltStandaloneProxyOptionParser(
     default_timeout = 1
 
     description = (
-'''
+        '''
   ___          _   _       ___   ___
  / __|  __ _  | | | |_    / __| | _ \  _ _   ___  __ __  _  _
  \__ \ / _` | | | |  _|   \__ \ |  _/ | '_| / _ \ \ \ / | || |
@@ -229,7 +230,7 @@ class SaltStandaloneProxyOptionParser(
             help=(
                 'The number of devices to connect to in parallel. '
                 'Default: {}'.format(CPU_COUNT)
-            )
+            ),
         )
         self.add_option(
             '--preview-target',
