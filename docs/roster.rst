@@ -359,7 +359,8 @@ External Pillar modules as well - see
 https://docs.saltstack.com/en/latest/ref/pillar/all/index.html for the 
 available list of External Pillars data allow you to load data from external 
 sources. Of course, when working with Pillar SLS files, you can provide them in 
-any format, either Jinja + YAML, or pure Python, e.g.,
+any format, either Jinja + YAML, or pure Python, e.g. generate a longer list
+of devices, dynamically:
 
 ``/srv/salt/pillar/devices_pillar.sls``
 
