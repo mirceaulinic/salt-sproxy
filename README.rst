@@ -98,6 +98,9 @@ Documentation
 The complete documentation is available at 
 https://salt-sproxy.readthedocs.io/en/latest/.
 
+On Unix distributions you can also check the documentation locally, by 
+executing ``man salt-sproxy``.
+
 Quick Start
 -----------
 

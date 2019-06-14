@@ -1,0 +1,3545 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "SALT-SPROXY" "1" "Jun 14, 2019" "" "salt-sproxy"
+.SH NAME
+salt-sproxy \- salt-sproxy Documentation
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.sp
+Salt plugin to automate the management and configuration of network devices at
+scale, without running (Proxy) Minions.
+.sp
+Using \fBsalt\-sproxy\fP, you can continue to benefit from the scalability,
+flexibility and extensibility of Salt, while you don\(aqt have to manage thousands
+of (Proxy) Minion services. However, you are able to use both \fBsalt\-sproxy\fP
+and your (Proxy) Minions at the same time.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+This is NOT a SaltStack product.
+.sp
+This package may eventually be integrated in a future version of the
+official Salt releases, in this form or slightly different.
+.UNINDENT
+.UNINDENT
+.SH INSTALL
+.sp
+Install this package where you would like to manage your devices from. In case
+you need a specific Salt version, make sure you install it beforehand,
+otherwise this package will bring the latest Salt version available instead.
+.sp
+The package is distributed via PyPI, under the name \fBsalt\-sproxy\fP\&.
+.sp
+Execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pip install salt\-sproxy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+See install for more detailed installation notes.
+.SH QUICK START
+.sp
+See this recording for a live quick start:
+.sp
+In the above, \fBminion1\fP is
+a \fI\%dummy\fP
+Proxy Minion, that can be used for getting started and make the first steps
+without connecting to an actual device, but get used to the \fBsalt\-sproxy\fP
+methodology.
+.sp
+The Master configuration file is \fB/home/mircea/master\fP, which is why the
+command is executed using the \fB\-c\fP option specifying the path to the directory
+with the configuration file. In this Master configuration file, the
+\fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP which is where
+\fBsalt\-sproxy\fP is going to load the Pillar data from. Accordingly, the Pillar
+Top file is under that path, \fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  minion1:
+    \- dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+This Pillar Top file says that the Minion \fBminion1\fP will have the Pillar data
+from the \fBdummy.sls\fP from the same directory, thus
+\fB/srv/salt/pillar/dummy.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In this case, it was sufficient to only set the \fBproxytype\fP field to
+\fBdummy\fP\&.
+.sp
+\fBsalt\-sproxy\fP can be used in conjunction with any of the available \fI\%Salt
+Proxy modules\fP,
+or others that you might have in your own environment. See
+\fI\%https://docs.saltstack.com/en/latest/topics/proxyminion/index.html\fP to
+understand how to write a new Proxy module if you require.
+.sp
+For example, let\(aqs take a look at how we can manage a network device through
+the \fI\%NAPALM Proxy\fP:
+.sp
+In the above, in the same Python virtual environment as previously make sure
+you have \fBNAPALM\fP installed, by executing \fBpip install napalm\fP (see
+\fI\%https://napalm.readthedocs.io/en/latest/installation/index.html\fP for further
+installation requirements, depending on the platform you\(aqre running on). The
+connection credentials for the \fBjuniper\-router\fP are stored in the
+\fB/srv/salt/pillar/junos.sls\fP Pillar, and we can go ahead and start executing
+arbitrary Salt commands, e.g., \fI\%net.arp\fP
+to retrieve the ARP table, or \fI\%net.load_config\fP
+to apply a configuration change on the router.
+.sp
+The Pillar Top file in this example was (under the same path as previously, as
+the Master config was the same):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  juniper\-router:
+    \- junos
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Thanks to \fI\%Tesuto\fP for providing the virtual
+machine for the demos!
+.SH USAGE
+.sp
+First off, make sure you have the Salt \fI\%Pillar Top file\fP correctly defined
+and the \fBproxy\fP key is available into the Pillar. For more in\-depth
+explanation and examples, check \fI\%this\fP tutorial
+from the official SaltStack docs.
+.sp
+Once you have that, you can start using \fBsalt\-sproxy\fP even without any Proxy
+Minions or Salt Master running. To check, can start by executing:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \-L a,b,c \-\-preview\-target
+\- a
+\- b
+\- c
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The syntax is very similar to the widely used CLI command \fBsalt\fP, however the
+way it works is completely different under the hood:
+.sp
+\fBsalt\-sproxy <target> <function> [<arguments>]\fP
+.sp
+Usage Example:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy cr1.thn.lon test.ping
+cr1.thn.lon:
+    True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+One of the most important differences between \fBsalt\fP and \fBsalt\-sproxy\fP is
+that the former is aware of the devices available, thanks to the fact that the
+Minions connect to the Master, therefore \fBsalt\fP has the list of targets
+already available. \fBsalt\-sproxy\fP does not have this, as it doesn\(aqt require
+the Proxy Minions to be up and connected to the Master. For this reason, you
+will need to provide it a list of devices, or a \fI\%Roster file\fP that provides
+the list of available devices.
+.sp
+The following targeting options are available:
+.INDENT 0.0
+.IP \(bu 2
+\fB\-E\fP, \fB\-\-pcre\fP: Instead of using shell globs to evaluate the target
+servers, use pcre regular expressions.
+.IP \(bu 2
+\fB\-L\fP, \fB\-\-list\fP: Instead of using shell globs to evaluate the target
+servers, take a comma or space delimited list of servers.
+.IP \(bu 2
+\fB\-G\fP, \fB\-\-grain\fP: Instead of using shell globs to evaluate the target
+use a grain value to identify targets, the syntax for the target is the grain
+key followed by a globexpression: \fB"os:Arch*"\fP\&.
+.IP \(bu 2
+\fB\-P\fP, \fB\-\-grain\-pcre\fP: Instead of using shell globs to evaluate the target
+use a grain value to identify targets, the syntax for the target is the grain
+key followed by a pcre regular expression: "os:Arch.*".
+.IP \(bu 2
+\fB\-N\fP, \fB\-\-nodegroup\fP: Instead of using shell globs to evaluate the target
+use one of the predefined nodegroups to identify a list of targets.
+.IP \(bu 2
+\fB\-R\fP, \fB\-\-range\fP: Instead of using shell globs to evaluate the target
+use a range expression to identify targets. Range expressions look like
+%cluster.
+.UNINDENT
+.sp
+\fBWARNING:\fP
+.INDENT 0.0
+.INDENT 3.5
+Some of the targeting options above may not be avaialble for some Roster
+modules.
+.UNINDENT
+.UNINDENT
+.sp
+To use a specific Roster, configure the \fBproxy_roster\fP (or simply \fBroster\fP)
+option into your Master config file, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy_roster: ansible
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+It is recommended to prefer the \fBproxy_roster\fP option in the favour of
+\fBroster\fP as the latter is used by Salt SSH. In case you want to use both
+salt\-sproxy and Salt SSH, you may want to use different Roster files, which
+is why there are two different options.
+.sp
+salt\-sproxy will evauluate both \fBproxy_roster\fP and \fBroster\fP, in this
+order.
+.UNINDENT
+.UNINDENT
+.sp
+With the configuration above, \fBsalt\-sproxy\fP would try to use the \fI\%ansbile
+Roster module\fP
+to compile the Roster file (typically \fB/etc/salt/roster\fP) which is structured
+as a regular Ansible Inventory file. This inventory should only provide the
+list of devices.
+.sp
+The Roster can also be specified on the fly, using the \fB\-R\fP or \fB\-\-roster\fP
+options, e.g., \fBsalt\-sproxy cr1.thn.lon test.ping \-\-roster=flat\fP\&. In this
+example, we\(aqd be using the \fI\%flat Roster module\fP
+to determine the list of devices matched by a specific target.
+.sp
+When you don\(aqt specify the Roster into the Master config, or from the CLI, you
+can use \fBsalt\-sproxy\fP to target on or more devices using the \fBglob\fP or
+\fBlist\fP target types, e.g., \fBsalt\-sproxy cr1.thn.lon test.ping\fP (glob) or
+\fBsalt\-sproxy \-L cr1.thn.lon,cr2.thn.lon test.ping\fP (to target a list of
+devices, \fBcr1.thn.lon\fP and \fBcr2.thn.lon\fP, respectively).
+.sp
+Note that in any case (with or without the Roster), you will need to provide
+a valid list of Minions.
+.SH DOCKER
+.sp
+There are Docker images available should you need or prefer:
+\fI\%https://hub.docker.com/r/mirceaulinic/salt\-sproxy\fP\&.
+.sp
+You can see here the available tags:
+\fI\%https://hub.docker.com/r/mirceaulinic/salt\-sproxy/tags\fP\&. \fBlatest\fP provides the
+code merged into the \fBmaster\fP branch, and \fBallinone\-latest\fP is the code
+merged into the \fBmaster\fP branch with several libraries such as
+\fI\%NAPALM\fP,
+\fI\%Netmiko\fP,
+\fI\%ciscoconfparse\fP, or Ansible
+which you may need for your modules or Roster (if you\(aqd want to use the
+\fI\%Ansible Roster\fP,
+for  example).
+.sp
+These can be used in various scenarios. For example, if you would like to use
+\fBsalt\-proxy\fP but without installing it, and prefer to use Docker instead, you
+can define the following convoluted alias:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+alias salt\-sproxy=\(aqf(){ docker run \-\-rm \-\-network host \-v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ \-ti mirceaulinic/salt\-sproxy salt\-sproxy $@; }; f\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+And in the \fBSALT_PROXY_PILLAR_DIR\fP environment variable, you set the path to
+the directory where you have the Pillars, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+export SALT_PROXY_PILLAR_DIR=/path/to/pillars/dir
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With this setup, you would be able to go ahead and execute "as normally" (with
+the difference that the code is executed inside the container, however from the
+CLI it won\(aqt look different):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+salt\-sproxy minion1 test.ping
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH MORE USAGE EXAMPLES
+.sp
+See the following examples to help getting started with salt\-sproxy:
+.SS Usage Examples
+.SS salt\-sproxy 101
+.sp
+This is the first example from the
+\fI\%Quick Start\fP
+section of the documentation.
+.sp
+Using the Master configuration file under \fI\%examples/master\fP:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP, so to be able to
+use this example, either create a symlink to the \fBpillar\fP directory in this
+example, or copy the files.
+For example, if you just cloned this repository:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/pillar
+$ git clone git@github.com:mirceaulinic/salt\-sproxy.git
+$ cp salt\-sproxy/examples/master /etc/salt/master
+$ cp salt\-sproxy/examples/101/pillar/*.sls /srv/salt/pillar/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The contents of these two files:
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  mininon1:
+    \- dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/dummy.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Having this setup ready, you can go ahead an execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy minion1 test.ping
+minion1:
+    True
+
+# let\(aqs display the list of packages installed via pip on this computer
+$ salt\-sproxy minion1 pip.list
+minion1:
+    \-\-\-\-\-\-\-\-\-\-
+    Jinja2:
+        2.10.1
+    MarkupSafe:
+        1.1.1
+    PyNaCl:
+        1.3.0
+    PyYAML:
+        5.1
+    Pygments:
+        2.4.0
+    asn1crypto:
+        0.24.0
+    bcrypt:
+        3.1.6
+    bleach:
+        3.1.0
+    certifi:
+        2019.3.9
+    cffi:
+        1.12.3
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Using the Ansible Roster
+.sp
+To be able to use the Ansible Roster, you will need to have \fBansible\fP
+installed in the same environment as \fBsalt\-sproxy\fP, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ pip instal ansible
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Using the Master configuration file under \fI\%examples/ansible/master\fP:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+
+proxy_roster: ansible
+roster_file: /etc/salt/roster
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Notice that compared to the previous examples, \fI\%101\fP and
+\fI\%NAPALM\fP,
+there are two additional options: \fBroster_file\fP which specifies the path to
+the Roster file to use, and \fBproxy_roster\fP that tells how to interpret the
+Roster file \- in this case, the Roster file \fB/etc/salt/roster\fP is going to be
+loaded as an Ansible inventory. Let\(aqs consider, for example, the following
+Roster / Ansible inventory which you can find at \fI\%examples/ansible/roster\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+all:
+  children:
+    usa:
+      children:
+        northeast: ~
+        northwest:
+          children:
+            seattle:
+              hosts:
+                edge1.seattle
+            vancouver:
+              hosts:
+                edge1.vancouver
+        southeast:
+          children:
+            atlanta:
+              hosts:
+                edge1.atlanta:
+                edge2.atlanta:
+            raleigh:
+              hosts:
+                edge1.raleigh:
+        southwest:
+          children:
+            san_francisco:
+              hosts:
+                edge1.sfo
+            los_angeles:
+              hosts:
+                edge1.la
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP, so to be able to
+use this example, either create a symlink to the \fBpillar\fP directory in this
+example, or copy the files.
+For example, if you just cloned this repository:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/pillar
+$ git clone git@github.com:mirceaulinic/salt\-sproxy.git
+$ cp salt\-sproxy/examples/ansible/master /etc/salt/master
+$ cp salt\-sproxy/examples/ansible/roster /etc/salt/roster
+$ cp salt\-sproxy/examples/ansible/pillar/*.sls /srv/salt/pillar/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The contents of these files:
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  \(aqedge1*\(aq:
+    \- junos
+  \(aqedge2*\(aq:
+    \- eos
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With this top file, Salt is going to load the Pillar data from
+\fB/srv/salt/pillar/junos.sls\fP for \fBedge1.seattle\fP, \fBedge1.atlanta\fP,
+\fBedge1.raleigh\fP, \fBedge1.sfo\fP, and \fBedge1.la\fP, while loading the data from
+\fB/srv/salt/pillar/eos.sls\fP for \fBedge2.atlanta\fP (and anything that would
+match the \fBedge2*\fP expression should you have others).
+.sp
+\fB/srv/salt/pillar/junos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: junos
+  host: {{ opts.id | replace(\(aq.\(aq, \(aq\-\(aq) }}.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/eos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: eos
+  host: {{ opts.id | replace(\(aq.\(aq, \(aq\-\(aq) }}.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Note that in both case the \fBhostname\fP has been set as \fB{{ opts.id
+| replace(\(aq.\(aq, \(aq\-\(aq) }}.salt\-sproxy.digitalocean.cloud.tesuto.com\fP\&. \fBopts.id\fP
+points to the Minion ID, which means that the Pillar data is rendered depending
+on the name of the device; therefore, the hostname for \fBedge1.atlanta\fP will
+be \fBedge1\-atlanta.salt\-sproxy.digitalocean.cloud.tesuto.com\fP, the hostname
+for \fBedge2.atlanta\fP is
+\fBedge2\-atlanta.salt\-sproxy.digitalocean.cloud.tesuto.com\fP, and so on.
+.sp
+Having this setup ready, you can go ahead an execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aq*\(aq \-\-preview\-target
+\- edge1.seattle
+\- edge1.vancouver
+\- edge1.atlanta
+\- edge2.atlanta
+\- edge1.raleigh
+\- edge1.la
+\- edge1.sfo
+
+# get the LLDP neighbors from all the edge devices
+$ salt\-sproxy \(aqedge*\(aq net.lldp
+edge1.vancouver:
+    ~~~ snip ~~~
+edge1.atlanta:
+    ~~~ snip ~~~
+edge1.sfo:
+    ~~~ snip ~~~
+edge1.seattle:
+    ~~~ snip ~~~
+edge1.la:
+    ~~~ snip ~~~
+edge1.raleigh:
+    ~~~ snip ~~~
+edge2.atlanta:
+    ~~~ snip ~~~
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS salt\-sproxy with network devices
+.sp
+This is the second example from the
+\fI\%Quick Start\fP
+section of the documentation.
+.sp
+To be able to use this example, make sure you have NAPALM installed \- see the
+complete installation notes from
+\fI\%https://napalm.readthedocs.io/en/latest/installation/index.html\fP\&.
+.sp
+Using the Master configuration file under \fI\%examples/master\fP:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP, so to be able to
+use this example, either create a symlink to the \fBpillar\fP directory in this
+example, or copy the files.
+For example, if you just cloned this repository:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/pillar
+$ git clone git@github.com:mirceaulinic/salt\-sproxy.git
+$ cp salt\-sproxy/examples/master /etc/salt/master
+$ cp salt\-sproxy/examples/napalm/pillar/*.sls /srv/salt/pillar/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The contents of these two files:
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  juniper\-router:
+    \- junos
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/junos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: junos
+  host: juniper.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Having this setup ready, after you update the connection details, you can go ahead an execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy juniper\-router test.ping
+juniper\-router:
+    True
+
+# retrieve the ARP table from juniper\-router
+$ salt\-sproxy juniper\-router net.arp
+juniper\-router:
+    \-\-\-\-\-\-\-\-\-\-
+    comment:
+    out:
+        |_
+          \-\-\-\-\-\-\-\-\-\-
+          age:
+              849.0
+          interface:
+              fxp0.0
+          ip:
+              10.96.0.1
+          mac:
+              92:99:00:0A:00:00
+        |_
+          \-\-\-\-\-\-\-\-\-\-
+          age:
+              973.0
+          interface:
+              fxp0.0
+          ip:
+              10.96.0.13
+          mac:
+              92:99:00:0A:00:00
+        |_
+          \-\-\-\-\-\-\-\-\-\-
+          age:
+              738.0
+          interface:
+              em1.0
+          ip:
+              128.0.0.16
+          mac:
+              02:42:AC:13:00:02
+    result:
+        True
+
+# apply a configuration change: dry run
+$ salt\-sproxy juniper\-router net.load_config text=\(aqset system ntp server 10.10.10.1\(aq test=True
+juniper\-router:
+    \-\-\-\-\-\-\-\-\-\-
+    already_configured:
+        False
+    comment:
+        Configuration discarded.
+    diff:
+        [edit system]
+        +   ntp {
+        +       server 10.10.10.1;
+        +   }
+    loaded_config:
+    result:
+        True
+
+# apply the configuration change and commit
+$ salt\-sproxy juniper\-router net.load_config text=\(aqset system ntp server 10.10.10.1\(aq
+juniper\-router:
+    \-\-\-\-\-\-\-\-\-\-
+    already_configured:
+        False
+    comment:
+    diff:
+        [edit system]
+        +   ntp {
+        +       server 10.10.10.1;
+        +   }
+    loaded_config:
+    result:
+        True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If you run into issues when connecting to your device, you might want to go
+through this checklist: \fI\%https://github.com/napalm\-automation/napalm#faq\fP\&.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+For a better methodology on managing the configuration, you might want to
+take a look at the \fI\%State system\fP, one
+of the most widely used State modules for configuration management through
+NAPALM being \fI\%Netconfig\fP\&.
+.UNINDENT
+.UNINDENT
+.SS Using the NetBox Roster
+.sp
+To be able to use the NetBox Roster, you will need to have the \fBpynetbox\fP
+library installed in the same environment as \fBsalt\-sproxy\fP, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ pip instal pynetbox
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Using the Master configuration file under \fI\%examples/netbox/master\fP:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+
+proxy_roster: netbox
+
+netbox:
+  url: https://url\-to\-your\-netbox\-instance
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With this configuration, the list of devices is going to be loaded from NetBox,
+with the connection details provides under the \fBnetbox\fP key.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+To set up a NetBox instance, see the installation notes from
+\fI\%https://netbox.readthedocs.io/en/stable/installation/\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP, so to be able to
+use this example, either create a symlink to the \fBpillar\fP directory in this
+example, or copy the files.
+For example, if you just cloned this repository:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/pillar
+$ git clone git@github.com:mirceaulinic/salt\-sproxy.git
+$ cp salt\-sproxy/examples/netbox/master /etc/salt/master
+$ cp salt\-sproxy/examples/netbox/pillar/*.sls /srv/salt/pillar/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The contents of these files highly depend on the device names you have in your
+NetBox instance. The following examples are crafted for device name starting
+with \fBedge1\fP and \fBedge2\fP, e.g., \fBedge1.atlanta\fP, \fBedge1.seattle\fP etc.
+If you have different device names in your NetBox instance, you\(aqll have to
+update these Pillars.
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  \(aqedge1*\(aq:
+    \- junos
+  \(aqedge2*\(aq:
+    \- eos
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With this top file, Salt is going to load the Pillar data from
+\fB/srv/salt/pillar/junos.sls\fP for \fBedge1.seattle\fP, \fBedge1.atlanta\fP,
+\fBedge1.raleigh\fP, \fBedge1.sfo\fP, and \fBedge1.la\fP, while loading the data from
+\fB/srv/salt/pillar/eos.sls\fP for \fBedge2.atlanta\fP (and anything that would
+match the \fBedge2*\fP expression should you have others).
+.sp
+\fB/srv/salt/pillar/junos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: junos
+  host: {{ opts.id | replace(\(aq.\(aq, \(aq\-\(aq) }}.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/eos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: eos
+  host: {{ opts.id | replace(\(aq.\(aq, \(aq\-\(aq) }}.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Note that in both case the \fBhostname\fP has been set as \fB{{ opts.id
+| replace(\(aq.\(aq, \(aq\-\(aq) }}.salt\-sproxy.digitalocean.cloud.tesuto.com\fP\&. \fBopts.id\fP
+points to the Minion ID, which means that the Pillar data is rendered depending
+on the name of the device; therefore, the hostname for \fBedge1.atlanta\fP will
+be \fBedge1\-atlanta.salt\-sproxy.digitalocean.cloud.tesuto.com\fP, the hostname
+for \fBedge2.atlanta\fP is
+\fBedge2\-atlanta.salt\-sproxy.digitalocean.cloud.tesuto.com\fP, and so on.
+.sp
+Having this setup ready, you can go ahead an execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aq*\(aq \-\-preview\-target
+\- edge1.seattle
+\- edge1.vancouver
+\- edge1.atlanta
+\- edge2.atlanta
+\- edge1.raleigh
+\- edge1.la
+\- edge1.sfo
+~~~ many others ~~~
+
+# get the LLDP neighbors from all the edge devices
+$ salt\-sproxy \(aqedge*\(aq net.lldp
+edge1.vancouver:
+    ~~~ snip ~~~
+edge1.atlanta:
+    ~~~ snip ~~~
+edge1.sfo:
+    ~~~ snip ~~~
+edge1.seattle:
+    ~~~ snip ~~~
+edge1.la:
+    ~~~ snip ~~~
+edge1.raleigh:
+    ~~~ snip ~~~
+edge2.atlanta:
+    ~~~ snip ~~~
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Salt REST API
+.sp
+\fBIMPORTANT:\fP
+.INDENT 0.0
+.INDENT 3.5
+In the configuration examples below, for simplicity, I\(aqve used the \fI\%auto\fP
+external authentication, and disabled the SSL for the Salt API. This setup
+is highly discouraged in production.
+.UNINDENT
+.UNINDENT
+.sp
+Using the Master configuration file under \fI\%examples/salt_api/master\fP:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+
+file_roots:
+  base:
+    \- /srv/salt/extmods
+
+rest_cherrypy:
+  port: 8080
+  disable_ssl: true
+
+external_auth:
+  auto:
+    \(aq*\(aq:
+      \- \(aq@runner\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP, so to be able to
+use this example, either create a symlink to the \fBpillar\fP directory in this
+example, or copy the files.
+For example, if you just cloned this repository:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/pillar
+$ git clone git@github.com:mirceaulinic/salt\-sproxy.git
+$ cp salt\-sproxy/examples/salt_api/master /etc/salt/master
+$ cp salt\-sproxy/examples/salt_api/pillar/*.sls /srv/salt/pillar/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The contents of Pillar files:
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  mininon1:
+    \- dummy
+  juniper\-router:
+    \- junos
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/dummy.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/junos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: junos
+  host: juniper.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The \fBtop.sls\fP, \fBdummy.sls\fP, and \fBjunos.sls\fP are a combination of the
+previous examples, \fI\%101\fP and
+\fI\%napalm\fP,
+which is going to allow use to execute against both the dummy device and
+a real network device.
+.UNINDENT
+.UNINDENT
+.sp
+In the example Master configuration file above, there\(aqs also a section for the
+\fBfile_roots\fP\&. As documented in \fI\%The Proxy Runner\fP section of the
+documentation, you are going to reference the \fI\%proxy Runner\fP, e.g.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/extmods/_runners
+$ cp salt\-sproxy/salt_sproxy/_runners/proxy.py /srv/salt/extmods/_runners/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Or symlink:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ ln \-s /path/to/git/clone/salt\-sproxy/salt_sproxy /srv/salt/extmods
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With the \fBrest_cherrypy\fP section, the Salt API will be listening to HTTP
+requests over port 8080, and SSL being disabled (not recommended in production):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+rest_cherrypy:
+  port: 8080
+  disable_ssl: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+One another part of the configuration is the external authentication:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+external_auth:
+  auto:
+    \(aq*\(aq:
+      \- \(aq@runner\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+This grants access to anyone to execute any Runner (again, don\(aqt do this in
+production).
+.sp
+With this setup, we can start the Salt Master and the Salt API (running in
+background):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-master \-d
+$ salt\-api \-d
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+To verify that the REST API is ready, execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-i localhost:8080
+HTTP/1.1 200 OK
+Content\-Type: application/json
+Server: CherryPy/18.1.1
+Date: Wed, 05 Jun 2019 07:58:32 GMT
+Allow: GET, HEAD, POST
+Access\-Control\-Allow\-Origin: *
+Access\-Control\-Expose\-Headers: GET, POST
+Access\-Control\-Allow\-Credentials: true
+Vary: Accept\-Encoding
+Content\-Length: 146
+
+{"return": "Welcome", "clients": ["local", "local_async", "local_batch", "local_subset", "runner", "runner_async", "ssh", "wheel", "wheel_async"]}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Now we can go ahead and execute the CLI command from \fI\%example 101\fP, by making
+an HTTP request:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqauto\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqminion1\(aq \e
+  \-d function=\(aqtest.ping\(aq \e
+  \-d sync=True
+return:
+\- minion1: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Notice that \fBeauth\fP field in this case is \fBauto\fP as this is what we\(aqve
+configured in the \fBexternal_auth\fP on the Master.
+.sp
+Similarly, you can now execute the Salt functions from the \fI\%NAPALM example\fP, against
+a network device, by making an HTTP request:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqauto\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqjuniper\-router\(aq \e
+  \-d function=\(aqnet.arp\(aq \e
+  \-d sync=True
+return:
+\- juniper\-router:
+    comment: \(aq\(aq
+    out:
+    \- age: 891.0
+      interface: fxp0.0
+      ip: 10.96.0.1
+      mac: 92:99:00:0A:00:00
+    \- age: 1001.0
+      interface: fxp0.0
+      ip: 10.96.0.13
+      mac: 92:99:00:0A:00:00
+    \- age: 902.0
+      interface: em1.0
+      ip: 128.0.0.16
+      mac: 02:42:AC:12:00:02
+    result: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH EXTENSION MODULES
+.sp
+\fBsalt\-sproxy\fP is delivered together with a few extension modules that are
+dynamically loaded and immediately available. Please see below the
+documentation for these modules:
+.SS Extension Roster Modules
+.SS Ansible Roster
+.sp
+Read in an Ansible inventory file or script
+.sp
+Flat inventory files should be in the regular ansible inventory format.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[servers]
+salt.gtmanfred.com ansible_ssh_user=gtmanfred ansible_ssh_host=127.0.0.1 ansible_ssh_port=22 ansible_ssh_pass=\(aqpassword\(aq
+
+[desktop]
+home ansible_ssh_user=gtmanfred ansible_ssh_host=12.34.56.78 ansible_ssh_port=23 ansible_ssh_pass=\(aqpassword\(aq
+
+[computers:children]
+desktop
+servers
+
+[names:vars]
+http_port=80
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+then salt\-ssh can be used to hit any of them
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[~]# salt\-ssh \-N all test.ping
+salt.gtmanfred.com:
+    True
+home:
+    True
+[~]# salt\-ssh \-N desktop test.ping
+home:
+    True
+[~]# salt\-ssh \-N computers test.ping
+salt.gtmanfred.com:
+    True
+home:
+    True
+[~]# salt\-ssh salt.gtmanfred.com test.ping
+salt.gtmanfred.com:
+    True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+There is also the option of specifying a dynamic inventory, and generating it on the fly
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#!/bin/bash
+echo \(aq{
+  "servers": [
+    "salt.gtmanfred.com"
+  ],
+  "desktop": [
+    "home"
+  ],
+  "computers": {
+    "hosts": [],
+    "children": [
+      "desktop",
+      "servers"
+    ]
+  },
+  "_meta": {
+    "hostvars": {
+      "salt.gtmanfred.com": {
+        "ansible_ssh_user": "gtmanfred",
+        "ansible_ssh_host": "127.0.0.1",
+        "ansible_sudo_pass": "password",
+        "ansible_ssh_port": 22
+      },
+      "home": {
+        "ansible_ssh_user": "gtmanfred",
+        "ansible_ssh_host": "12.34.56.78",
+        "ansible_sudo_pass": "password",
+        "ansible_ssh_port": 23
+      }
+    }
+  }
+}\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+This is the format that an inventory script needs to output to work with ansible, and thus here.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[~]# salt\-ssh \-\-roster\-file /etc/salt/hosts salt.gtmanfred.com test.ping
+salt.gtmanfred.com:
+        True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Any of the [groups] or direct hostnames will return.  The ‘all’ is special, and returns everything.
+.INDENT 0.0
+.TP
+.B _roster.ansible.targets(tgt, tgt_type=\(aqglob\(aq, **kwargs)
+Return the targets from the ansible inventory_file
+Default: /etc/salt/roster
+.UNINDENT
+.SS NetBox Roster
+.sp
+Load devices from \fI\%NetBox\fP, and make
+them available for salt\-ssh or salt\-sproxy (or any other program that doesn’t
+require (Proxy) Minions running).
+.sp
+Make sure that the following options are configured on the Master:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+netbox:
+  url: <NETBOX_URL>
+  token: <NETBOX_USERNAME_API_TOKEN (OPTIONAL)>
+  keyfile: </PATH/TO/NETBOX/KEY (OPTIONAL)>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If you want to pre\-filter the devices, so it won’t try to pull the whole
+database available in NetBox, you can configure another key, \fBfilters\fP, under
+\fBnetbox\fP, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+netbox:
+  url: <NETBOX_URL>
+  filters:
+    site: <SITE>
+    status: <STATUS>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBHINT:\fP
+.INDENT 0.0
+.INDENT 3.5
+You can use any NetBox field as a filter.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B _roster.netbox.targets(tgt, tgt_type=\(aqglob\(aq, **kwargs)
+Return the targets from NetBox.
+.UNINDENT
+.SS Extension Runners
+.SS Proxy Runner
+.sp
+Salt Runner to invoke arbitrary commands on network devices that are not
+managed via a Proxy or regular Minion. Therefore, this Runner doesn’t
+necessarily require the targets to be up and running, as it will connect to
+collect the Grains, compile the Pillar, then execute the commands.
+.INDENT 0.0
+.TP
+.B class _runners.proxy.SProxyMinion(opts)
+Create an object that has loaded all of the minion module functions,
+grains, modules, returners etc.  The SProxyMinion allows developers to
+generate all of the salt minion functions and present them with these
+functions for general use.
+.INDENT 7.0
+.TP
+.B gen_modules(initial_load=False)
+Tell the minion to reload the execution modules.
+.sp
+CLI Example:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+salt \(aq*\(aq sys.reload_modules
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B class _runners.proxy.StandaloneProxy(opts)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B _runners.proxy.execute(tgt, function=None, tgt_type=\(aqglob\(aq, roster=None, preview_target=False, target_details=False, timeout=60, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, args=(), batch_size=10, sync=False, events=True, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, **kwargs)
+Invoke a Salt function on the list of devices matched by the Roster
+subsystem.
+.INDENT 7.0
+.TP
+.B tgt
+The target expression, e.g., \fB*\fP for all devices, or \fBhost1,host2\fP
+for a list, etc. The \fBtgt_list\fP argument must be used accordingly,
+depending on the type of this expression.
+.TP
+.B function
+The name of the Salt function to invoke.
+.TP
+.B tgt_type: \fBglob\fP
+The type of the \fBtgt\fP expression. Choose between: \fBglob\fP (default),
+\fBlist\fP, \fBpcre\fP, \fBrage\fP, or \fBnodegroup\fP\&.
+.TP
+.B roster: \fBNone\fP
+The name of the Roster to generate the targets. Alternatively, you can
+specify the name of the Roster by configuring the \fBproxy_roster\fP
+option into the Master config.
+.TP
+.B preview_target: \fBFalse\fP
+Return the list of Roster targets matched by the \fBtgt\fP and
+\fBtgt_type\fP arguments.
+.TP
+.B preload_grains: \fBTrue\fP
+Whether to preload the Grains before establishing the connection with
+the remote network device.
+.TP
+.B default_grains:
+Dictionary of the default Grains to make available within the functions
+loaded.
+.TP
+.B with_grains: \fBTrue\fP
+Whether to load the Grains modules and collect Grains data and make it
+available inside the Execution Functions.
+The Grains will be loaded after opening the connection with the remote
+network device.
+.TP
+.B default_pillar:
+Dictionary of the default Pillar data to make it available within the
+functions loaded.
+.TP
+.B with_pillar: \fBTrue\fP
+Whether to load the Pillar modules and compile Pillar data and make it
+available inside the Execution Functions.
+.TP
+.B arg
+The list of arguments to send to the Salt function.
+.TP
+.B kwargs
+Key\-value arguments to send to the Salt function.
+.TP
+.B batch_size: \fB10\fP
+The size of each batch to execute.
+.TP
+.B sync: \fBFalse\fP
+Whether to return the results synchronously (or return them as soon
+as the device replies).
+.TP
+.B events: \fBTrue\fP
+Whether should push events on the Salt bus, similar to when executing
+equivalent through the \fBsalt\fP command.
+.TP
+.B use_cached_pillar: \fBTrue\fP
+Use cached Pillars whenever possible. If unable to gather cached data,
+it falls back to compiling the Pillar.
+.TP
+.B use_cached_grains: \fBTrue\fP
+Use cached Grains whenever possible. If unable to gather cached data,
+it falls back to collecting Grains.
+.TP
+.B cache_pillar: \fBFalse\fP
+Cache the compiled Pillar data before returning.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option may be dangerous when targeting a device that already
+has a Proxy Minion associated, however recommended otherwise.
+.UNINDENT
+.UNINDENT
+.TP
+.B cache_grains: \fBFalse\fP
+Cache the collected Grains before returning.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option may be dangerous when targeting a device that already
+has a Proxy Minion associated, however recommended otherwise.
+.UNINDENT
+.UNINDENT
+.TP
+.B use_existing_proxy: \fBFalse\fP
+Use the existing Proxy Minions when they are available (say on an
+already running Master).
+.UNINDENT
+.sp
+CLI Example:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+salt\-run proxy.execute_roster edge* test.ping
+salt\-run proxy.execute_roster junos\-edges test.ping tgt_type=nodegroup
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B _runners.proxy.execute_devices(minions, function, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, args=(), batch_size=10, sync=False, tgt=None, tgt_type=None, jid=None, events=True, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, **kwargs)
+Execute a Salt function on a group of network devices identified by their
+Minion ID, as listed under the \fBminions\fP argument.
+.INDENT 7.0
+.TP
+.B minions
+A list of Minion IDs to invoke \fBfunction\fP on.
+.TP
+.B function
+The name of the Salt function to invoke.
+.TP
+.B preload_grains: \fBTrue\fP
+Whether to preload the Grains before establishing the connection with
+the remote network device.
+.TP
+.B default_grains:
+Dictionary of the default Grains to make available within the functions
+loaded.
+.TP
+.B with_grains: \fBFalse\fP
+Whether to load the Grains modules and collect Grains data and make it
+available inside the Execution Functions.
+The Grains will be loaded after opening the connection with the remote
+network device.
+.TP
+.B preload_pillar: \fBTrue\fP
+Whether to preload Pillar data before opening the connection with the
+remote network device.
+.TP
+.B default_pillar:
+Dictionary of the default Pillar data to make it available within the
+functions loaded.
+.TP
+.B with_pillar: \fBTrue\fP
+Whether to load the Pillar modules and compile Pillar data and make it
+available inside the Execution Functions.
+.TP
+.B args
+The list of arguments to send to the Salt function.
+.TP
+.B kwargs
+Key\-value arguments to send to the Salt function.
+.TP
+.B batch_size: \fB10\fP
+The size of each batch to execute.
+.TP
+.B sync: \fBFalse\fP
+Whether to return the results synchronously (or return them as soon
+as the device replies).
+.TP
+.B events: \fBTrue\fP
+Whether should push events on the Salt bus, similar to when executing
+equivalent through the \fBsalt\fP command.
+.TP
+.B use_cached_pillar: \fBTrue\fP
+Use cached Pillars whenever possible. If unable to gather cached data,
+it falls back to compiling the Pillar.
+.TP
+.B use_cached_grains: \fBTrue\fP
+Use cached Grains whenever possible. If unable to gather cached data,
+it falls back to collecting Grains.
+.TP
+.B cache_pillar: \fBFalse\fP
+Cache the compiled Pillar data before returning.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option may be dangerous when targeting a device that already
+has a Proxy Minion associated, however recommended otherwise.
+.UNINDENT
+.UNINDENT
+.TP
+.B cache_grains: \fBFalse\fP
+Cache the collected Grains before returning.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option may be dangerous when targeting a device that already
+has a Proxy Minion associated, however recommended otherwise.
+.UNINDENT
+.UNINDENT
+.TP
+.B use_existing_proxy: \fBFalse\fP
+Use the existing Proxy Minions when they are available (say on an
+already running Master).
+.UNINDENT
+.sp
+CLI Example:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+salt\-run proxy.execute "[\(aq172.17.17.1\(aq, \(aq172.17.17.2\(aq]" test.ping driver=eos username=test password=test123
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B _runners.proxy.salt_call(minion_id, function=None, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, jid=None, args=(), **kwargs)
+Invoke a Salt Execution Function that requires or invokes an NAPALM
+functionality (directly or indirectly).
+.INDENT 7.0
+.TP
+.B minion_id:
+The ID of the Minion to compile Pillar data for.
+.TP
+.B function
+The name of the Salt function to invoke.
+.TP
+.B preload_grains: \fBTrue\fP
+Whether to preload the Grains before establishing the connection with
+the remote network device.
+.TP
+.B default_grains:
+Dictionary of the default Grains to make available within the functions
+loaded.
+.TP
+.B with_grains: \fBTrue\fP
+Whether to load the Grains modules and collect Grains data and make it
+available inside the Execution Functions.
+The Grains will be loaded after opening the connection with the remote
+network device.
+.TP
+.B preload_pillar: \fBTrue\fP
+Whether to preload Pillar data before opening the connection with the
+remote network device.
+.TP
+.B default_pillar:
+Dictionary of the default Pillar data to make it available within the
+functions loaded.
+.TP
+.B with_pillar: \fBTrue\fP
+Whether to load the Pillar modules and compile Pillar data and make it
+available inside the Execution Functions.
+.TP
+.B use_cached_pillar: \fBTrue\fP
+Use cached Pillars whenever possible. If unable to gather cached data,
+it falls back to compiling the Pillar.
+.TP
+.B use_cached_grains: \fBTrue\fP
+Use cached Grains whenever possible. If unable to gather cached data,
+it falls back to collecting Grains.
+.TP
+.B cache_pillar: \fBFalse\fP
+Cache the compiled Pillar data before returning.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option may be dangerous when targeting a device that already
+has a Proxy Minion associated, however recommended otherwise.
+.UNINDENT
+.UNINDENT
+.TP
+.B cache_grains: \fBFalse\fP
+Cache the collected Grains before returning.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option may be dangerous when targeting a device that already
+has a Proxy Minion associated, however recommended otherwise.
+.UNINDENT
+.UNINDENT
+.TP
+.B use_existing_proxy: \fBFalse\fP
+Use the existing Proxy Minions when they are available (say on an
+already running Master).
+.TP
+.B jid: \fBNone\fP
+The JID to pass on, when executing.
+.TP
+.B arg
+The list of arguments to send to the Salt function.
+.TP
+.B kwargs
+Key\-value arguments to send to the Salt function.
+.UNINDENT
+.sp
+CLI Example:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+salt\-run proxy.salt_call bgp.neighbors junos 1.2.3.4 test test123
+salt\-run proxy.salt_call net.load_config junos 1.2.3.4 test test123 text=\(aqset system ntp peer 1.2.3.4\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SH SEE ALSO
+.SS Command Line and Configuration Options
+.sp
+There are a few options specific for \fBsalt\-sproxy\fP, however you might be
+already familiar with a vast majority of them from the \fI\%salt\fP or \fI\%salt\-run\fP Salt commands.
+.sp
+\fBHINT:\fP
+.INDENT 0.0
+.INDENT 3.5
+Many of the CLI options are available to be configured through the file
+you can specifiy through the \fB\-c\fP (\fB\-config\-dir\fP) option, with the
+difference that in the file you need to use the longer name and underscore
+instead of hyphen. For example, the \fB\-\-roster\-file\fP option would be
+configured as \fBroster_file: /path/to/roster/file\fP in the config file.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-version
+Print the version of Salt and Salt SProxy that is running.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-versions\-report
+Show program\(aqs dependencies and version number, and then exit.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h, \-\-help
+Show the help message and exit.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-c CONFIG_DIR, \-\-config\-dir=CONFIG_dir
+The location of the Salt configuration directory. This directory contains
+the configuration files for Salt master and minions. The default location
+on most systems is \fB/etc/salt\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-r, \-\-roster
+The Roster module to use to compile the list of targeted devices.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-roster\-file
+Absolute path to the Roster file to load (when the Roster module requires
+a file). Default: \fB/etc/salt/roster\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-sync
+Whether should return the entire output at once, or for every device
+separately as they return.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-cache\-grains
+Cache the collected Grains. Beware that this option overwrites the existing
+Grains. This may be helpful when using the \fBsalt\-sproxy\fP only, but may
+lead to unexpected results when running in a mixed environment.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-cache\-pillar
+Cache the collected Pillar. Beware that this option overwrites the existing
+Pillar. This may be helpful when using the \fBsalt\-sproxy\fP only, but may
+lead to unexpected results when running in a mixed environment.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-no\-cached\-grains
+Do not use the cached Grains (i.e., recollect regardless).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-no\-cached\-pillar
+Do not use the cached Pillar (i.e., recompile regardless).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-no\-grains
+Do not attempt to collect Grains at all. While it does reduce the runtime,
+this may lead to unexpected results when the Grains are referenced in other
+subsystems.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-no\-pillar
+Do not attempt to compile Pillar at all. While it does reduce the runtime,
+this may lead to unexpected results when the Pillar data is referenced in
+other subsystems.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-b, \-\-batch, \-\-batch\-size
+The number of devices to connect to in parallel.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-preview\-target
+Show the devices expected to match the target, without executing any
+function (i.e., just print the list of devices matching, then exit).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-sync\-roster
+Synchronise the Roster modules (both salt\-sproxy native and provided by the
+user in their own environment). Default: \fBTrue\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-events
+Whether should put the events on the Salt bus (mostly useful when having a
+Master running). Default: \fBFalse\fP\&.
+.sp
+\fBIMPORTANT:\fP
+.INDENT 7.0
+.INDENT 3.5
+See events for further details.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-use\-existing\-proxy
+Execute the commands on an existing Proxy Minion whenever available. If one
+or more Minions matched by the target don\(aqt exist (or the key is not
+accepted by the Master), salt\-sproxy will fallback and execute the command
+locally, and, implicitly, initiate the connection to the device locally.
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+This option requires a Master to be up and running. See
+mixed\-environments for more information.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-file\-roots, \-\-display\-file\-roots
+Display the location of the salt\-sproxy installation, where you can point
+your \fBfile_roots\fP on the Master, to use the proxy\-runner and other
+extension modules included in the salt\-sproxy package. See also
+runner\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-save\-file\-roots
+Save the configuration for the \fBfile_roots\fP in the Master configuration
+file, in order to start using the proxy\-runner and other extension
+modules included in the salt\-sproxy package. See also runner\&.
+This option is going to add the salt\-sproxy installation path to your
+existing \fBfile_roots\fP\&.
+.UNINDENT
+.SS Logging Options
+.sp
+Logging options which override any settings defined on the configuration files.
+.INDENT 0.0
+.TP
+.B \-l LOG_LEVEL, \-\-log\-level=LOG_LEVEL
+Console logging log level. One of \fBall\fP, \fBgarbage\fP, \fBtrace\fP,
+\fBdebug\fP, \fBinfo\fP, \fBwarning\fP, \fBerror\fP, \fBquiet\fP\&. Default: \fBerror\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-log\-file=LOG_FILE
+Log file path. Default: \fB/var/log/salt/master\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-log\-file\-level=LOG_LEVEL_LOGFILE
+Logfile logging log level. One of \fBall\fP, \fBgarbage\fP, \fBtrace\fP,
+\fBdebug\fP, \fBinfo\fP, \fBwarning\fP, \fBerror\fP, \fBquiet\fP\&. Default: \fBerror\fP\&.
+.UNINDENT
+.SS Target Selection
+.sp
+The default matching that Salt utilizes is shell\-style globbing around the
+minion id. See \fI\%https://docs.python.org/2/library/fnmatch.html#module\-fnmatch\fP\&.
+.INDENT 0.0
+.TP
+.B \-E, \-\-pcre
+The target expression will be interpreted as a PCRE regular expression
+rather than a shell glob.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-L, \-\-list
+The target expression will be interpreted as a comma\-delimited list;
+example: server1.foo.bar,server2.foo.bar,example7.quo.qux
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-G, \-\-grain
+The target expression matches values returned by the Salt grains system on
+the minions. The target expression is in the format of \(aq<grain value>:<glob
+expression>\(aq; example: \(aqos:Arch*\(aq
+.sp
+This was changed in version 0.9.8 to accept glob expressions instead of
+regular expression. To use regular expression matching with grains, use
+the \-\-grain\-pcre option.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-grain\-pcre
+The target expression matches values returned by the Salt grains system on
+the minions. The target expression is in the format of \(aq<grain value>:<
+regular expression>\(aq; example: \(aqos:Arch.*\(aq
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-N, \-\-nodegroup
+Use a predefined compound target defined in the Salt master configuration
+file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-R, \-\-range
+Instead of using shell globs to evaluate the target, use a range expression
+to identify targets. Range expressions look like %cluster.
+.sp
+Using the Range option requires that a range server is set up and the
+location of the range server is referenced in the master configuration
+file.
+.UNINDENT
+.SS Output Options
+.INDENT 0.0
+.TP
+.B \-\-out
+Pass in an alternative outputter to display the return of data. This
+outputter can be any of the available outputters:
+.INDENT 7.0
+.INDENT 3.5
+\fBhighstate\fP, \fBjson\fP, \fBkey\fP, \fBoverstatestage\fP, \fBpprint\fP, \fBraw\fP, \fBtxt\fP, \fByaml\fP, \fBtable\fP, and many others.
+.UNINDENT
+.UNINDENT
+.sp
+Some outputters are formatted only for data returned from specific functions.
+If an outputter is used that does not support the data passed into it, then
+Salt will fall back on the \fBpprint\fP outputter and display the return data
+using the Python \fBpprint\fP standard library module.
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+If using \fB\-\-out=json\fP, you will probably want \fB\-\-sync\fP as well.
+Without the sync option, you will get a separate JSON string per minion
+which makes JSON output invalid as a whole.
+This is due to using an iterative outputter. So if you want to feed it
+to a JSON parser, use \fB\-\-sync\fP as well.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-out\-indent OUTPUT_INDENT, \-\-output\-indent OUTPUT_INDENT
+Print the output indented by the provided value in spaces. Negative values
+disable indentation. Only applicable in outputters that support
+indentation.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-out\-file=OUTPUT_FILE, \-\-output\-file=OUTPUT_FILE
+Write the output to the specified file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-out\-file\-append, \-\-output\-file\-append
+Append the output to the specified file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-no\-color
+Disable all colored output
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-force\-color
+Force colored output
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+When using colored output the color codes are as follows:
+.sp
+\fBgreen\fP denotes success, \fBred\fP denotes failure, \fBblue\fP denotes
+changes and success and \fByellow\fP denotes a expected future change in configuration.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-state\-output=STATE_OUTPUT, \-\-state_output=STATE_OUTPUT
+Override the configured state_output value for minion
+output. One of \(aqfull\(aq, \(aqterse\(aq, \(aqmixed\(aq, \(aqchanges\(aq or
+\(aqfilter\(aq. Default: \(aqnone\(aq.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-state\-verbose=STATE_VERBOSE, \-\-state_verbose=STATE_VERBOSE
+Override the configured state_verbose value for minion
+output. Set to True or False. Default: none.
+.UNINDENT
+.SS Installation
+.sp
+The base installation is pretty much straightforward, \fBsalt\-sproxy\fP is
+installable using \fBpip\fP\&. See
+\fI\%https://packaging.python.org/tutorials/installing\-packages/\fP for a comprehensive
+guide on the installing Python packages.
+.sp
+Either when installing in a virtual environment, or directly on the base
+system, execute the following:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ pip install salt\-sproxy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If you would like to install a specific Salt version, you will firstly need to
+instal Salt (via pip) pinning to the desired version, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ pip install salt==2018.3.4
+$ pip install salt\-sproxy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Easy installation
+.sp
+We also provide a script to install the system requirements:
+\fI\%https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/install.sh\fP
+.sp
+Usage example:
+.INDENT 0.0
+.IP \(bu 2
+Using curl
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl sproxy\-install.sh \-L https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/install.sh
+# check the contents of sproxy\-install.sh
+$ sudo sh sproxy\-install.sh
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Using wget
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ wget \-O sproxy\-install.sh https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/install.sh
+# check the contents of sproxy\-install.sh
+$ sudo sh sproxy\-install.sh
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Using fetch (on FreeBSD)
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ fetch \-o sproxy\-install.sh https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/install.sh
+# check the contents of sproxy\-install.sh
+$ sudo sh sproxy\-install.sh
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+One liner:
+.sp
+\fBWARNING:\fP
+.INDENT 0.0
+.INDENT 3.5
+This method can be dangerous and it is not recommended on production systems.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-L https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/install.sh | sudo sh
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+See \fI\%https://gist.github.com/mirceaulinic/bdbbbcfbc3588b1c8b1ec7ef63931ac6\fP for
+a sample one\-line installation on a fresh Fedora server.
+.sp
+The script ensures Python 3 is installed on your system, together with the
+virtualenv package, and others required for Salt, in a virtual
+environment under the \fB$HOME/venvs/salt\-sproxy\fP path. In fact, when
+executing, you will see that the script will tell where it’s going to try to
+install, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ sudo sh install.sh
+
+Installing salt\-sproxy under /home/mircea/venvs/salt\-sproxy
+
+Reading package lists... Done
+
+~~~ snip ~~~
+
+Installation complete, now you can start using by executing the following command:
+\&. /home/mircea/venvs/salt\-sproxy/bin/activate
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+After that, you can start using it:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ . /home/mircea/venvs/salt\-sproxy/bin/activate
+(salt\-sproxy) $
+(salt\-sproxy) $ salt\-sproxy \-V
+Salt Version:
+           Salt: 2019.2.0
+    Salt SProxy: 2019.6.0b1
+
+Dependency Versions:
+        Ansible: Not Installed
+           cffi: 1.12.3
+       dateutil: Not Installed
+      docker\-py: Not Installed
+          gitdb: Not Installed
+      gitpython: Not Installed
+         Jinja2: 2.10.1
+     junos\-eznc: 2.2.1
+       jxmlease: 1.0.1
+        libgit2: Not Installed
+       M2Crypto: Not Installed
+           Mako: Not Installed
+   msgpack\-pure: Not Installed
+ msgpack\-python: 0.6.1
+         NAPALM: 2.4.0
+       ncclient: 0.6.4
+        Netmiko: 2.3.3
+       paramiko: 2.4.2
+      pycparser: 2.19
+       pycrypto: 2.6.1
+   pycryptodome: Not Installed
+         pyeapi: 0.8.2
+         pygit2: Not Installed
+       PyNetBox: 4.0.6
+          PyNSO: Not Installed
+         Python: 3.6.7 (default, Oct 22 2018, 11:32:17)
+   python\-gnupg: Not Installed
+         PyYAML: 5.1
+          PyZMQ: 18.0.1
+            scp: 0.13.2
+          smmap: Not Installed
+        textfsm: 0.4.1
+        timelib: Not Installed
+        Tornado: 4.5.3
+            ZMQ: 4.3.1
+
+System Versions:
+           dist: Ubuntu 18.04 bionic
+         locale: UTF\-8
+        machine: x86_64
+        release: 4.18.0\-20\-generic
+         system: Linux
+        version: Ubuntu 18.04 bionic
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Upgrading
+.sp
+To install a newer version, you can execute \fBpip install \-U salt\-sproxy\fP,
+however this is also going to upgrade your Salt installation. So in case you
+would like to use a specific Salt version, it might be a better idea to install
+the specific salt\-sproxy version you want. You can check at
+\fI\%https://pypi.org/project/salt\-sproxy/#history\fP the list of available salt\-sproxy
+versions.
+.sp
+Example:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ pip install salt\-sproxy==2019.6.0
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Using the Roster Interface
+.sp
+While from the CLI perspective \fBsalt\-sproxy\fP looks like it works similar to
+the usual \fBsalt\fP command, in fact, they work fundamentally different. One of
+the most important differences is that \fBsalt\fP is aware of what Minions are
+connected to the Master, therefore it is easy to know what Minions would be
+matched by a certain target expression (see
+\fI\%https://docs.saltstack.com/en/latest/topics/targeting/\fP for further details). In
+contrast, by definition, \fBsalt\-sproxy\fP doesn’t suppose there are any (Proxy)
+Minions running, so it cannot possibly know what Minions would be matched by an
+arbitrary expression. For this reasoning, we need to “help” it by providing
+the list of all the devices it should be aware of. This is done through the
+\fI\%Roster\fP
+interface; even though this Salt subsystem has initially been developed for
+\fI\%salt\-ssh\fP\&.
+.sp
+There are several \fI\%Roster modules\fP
+natively available in Salt, or you may write a custom one in your own
+environment, under the \fBsalt://_roster\fP directory.
+.sp
+To make it work, you would need to provide two configuration options (either
+via the CLI, or through the Master configuration file. See opts, in
+particular \fB\-r\fP (or \fB\-roster\fP), and \fB\-\-roster\-file\fP (when the Roster
+module loads the list of devices from a file).
+.sp
+For example, let’s see how we can use the ansible\-roster\&.
+.SS Roster usage example: Ansible
+.sp
+If you already have an Ansible inventory, simply drop it into a file, e.g.,
+\fB/etc/salt/roster\fP\&.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The Ansible inventory file doesn’t need to provide any connection details,
+as they must be configured into the Pillar. If you do provide them however,
+they will be ignored. The Roster file (Ansible inventory in this case)
+needs to provide really just the name of the devices you want to manage –
+everything else must go into the Pillar.
+.UNINDENT
+.UNINDENT
+.sp
+With that in mind, let’s consider a very simply inventory, e.g.,
+.sp
+\fB/etc/salt/roster\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[routers]
+router1
+router2
+router3
+
+[switches]
+switch1
+switch2
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Reference this file, and tell \fBsalt\-sproxy\fP to interpret this file as an
+Ansible inventory:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+roster: ansible
+roster_file: /etc/salt/roster
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+To verify that the inventory is interpreted correctly, run the following
+command which should display all the possible devices salt\-sproxy should be
+aware of:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \e* \-\-preview\-target
+\- router1
+\- router2
+\- router3
+\- switch1
+\- switch2
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Then you can check that your desired target matches \- say run against all the
+routers:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aqrouter*\(aq \-\-preview\-target
+\- router1
+\- router2
+\- router3
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBHINT:\fP
+.INDENT 0.0
+.INDENT 3.5
+If you don’t provide the Roster name and the path to the Roster file, into
+the Master config file, you can specify them on the command line, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aqrouter*\(aq \-\-preview\-target \-r ansible \-\-roster\-file /etc/salt/roster
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+The default target matching is \fBglob\fP (shell\-like globbing) \- see
+target\-selection for more details, and other target selection options.
+.sp
+\fBIMPORTANT:\fP
+.INDENT 0.0
+.INDENT 3.5
+Keep in mind that some Roster modules may not implement all the possible
+target selection options.
+.UNINDENT
+.UNINDENT
+.sp
+Using the inventory above, we can also use the \fI\%PCRE\fP
+(Perl Compatible Regular Expression) matching and target devices using
+a regular expression, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \-E \(aqrouter(1|2).?\(aq \-\-preview\-target
+\- router1
+\- router2
+$ salt\-sproxy \-E \(aq(switch|router)1\(aq \-\-preview\-target
+\- router1
+\- switch1
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The inventory file doesn’t necessarily need to be flat, can be as complex as
+you want, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+all:
+  children:
+    usa:
+      children:
+        northeast: ~
+        northwest:
+          children:
+            seattle:
+              hosts:
+                edge1.seattle
+            vancouver:
+              hosts:
+                edge1.vancouver
+        southeast:
+          children:
+            atlanta:
+              hosts:
+                edge1.atlanta:
+                edge2.atlanta:
+            raleigh:
+              hosts:
+                edge1.raleigh:
+        southwest:
+          children:
+            san_francisco:
+              hosts:
+                edge1.sfo
+            los_angeles:
+              hosts:
+                edge1.la
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Using this inventory, you can then run, for example, against all the devices in
+Atlanta, to gather the LLDP neighbors for every device:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aq*.atlanta\(aq net.lldp
+edge1.atlanta:
+   ~~~ snip ~~~
+edge2.atlanta:
+   ~~~ snip ~~~
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Targeting using groups
+.sp
+Another very important detail here is that, depending on the structure of the
+inventory, and how the devices are grouped, you can use these groups to target
+using the \fB\-N\fP target type (nodegroup). For example, based on the
+hierarchical inventory file above, we can use these targets:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+# All devices in the USA:
+$ salt\-sproxy \-N usa \-\-preview\-target
+\- edge1.seattle
+\- edge1.vancouver
+\- edge1.atlanta
+\- edge2.atlanta
+\- edge1.raleigh
+\- edge1.la
+\- edge1.sfo
+
+# All devices in the North\-West region:
+$ salt\-sproxy \-N northwest \-\-preview\-target
+\- edge1.seattle
+\- edge1.vancouver
+
+# All devices in the Atlanta area:
+$ salt\-sproxy \-N atlanta \-\-preview\-target
+\- edge1.atlanta
+\- edge2.atlanta
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The nodegroups you can use for targeting depend on the names you’ve assigned
+in your inventory, and sometimes may be more useful to use them vs. the device
+name (which may not contain the area / region / country name).
+.SS Roster usage example: NetBox
+.sp
+The netbox\-roster is a good example of a Roster modules that doesn’t
+work with files, rather gathers the data from
+\fI\%NetBox\fP via the \fI\%API\fP\&.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The NetBox Roster module is currently not available in the official Salt
+releases, and it is distributed as part of the \fBsalt\-sproxy\fP package and
+dynamically loaded on runtime, so you don’t need to worry about that,
+simply reference it, configured the details and documented and start using
+it straight away.
+.UNINDENT
+.UNINDENT
+.sp
+To use the NetBox Roster, simply put the following details in the Master
+configuration you want to use (default \fB/etc/salt/master\fP):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+roster: netbox
+
+netbox:
+ url: <NETBOX_URL>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+You can also specify the \fBtoken\fP, and the \fBkeyfile\fP but for this Roster
+specifically, the \fBurl\fP is sufficient.
+.sp
+To verify that you are indeed able to retrieve the list of devices from your
+NetBox instance, you can, for example, execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-run salt.cmd netbox.filter dcim devices
+# ~~~ should normally return all the devices ~~~
+
+# Or with some specific filters, e.g.:
+$ salt\-run salt.cmd netbox.filter dcim devices site=<SITE> status=<STATUS>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Once confirmed this works well, you can verify that the Roster is able to pull
+the data:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aq*\(aq \-\-preview\-target
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In the same way, you can then start executing Salt commands targeting using
+expressions that match the name of the devices you have in NetBox:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \(aq*atlanta\(aq net.lldp
+edge1.atlanta:
+    ~~~ snip ~~~
+edge2.atlanta:
+    ~~~ snip ~~~
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Other Roster modules
+.sp
+If you may need to load your data from various other data sources, that might
+not be covered in the existing Roster modules. Roster modules are easy to
+write, and you only need to drop them into your \fBsalt://_roster\fP directory,
+then it would be great if you could open source them for the benefit of the
+community (either submit them to this repository, at
+\fI\%https://github.com/mirceaulinic/salt\-sproxy\fP, or to the official
+\fI\%Salt repository\fP on GitHub)
+.SS The Proxy Runner
+.sp
+The proxy\-runner is the core functionality of \fBsalt\-sproxy\fP and can be
+used to trigger jobs as events\-reactions, or invoked when
+salt\-api\&.
+.sp
+In both cases mentioned above you are going to need to have a Salt Master
+running, that allows you to set up the Reactors and the Salt API; that means,
+the \fBproxy\fP Runner needs to be available on your Master. To do so, you have
+two options:
+.SS 1. Reference it from the salt\-sproxy installation
+.sp
+After installing salt\-sproxy, you can execute the following command:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \-\-file\-roots
+salt\-sproxy is installed at: /home/mircea/venvs/salt\-sproxy/lib/python3.6/site\-packages/salt_sproxy
+
+You can configure the file_roots on the Master, e.g.,
+
+file_roots:
+  base:
+    \- /home/mircea/venvs/salt\-sproxy/lib/python3.6/site\-packages/salt_sproxy
+
+Or only for the Runners:
+
+runner_dirs:
+  \- /home/mircea/venvs/salt\-sproxy/lib/python3.6/site\-packages/salt_sproxy/_runners
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+As suggested in the output, you can directly reference the salt\-sproxy
+installation path to start using the \fBproxy\fP Runner (and other extension
+modules included in the package).
+.sp
+A simpler alternative is executing with \fB\-\-save\-file\-roots\fP which adds the
+path for you, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \-\-save\-file\-roots
+/home/mircea/venvs/salt\-sproxy/lib/python3.6/site\-packages/salt_sproxy added to the file_roots:
+
+file_roots:
+  base:
+    \- /home/mircea/venvs/salt\-sproxy/lib/python3.6/site\-packages/salt_sproxy
+
+Now you can start using salt\-sproxy for event\-driven automation, and the Salt REST API.
+See https://salt\-sproxy.readthedocs.io/en/latest/salt_api.rst
+and https://salt\-sproxy.readthedocs.io/en/latest/events.rst for more details.
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS 2. Copy the source file
+.sp
+You can either download it from
+\fI\%https://github.com/mirceaulinic/salt\-sproxy/blob/master/salt_sproxy/_runners/proxy.py\fP,
+e.g., if your \fBfile_roots\fP configuration on the Master looks like:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+file_roots:
+  base:
+    \- /srv/salt
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+You are going to need to create a directory under \fB/srv/salt/_runners\fP, then
+download the \fBproxy\fP Runner there:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/_runners
+$ curl \-o /srv/salt/_runners/proxy.py \-L \e
+  https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/salt_sproxy/_runners/proxy.py
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+In the above I\(aqve used the \fIraw\fP like from GitHub to ensure the source code
+is preserved.
+.UNINDENT
+.UNINDENT
+.sp
+Alternatively, you can also put it under an arbitrary path, e.g.,
+(configuration on the Master)
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+runner_dirs:
+  \- /path/to/runners
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Downloading the \fBproxy\fP Runner under that specific path:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-o /path/to/runners/proxy.py \-L \e
+  https://raw.githubusercontent.com/mirceaulinic/salt\-sproxy/master/salt_sproxy/_runners/proxy.py
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Event\-Driven Automation and Orchestration
+.SS Execution Events
+.sp
+Even though \fBsalt\-sproxy\fP has been designed to be an on\-demand executed
+process  (as in opposite to an always running service), you still have the
+possibility  to monitor what is being executed, and potentially export these
+events or trigger a
+\fI\%Reactor\fP  execution
+in response.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+To be able to have events, you will need to have a Salt Master running, and
+preferrably using the same Master configuration file as salt\-sproxy, to
+ensure that they are both sharing the same socket object.
+.UNINDENT
+.UNINDENT
+.sp
+Using the \fB\-\-events\fP option on the CLI (or by configuring \fBevents: true\fP in
+the Master configuration file), \fBsalt\-sproxy\fP is going to inject events on the
+Salt bus as you’re running the usual Salt commands.
+.sp
+For example, running the following command (from the
+\fI\%salt\-sproxy with network devices\fP
+example):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy juniper\-router net.arp \-\-events
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Watching the event bus on the Master, you should notice the following events:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-run state.event pretty=True
+20190529143434052740        {
+    "_stamp": "2019\-05\-29T14:34:34.053900",
+    "minions": [
+        "juniper\-router"
+    ]
+}
+proxy/runner/20190529143434054424/new       {
+    "_stamp": "2019\-05\-29T14:34:34.055386",
+    "arg": [],
+    "fun": "net.arp",
+    "jid": "20190529143434054424",
+    "minions": [
+        "juniper\-router"
+    ],
+    "tgt": "juniper\-router",
+    "tgt_type": "glob",
+    "user": "mircea"
+}
+proxy/runner/20190529143434054424/ret/juniper\-router        {
+    "_stamp": "2019\-05\-29T14:34:36.937409",
+    "fun": "net.arp",
+    "fun_args": [],
+    "id": "juniper\-router",
+    "jid": "20190529143434054424",
+    "return": {
+        "out": [
+            {
+                "interface": "fxp0.0",
+                "mac": "92:99:00:0A:00:00",
+                "ip": "10.96.0.1",
+                "age": 926.0
+            },
+            {
+                "interface": "fxp0.0",
+                "mac": "92:99:00:0A:00:00",
+                "ip": "10.96.0.13",
+                "age": 810.0
+            },
+            {
+                "interface": "em1.0",
+                "mac": "02:42:AC:13:00:02",
+                "ip": "128.0.0.16",
+                "age": 952.0
+            }
+        ],
+        "result": true,
+        "comment": ""
+    },
+    "success": true
+}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+As in the example, above, every execution pushes at least three events:
+.INDENT 0.0
+.IP \(bu 2
+Job creation. The tag is the JID of the execution.
+.IP \(bu 2
+Job payload with the job details, i.e., function name, arguments, target
+expression and type, matched devices, etc.
+.IP \(bu 2
+One separate return event from every device.
+.UNINDENT
+.sp
+A more experienced Salt user may have already noticed that the structure of
+these events is \fIvery\fP similar to the usual Salt native events when executing
+a regular command using the usual \fBsalt\fP\&. Let’s take an example for clarity:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt \(aqtest\-minion\(aq test.ping
+test\-minion:
+    True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The event bus:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-run state.event pretty=True
+20190529144939496567        {
+    "_stamp": "2019\-05\-29T14:49:39.496954",
+    "minions": [
+        "test\-minion"
+    ]
+}
+salt/job/20190529144939496567/new   {
+    "_stamp": "2019\-05\-29T14:49:39.498021",
+    "arg": [],
+    "fun": "test.ping",
+    "jid": "20190529144939496567",
+    "minions": [
+        "test\-minion"
+    ],
+    "missing": [],
+    "tgt": "test\-minion",
+    "tgt_type": "glob",
+    "user": "sudo_mulinic"
+}
+salt/job/20190529144939496567/ret/test\-minion       {
+    "_stamp": "2019\-05\-29T14:49:39.905727",
+    "cmd": "_return",
+    "fun": "test.ping",
+    "fun_args": [],
+    "id": "test\-minion",
+    "jid": "20190529144939496567",
+    "retcode": 0,
+    "return": true,
+    "success": true
+}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+That said, if you already have Reactors matching Salt events, in order to
+trigger them in response to salt\-sproxy commands, you would only need to update
+the tag matching expression (i.e., besides \fBsalt/job/20190529144939496567/new\fP
+should also match \fBproxy/runner/20190529143434054424/new\fP tags, etc.).
+.sp
+In the exact same way with other Engine types – if you already have Engines
+exporting events, they should be able to export salt\-sproxy events as well,
+which is a great easy win for PCI compliance, and generally to monitor who
+executes what.
+.SS Reactions to external events
+.sp
+Using the runner, you can configure a Reactor to execute a Salt function
+on a (network) device in response to an event.
+.sp
+For example, let’s consider network events from
+\fI\%napalm\-logs\fP\&. To import the napalm\-logs
+events on the Salt bus, simply enable the \fI\%napalm_syslog\fP
+Salt Engine on the Master.
+.sp
+In response to an \fI\%INTERFACE_DOWN\fP
+notification, say we define the following reaction, in response to events with
+the \fBnapalm/syslog/*/INTERFACE_DOWN/*\fP pattern (i.e., matching events such
+as \fBnapalm/syslog/iosxr/INTERFACE_DOWN/edge\-router1\fP,
+\fBnapalm/syslog/junos/INTERFACE_DOWN/edge\-router2\fP, etc.):
+.sp
+\fB/etc/salt/master\fP
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+reactor:
+  \- \(aqnapalm/syslog/*/INTERFACE_DOWN/*\(aq:
+    \- salt://reactor/if_down_shutdown.sls
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBsalt://reactor/if_down_shutdown.sls\fP translates to
+\fB/etc/salt/reactor/if_down_shutdown.sls\fP when \fB/etc/salt\fP is one of the
+configured \fBfile_roots\fP\&. To apply a configuration change on the device with
+the interface down, we can use the \fB_runner.proxy.execute()\fP Runner
+function:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+shutdown_interface:
+  runner.proxy.execute:
+    \- tgt: {{ data.host }}
+    \- function: net.load_template
+    \- kwarg:
+        template_name: salt://templates/shut_interface.jinja
+        interface_name: {{ data.yang_message.interfaces.interface.keys()[0] }}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+This Reactor would apply a configuration change as rendered in the Jinja
+template \fBsalt://templates/shut_interface.jinja\fP (physical path
+\fB/etc/salt/templates/shut_interface.jinja\fP). Or, to have an end\-to\-end
+overview of the system: when the device sends a notification that one interface
+is down, in response, Salt is automatically going to try and remediate the
+problem (in the \fBshut_interface.jinja\fP template you can define the business
+logic you need). Similarly, you can have other concurrent reactions to the
+same, e.g. to send a Slack notification, and email and so on.
+.sp
+For reactions to \fBnapalm\-logs\fP events specifically, you can continue reading
+more at \fI\%https://mirceaulinic.net/2017\-10\-19\-event\-driven\-network\-automation/\fP
+for a more extensive introduction and the napalm\-logs documentation available
+at \fI\%https://napalm\-logs.readthedocs.io/en/latest/\fP, with the difference that
+instead of calling a Salt function directly, you go through the
+\fB_runner.proxy.execute()\fP or \fB_runner.proxy.execute_devices()\fP Runner
+functions.
+.SS Using the Salt REST API
+.sp
+To be able to use the Salt HTTP API, similarly to events, you will
+need to have the Salt Master running, and, of course, also the Salt API
+service.
+.sp
+As the core functionality if based on the proxy\-runner, check out first
+the notes from runner to understand how to have the \fBproxy\fP Runner
+available on your Master.
+.sp
+The Salt API configuration is unchanged from the usual approaches: see
+\fI\%https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html\fP
+how to configure and \fI\%https://docs.saltstack.com/en/latest/ref/cli/salt\-api.html\fP
+how to start up the salt\-api process.
+.sp
+Suppose we have the following configuration:
+.sp
+\fB/etc/salt/master\fP
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+rest_cherrypy:
+  port: 8080
+  ssl_crt: /etc/pki/tls/certs/localhost.crt
+  ssl_key: /etc/pki/tls/certs/localhost.key
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBHINT:\fP
+.INDENT 0.0
+.INDENT 3.5
+Consider looking at the example\-salt\-api example for a more complete
+example on configuring the Salt API, however the official Salt
+documentation should always be used as the reference.
+.UNINDENT
+.UNINDENT
+.sp
+After starting the salt\-api process, we should get the following:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-i localhost:8080
+HTTP/1.1 200 OK
+Content\-Type: application/json
+Server: CherryPy/18.1.1
+Date: Wed, 05 Jun 2019 07:58:32 GMT
+Allow: GET, HEAD, POST
+Access\-Control\-Allow\-Origin: *
+Access\-Control\-Expose\-Headers: GET, POST
+Access\-Control\-Allow\-Credentials: true
+Vary: Accept\-Encoding
+Content\-Length: 146
+
+{"return": "Welcome", "clients": ["local", "local_async", "local_batch", "local_subset", "runner", "runner_async", "ssh", "wheel", "wheel_async"]}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+That means the Salt API is ready to receive requests.
+.sp
+To invoke a command on a (network) device managed through Salt, you can use the
+\fBproxy\fP Runner to invoke commands on, e.g.,
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqpam\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqminion1\(aq \e
+  \-d function=\(aqtest.ping\(aq \e
+  \-d sync=True
+return:
+\- minion1: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Note that the execution is at the \fB/run\fP endpoint, with the following
+details:
+.INDENT 0.0
+.IP \(bu 2
+\fBusername\fP, \fBpassword\fP, \fBeauth\fP as configured in the \fBexternal_auth\fP\&.
+See \fI\%https://docs.saltstack.com/en/latest/topics/eauth/index.html\fP for more
+details and how to configure external authentication.
+.IP \(bu 2
+\fBclient\fP is \fIrunner\fP, as we’re going to use the \fBproxy\fP Runner.
+.IP \(bu 2
+\fBfun\fP is the name of the Runner function, in this case
+\fB_runners.proxy.execute()\fP\&.
+.IP \(bu 2
+\fBtgt\fP is the Minion ID / device name to target.
+.IP \(bu 2
+\fBfunction\fP is the Salt function to execute on the targeted device(s).
+.IP \(bu 2
+\fBsync\fP is set as \fBTrue\fP as the execution must be synchronous because we’re
+waiting for the output to be returned back over the API. Otherwise, if we only
+need to invoke the function without expecting an output, we don’t need to pass
+this argument.
+.UNINDENT
+.sp
+This HTTP request is the equivalent of CLI from the example example\-101:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy minion1 test.ping
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+It works in the same way when execution function on actual devices, for
+instance when gathering the ARP table from a Juniper router (the equivalent
+of the \fBsalt\-sproxy juniper\-router net.arp\fP CLI from the example
+example\-napalm):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqpam\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqjuniper\-router\(aq \e
+  \-d function=\(aqnet.arp\(aq \e
+  \-d sync=True
+return:
+\- juniper\-router:
+    comment: \(aq\(aq
+    out:
+    \- age: 891.0
+      interface: fxp0.0
+      ip: 10.96.0.1
+      mac: 92:99:00:0A:00:00
+    \- age: 1001.0
+      interface: fxp0.0
+      ip: 10.96.0.13
+      mac: 92:99:00:0A:00:00
+    \- age: 902.0
+      interface: em1.0
+      ip: 128.0.0.16
+      mac: 02:42:AC:12:00:02
+    result: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Or when updating the configuration:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqpam\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqjuniper\-router\(aq \e
+  \-d function=\(aqnet.load_config\(aq \e
+  \-d text=\(aqset system ntp server 10.10.10.1\(aq \e
+  \-d test=True \e
+  \-d sync=True
+return:
+\- juniper\-router:
+    already_configured: false
+    comment: Configuration discarded.
+    diff: \(aq[edit system]
+      +   ntp {
+      +       server 10.10.10.1;
+      +   }\(aq
+    loaded_config: \(aq\(aq
+    result: true
+
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqpam\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqjuniper\-router\(aq \e
+  \-d function=\(aqnet.load_config\(aq \e
+  \-d text=\(aqset system ntp server 10.10.10.1\(aq \e
+  \-d sync=True
+return:
+\- juniper\-router:
+    already_configured: false
+    comment: \(aq\(aq
+    diff: \(aq[edit system]
+      +   ntp {
+      +       server 10.10.10.1;
+      +   }\(aq
+    loaded_config: \(aq\(aq
+    result: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+You can follow the same methodology with any other Salt function (including
+States) that you might want to execute against a device, without having a
+(Proxy) Minion running.
+.SS Mixed Environments
+.sp
+When running in a mixed environment (you already have (Proxy) Minions running,
+and you would also like to use the salt\-sproxy), it is highly recommended to
+ensure that salt\-sproxy is using the same configuration file as your Master,
+and the Master is up and running.
+.sp
+Using the \fB\-\-use\-existing\-proxy\fP option on the CLI, or configuring
+\fBuse_existing_proxy: true\fP in the Master configuration file, \fBsalt\-sproxy\fP
+is going to execute the command on the Minions that are connected to this
+Master (and matching your target), otherwise the command is going to be
+executed locally.
+.sp
+For example, suppose we have two devices, identified as \fBminion1\fP and
+\fBminion2\fP, extending the example example\-101:
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  \(aqminion*\(aq:
+    \- dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/dummy.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The Master configuration remains the same:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Starting up the Master, and the \fBminion1\fP Proxy:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+# start the Salt Master
+$ salt\-master \-d
+
+# start the Proxy Minion for \(ga\(gaminion1\(ga\(ga
+$ salt\-proxy \-\-proxyid minion1 \-d
+
+# accept the key of minion1
+$ salt\-key \-y \-a minion1
+
+# check that minion1 is now up and running
+$ salt minion1 test.ping
+minion1:
+    Test
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In a different terminal window, you can start watching the Salt event bus (and
+leave it open, as I’m going to reference the events below):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-run state.event pretty=True
+# here you will see the events flowing
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Executing the following command, notice that the execution takes place locally
+(you can identify using the \fBproxy/runner\fP event tag):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \-L minion1,minion2 test.ping \-\-events
+minion1:
+    True
+minion2:
+    True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The event bus:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+20190603145654312094        {
+    "_stamp": "2019\-06\-03T13:56:54.312664",
+    "minions": [
+        "minion1",
+        "minion2"
+    ]
+}
+proxy/runner/20190603145654313680/new       {
+    "_stamp": "2019\-06\-03T13:56:54.314249",
+    "arg": [],
+    "fun": "test.ping",
+    "jid": "20190603145654313680",
+    "minions": [
+        "minion1",
+        "minion2"
+    ],
+    "tgt": [
+        "minion1",
+        "minion2"
+    ],
+    "tgt_type": "list",
+    "user": "sudo_mircea"
+}
+proxy/runner/20190603145654313680/ret/minion1       {
+    "_stamp": "2019\-06\-03T13:56:54.406816",
+    "fun": "test.ping",
+    "fun_args": [],
+    "id": "minion1",
+    "jid": "20190603145654313680",
+    "return": true,
+    "success": true
+}
+proxy/runner/20190603145654313680/ret/minion2       {
+    "_stamp": "2019\-06\-03T13:56:54.538850",
+    "fun": "test.ping",
+    "fun_args": [],
+    "id": "minion2",
+    "jid": "20190603145654313680",
+    "return": true,
+    "success": true
+}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+As presented in events, there is one event for the job creating, then
+one for job start, and one event for each device separately (i.e.,
+\fBproxy/runner/20190603145654313680/ret/minion1\fP and
+\fBproxy/runner/20190603145654313680/ret/minion2\fP, respectively).
+.sp
+Now, if we want to execute the same, but use the already running Proxy Minion
+for \fBminion1\fP (started previously), simply pass the \fB\-\-use\-existing\-proxy\fP
+option:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-sproxy \-L minion1,minion2 test.ping \-\-events \-\-use\-existing\-proxy
+minion2:
+    True
+minion1:
+    True
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In this case, the event bus would look like below:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy/runner/20190603150335939481/new       {
+    "_stamp": "2019\-06\-03T14:03:35.940128",
+    "arg": [],
+    "fun": "test.ping",
+    "jid": "20190603150335939481",
+    "minions": [
+        "minion1",
+        "minion2"
+    ],
+    "tgt": [
+        "minion1",
+        "minion2"
+    ],
+    "tgt_type": "list",
+    "user": "sudo_mircea"
+}
+salt/job/20190603150335939481/new   {
+    "_stamp": "2019\-06\-03T14:03:36.047971",
+    "arg": [],
+    "fun": "test.ping",
+    "jid": "20190603150335939481",
+    "minions": [
+        "minion1"
+    ],
+    "missing": [],
+    "tgt": "minion1",
+    "tgt_type": "glob",
+    "user": "sudo_mircea"
+}
+salt/job/20190603150335939481/ret/minion1   {
+    "_stamp": "2019\-06\-03T14:03:36.147398",
+    "cmd": "_return",
+    "fun": "test.ping",
+    "fun_args": [],
+    "id": "minion1",
+    "jid": "20190603150335939481",
+    "retcode": 0,
+    "return": true,
+    "success": true
+}
+proxy/runner/20190603150335939481/ret/minion2       {
+    "_stamp": "2019\-06\-03T14:03:36.245592",
+    "fun": "test.ping",
+    "fun_args": [],
+    "id": "minion2",
+    "jid": "20190603150335939481",
+    "return": true,
+    "success": true
+}
+proxy/runner/20190603150335939481/ret/minion1       {
+    "_stamp": "2019\-06\-03T14:03:36.247206",
+    "fun": "test.ping",
+    "fun_args": [],
+    "id": "minion1",
+    "jid": "20190603150335939481",
+    "return": true,
+    "success": true
+}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In this sequence of events, you can notice that, in addition to the events from
+the previous example, there are two additional events:
+\fBsalt/job/20190603150335939481/new\fP \- which is for the job start against the
+\fBminion1\fP Proxy Minion, and \fBsalt/job/20190603150335939481/ret/minion1\fP \-
+which is the return from the \fBminion1\fP Proxy Minion. The presence of the
+\fBsalt/job\fP event tags proves that the execution goes through the already
+existing Proxy Minion.
+.sp
+If you would like to always execute through the available Minions, whenever
+possible, you can add the following option to the Master configuration file:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+use_existing_proxy: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Mircea Ulinic
+.SH COPYRIGHT
+2019, Mircea Ulinic
+.\" Generated by docutils manpage writer.
+.

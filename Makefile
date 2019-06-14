@@ -5,6 +5,8 @@ TAG ?= $(IMAGE):$(VERSION)
 
 release:
 	rm -rf dist
+	rm -rf docs/_build/
+	cd docs && make man && cd ..
 	python setup.py sdist
 	python3 setup.py sdist
 	twine upload dist/* --skip
