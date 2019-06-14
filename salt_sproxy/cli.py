@@ -90,6 +90,15 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                         'file_roots:\n  %s:\n    -' % saltenv,
                         '\n    - '.join([fr for fr in file_roots]),
                     )
+                    log.debug('Syncing Runners on the Master')
+                    runner_client = salt.runner.RunnerClient(self.config)
+                    sync_runners = runner_client.cmd(
+                        'saltutil.sync_runners',
+                        kwarg={'saltenv': saltenv},
+                        print_event=False,
+                    )
+                    log.debug('saltutil.sync_runners output:')
+                    log.debug(sync_runners)
                 else:
                     print(
                         'The %s path is already included into the file_roots' % curpath
