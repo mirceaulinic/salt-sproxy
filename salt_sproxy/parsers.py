@@ -120,11 +120,18 @@ class SaltStandaloneProxyOptionParser(
     default_timeout = 1
 
     description = (
+'''
+  ___          _   _       ___   ___
+ / __|  __ _  | | | |_    / __| | _ \  _ _   ___  __ __  _  _
+ \__ \ / _` | | | |  _|   \__ \ |  _/ | '_| / _ \ \ \ / | || |
+ |___/ \__,_| |_|  \__|   |___/ |_|   |_|   \___/ /_\_\  \_, |
+                                                         |__/
+\n
+'''
         'salt-sproxy is a tool to invoke arbitrary Salt functions on a group\n'
         'of (network) devices connecting through a Salt Proxy Minion, without\n'
-        'having the Proxy Minion services up and running (or the Master).'
+        'having the Proxy Minion services up and running (or the Master).\n'
     )
-
     VERSION = salt_sproxy.version.__version__
 
     usage = '%prog [options] <target> <function> [arguments]'
@@ -140,6 +147,9 @@ class SaltStandaloneProxyOptionParser(
     # LogLevelMixIn attributes
     _default_logging_level_ = config.DEFAULT_MASTER_OPTS['log_level']
     _default_logging_logfile_ = config.DEFAULT_MASTER_OPTS['log_file']
+
+    def format_description(self, formatter):
+        return self.description
 
     def _mixin_setup(self):
         self.add_option(
