@@ -364,7 +364,7 @@ of devices, dynamically:
 
 ``/srv/salt/pillar/devices_pillar.sls``
 
-.. code-block:: yaml
+.. code-block:: jinja
 
     devices:
       {% for id in range(100) %}
@@ -406,6 +406,9 @@ With either of the examples above, the targeting would match:
 
     - minion98
     - minion99
+
+Check also the :ref:`example-pillar-roster` example on how to load the list of
+devices from an External Pillar.
 
 .. _other-roster:
 

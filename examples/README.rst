@@ -10,4 +10,6 @@ Usage Examples
 - `NetBox 
   <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/netbox>`__
 - `Salt API 
-  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/netbox>`__
+  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/salt_api>`__
+- `Using the Pillar Roster module
+  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/pillar_roster>`__
