@@ -265,6 +265,151 @@ expressions that match the name of the devices you have in NetBox:
   edge2.atlanta:
       ~~~ snip ~~~
 
+.. _roster-example-pillar:
+
+Loading the list of devices from the Pillar
+-------------------------------------------
+
+The Pillar subsystem is powerful and flexible enough to be used as an input 
+providing the list of devices and their properties.
+
+To use the :ref:`pillar-roster` you only need to ensure that you can access the
+list of devices you want to manage into a Pillar. The Pillar system is designed 
+to provide data (from whatever source, i.e., HTTP API, database, or any file 
+format you may prefer) to one specific Minion (or some / all). That doesn't 
+mean that the Minion must be up and running, but simply just that one or more
+Minions have access to this data.
+
+In the Master configuration file, configure the ``roster`` or ``proxy_roster``, 
+e.g.,
+
+.. code-block:: yaml
+
+    roster: pillar
+
+By default, the Pillar Roster is going to check the Pillar data for ``*`` (any
+Minion), and load it from the ``devices`` key. In other words, when executing
+``salt-sproxy pillar.show_pillar`` the output should have at least the 
+``devices`` key. To use different settings, have a look at the documentation: 
+:ref:`pillar-roster`.
+
+Consider the following example setup:
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+    pillar_roots:
+      base:
+        - /srv/salt/pillar
+
+    roster: pillar
+
+``/srv/salt/pillar/top.sls``
+
+.. code-block:: yaml
+
+    base:
+      '*':
+        - devices_pillar
+      'minion*':
+        - dummy_pillar
+
+``/srv/salt/pillar/devices_pillar.sls``
+
+.. code-block:: yaml
+
+    devices:
+      - name: minion1
+      - name: minion2
+
+``/srv/salt/pillar/dummy_pillar.sls``
+
+.. code-block:: yaml
+
+    proxy:
+      proxytype: dummy
+
+With this configuration, can verify that the list of expected devices is 
+properly defined:
+
+.. code-block:: bash
+
+    $ salt-run pillar.show_pillar
+    devices:
+        |_
+          ----------
+          name:
+              minion1
+        |_
+          ----------
+          name:
+              minion2
+
+Having this available, we can now start using salt-sproxy:
+
+.. code-block:: bash
+
+    $ salt-sproxy \* --preview-target
+    - minion1
+    - minion2
+
+Everything with the Pillar system doesn't change, so you can very well use
+External Pillar modules as well - see 
+https://docs.saltstack.com/en/latest/ref/pillar/all/index.html for the 
+available list of External Pillars data allow you to load data from external 
+sources. Of course, when working with Pillar SLS files, you can provide them in 
+any format, either Jinja + YAML, or pure Python, e.g. generate a longer list
+of devices, dynamically:
+
+``/srv/salt/pillar/devices_pillar.sls``
+
+.. code-block:: jinja
+
+    devices:
+      {% for id in range(100) %}
+      - name: minion{{ id }}
+      {%- endfor %}
+
+Or:
+
+``/srv/salt/pillar/devices_pillar.sls``
+
+.. code-block:: python
+
+    #!py
+
+    def run():
+        return {
+            'devices': [
+                'minion{}'.format(id_)
+                for id_ in range(100)
+            ]
+        }
+
+.. note::
+
+    The latter Python example would be particularly useful when the data 
+    compilation requires more computation, while keeping the code readable, 
+    e.g., execute HTTP requests, or anything you can usually do in Python 
+    scripts in general.
+
+With either of the examples above, the targeting would match:
+
+.. code-block:: bash
+
+    $ salt-sproxy \* --preview-target
+    - minion0
+    - minion1
+
+    ~~~ snip ~~~
+
+    - minion98
+    - minion99
+
+Check also the :ref:`example-pillar-roster` example on how to load the list of
+devices from an External Pillar.
+
 .. _other-roster:
 
 Other Roster modules

@@ -6,3 +6,4 @@ Extension Roster Modules
 
    ansible
    netbox
+   pillar
