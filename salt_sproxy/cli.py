@@ -97,8 +97,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 print(
                     '\nNow you can start using salt-sproxy for '
                     'event-driven automation, and the Salt REST API.\n'
-                    'See https://salt-sproxy.readthedocs.io/en/latest/salt_api.rst'
-                    '\nand https://salt-sproxy.readthedocs.io/en/latest/events.rst '
+                    'See https://salt-sproxy.readthedocs.io/en/latest/salt_api.html'
+                    '\nand https://salt-sproxy.readthedocs.io/en/latest/events.html '
                     'for more details.'
                 )
             return

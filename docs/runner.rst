@@ -50,8 +50,8 @@ path for you, e.g.,
         - /home/mircea/venvs/salt-sproxy/lib/python3.6/site-packages/salt_sproxy
 
     Now you can start using salt-sproxy for event-driven automation, and the Salt REST API.
-    See https://salt-sproxy.readthedocs.io/en/latest/salt_api.rst
-    and https://salt-sproxy.readthedocs.io/en/latest/events.rst for more details.
+    See https://salt-sproxy.readthedocs.io/en/latest/salt_api.html
+    and https://salt-sproxy.readthedocs.io/en/latest/events.html for more details.
 
 2. Copy the source file
 -----------------------
