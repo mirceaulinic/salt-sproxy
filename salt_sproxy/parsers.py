@@ -3,6 +3,7 @@
 import sys
 import logging
 import optparse
+import multiprocessing
 
 import salt_sproxy.version
 
@@ -12,6 +13,7 @@ import salt.utils.args
 import salt.utils.parsers
 import salt.config as config
 
+
 try:
     from jnpr.junos import __version__ as jnpr_version
 
@@ -19,6 +21,7 @@ try:
 except ImportError:
     jnpr_version = None
 
+CPU_COUNT = multiprocessing.cpu_count()
 
 def salt_information():
     '''
@@ -221,9 +224,12 @@ class SaltStandaloneProxyOptionParser(
             '-b',
             '--batch',
             '--batch-size',
-            default=10,
+            default=CPU_COUNT,
             dest='batch_size',
-            help='The number of devices to connect to in parallel.',
+            help=(
+                'The number of devices to connect to in parallel. '
+                'Default: {}'.format(CPU_COUNT)
+            )
         )
         self.add_option(
             '--preview-target',

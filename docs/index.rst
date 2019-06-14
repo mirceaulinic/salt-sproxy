@@ -292,3 +292,4 @@ See Also
    events
    salt_api
    mixed_envs
+   scale
