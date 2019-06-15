@@ -205,66 +205,6 @@ The nodegroups you can use for targeting depend on the names you've assigned
 in your inventory, and sometimes may be more useful to use them vs. the device 
 name (which may not contain the area / region / country name).
 
-.. _roster-example-netbox:
-
-Roster usage example: NetBox
-----------------------------
-
-The :ref:`netbox-roster` is a good example of a Roster modules that doesn't 
-work with files, rather gathers the data from
-`NetBox <https://github.com/digitalocean/netbox>`__ via the `API 
-<https://netbox.readthedocs.io/en/stable/api/overview/>`__.
-
-.. note::
-
-    The NetBox Roster module is currently not available in the official Salt 
-    releases, and it is distributed as part of the ``salt-sproxy`` package and 
-    dynamically loaded on runtime, so you don't need to worry about that, 
-    simply reference it, configured the details and documented and start using 
-    it straight away.
-
-To use the NetBox Roster, simply put the following details in the Master 
-configuration you want to use (default ``/etc/salt/master``):
-
-.. code-block:: yaml
-
-  roster: netbox
-
-  netbox:
-   url: <NETBOX_URL>
-
-You can also specify the ``token``, and the ``keyfile`` but for this Roster 
-specifically, the ``url`` is sufficient.
-
-To verify that you are indeed able to retrieve the list of devices from your 
-NetBox instance, you can, for example, execute:
-
-.. code-block:: bash
-
-  $ salt-run salt.cmd netbox.filter dcim devices
-  # ~~~ should normally return all the devices ~~~
-
-  # Or with some specific filters, e.g.:
-  $ salt-run salt.cmd netbox.filter dcim devices site=<SITE> status=<STATUS>
-
-Once confirmed this works well, you can verify that the Roster is able to pull 
-the data:
-
-.. code-block:: bash
-
-  $ salt-sproxy '*' --preview-target
-
-In the same way, you can then start executing Salt commands targeting using 
-expressions that match the name of the devices you have in NetBox:
-
-.. code-block:: bash
-
-  $ salt-sproxy '*atlanta' net.lldp
-  edge1.atlanta:
-      ~~~ snip ~~~
-  edge2.atlanta:
-      ~~~ snip ~~~
-
 .. _roster-example-pillar:
 
 Loading the list of devices from the Pillar
@@ -330,7 +270,7 @@ Consider the following example setup:
     proxy:
       proxytype: dummy
 
-With this configuration, can verify that the list of expected devices is 
+With this configuration, you can verify that the list of expected devices is 
 properly defined:
 
 .. code-block:: bash
@@ -354,13 +294,9 @@ Having this available, we can now start using salt-sproxy:
     - minion1
     - minion2
 
-Everything with the Pillar system doesn't change, so you can very well use
-External Pillar modules as well - see 
-https://docs.saltstack.com/en/latest/ref/pillar/all/index.html for the 
-available list of External Pillars data allow you to load data from external 
-sources. Of course, when working with Pillar SLS files, you can provide them in 
-any format, either Jinja + YAML, or pure Python, e.g. generate a longer list
-of devices, dynamically:
+When working with Pillar SLS files, you can provide them in any format, either
+Jinja + YAML, or pure Python, e.g. generate a longer list of devices,
+dynamically:
 
 ``/srv/salt/pillar/devices_pillar.sls``
 
@@ -407,8 +343,119 @@ With either of the examples above, the targeting would match:
     - minion98
     - minion99
 
-Check also the :ref:`example-pillar-roster` example on how to load the list of
-devices from an External Pillar.
+As the Pillar SLS files are flexible enough to allow you to compile the list of 
+devices you want to manage using whatever way you need and possibly coded in 
+Python. Say we would want to gather the list of devices from an HTTP API:
+
+``/srv/salt/pillar/devices_pillar.sls``
+
+.. code-block:: python
+
+    #!py
+
+    import requests
+
+    def run():
+        ret = requests.post('http://example.com/devices')
+        return {'devices': ret.json()}
+
+Or another example, slightly more advanced - retrieve the devices from a
+MySQL database:
+
+``/srv/salt/pillar/devices_pillar.sls``
+
+.. code-block:: python
+
+    #!py
+
+    import mysql.connector
+
+    def run():
+       devices = []
+       mysql_conn = mysql.connector.connect(host='localhost',
+                                            database='database',
+                                            user='user',
+                                            password='password')
+       get_devices_query = 'select * from devices'
+       cursor = mysql_conn.cursor()
+       cursor.execute(get_devices_query)
+       records = cursor.fetchall()
+       for row in records:
+           devices.append({'name': row[1]})
+       cursor.close()
+       return {'devices': devices}
+
+.. important::
+
+  Everything with the Pillar system remains the same as always, so you can very
+  well use also the External Pillar to provide the list of devices - see 
+  https://docs.saltstack.com/en/latest/ref/pillar/all/index.html for the 
+  list of the available External Pillars modules that allow you to load data
+  from various sources.
+
+  Check also the :ref:`example-pillar-roster` example on how to load the list of
+  devices from an External Pillar, as the functionaly you may need might 
+  already be implemented and available.
+
+.. _roster-example-netbox:
+
+Roster usage example: NetBox
+----------------------------
+
+The :ref:`netbox-roster` is a good example of a Roster modules that doesn't 
+work with files, rather gathers the data from
+`NetBox <https://github.com/digitalocean/netbox>`__ via the `API 
+<https://netbox.readthedocs.io/en/stable/api/overview/>`__.
+
+.. note::
+
+    The NetBox Roster module is currently not available in the official Salt 
+    releases, and it is distributed as part of the ``salt-sproxy`` package and 
+    dynamically loaded on runtime, so you don't need to worry about that, 
+    simply reference it, configure the details as documented and start using 
+    it straight away.
+
+To use the NetBox Roster, simply put the following details in the Master 
+configuration you want to use (default ``/etc/salt/master``):
+
+.. code-block:: yaml
+
+  roster: netbox
+
+  netbox:
+   url: <NETBOX_URL>
+
+You can also specify the ``token``, and the ``keyfile`` but for this Roster 
+specifically, the ``url`` is sufficient.
+
+To verify that you are indeed able to retrieve the list of devices from your 
+NetBox instance, you can, for example, execute:
+
+.. code-block:: bash
+
+  $ salt-run salt.cmd netbox.filter dcim devices
+  # ~~~ should normally return all the devices ~~~
+
+  # Or with some specific filters, e.g.:
+  $ salt-run salt.cmd netbox.filter dcim devices site=<SITE> status=<STATUS>
+
+Once confirmed this works well, you can verify that the Roster is able to pull 
+the data:
+
+.. code-block:: bash
+
+  $ salt-sproxy '*' --preview-target
+
+In the same way, you can then start executing Salt commands targeting using 
+expressions that match the name of the devices you have in NetBox:
+
+.. code-block:: bash
+
+  $ salt-sproxy '*atlanta' net.lldp
+  edge1.atlanta:
+      ~~~ snip ~~~
+  edge2.atlanta:
+      ~~~ snip ~~~
 
 .. _other-roster:
 
