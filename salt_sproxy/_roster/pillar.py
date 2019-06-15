@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 '''
-Pillar Roster
-=============
-
 Load the list of devices from the Pillar.
 
 Simply configure the ``roster`` option to point to this module, while making
