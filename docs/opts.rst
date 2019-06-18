@@ -115,6 +115,24 @@ already familiar with a vast majority of them from the `salt
         This option requires a Master to be up and running. See 
         :ref:`mixed-environments` for more information.
 
+.. option:: --no-connect
+
+    .. versionadded: 2019.7.0
+
+    Do not initiate the connection with the remote device. Please use this 
+    option with care, as it may lead to unexptected results. The main use case 
+    (although not limited to) is executing Salt functions that don't 
+    necessarily require the connection, however they may need Pillar or Grains
+    that are associated with each individual device. Such examples include HTTP 
+    requests, working with files, and so on. Keep in mind that, as the 
+    connection is not established, it won't re-compile fresh Grains, therefore 
+    it'll be working with cached data. Make sure that the data you have 
+    available is already cached before executing with ``--no-connect``, by 
+    executing ``grains.items`` and / or ``pillar.items``. The point of this 
+    functionality is to speed up the execution when dealing with a large volume 
+    of execution events (either from the CLI or through the :ref:`runner`), and 
+    when the connection is not actually absolutely necessary.
+
 .. option:: --file-roots, --display-file-roots
 
     Display the location of the salt-sproxy installation, where you can point 
