@@ -562,12 +562,17 @@ def execute_devices(
     ret = {}
     batch_size = int(batch_size)
     batch_count = int(len(minions) / batch_size) + 1
+    log.info('%d devices matched the target, executing in %d batches', len(minions), batch_count)
     for batch_index in range(batch_count):
+        log.info('Batch #%d', batch_index)
         processes = []
         devices_batch = minions[
             batch_index * batch_size : (batch_index + 1) * batch_size
         ]
+        log.info('Devices in batch #%d:', batch_index)
+        log.info(devices_batch)
         for minion_id in devices_batch:
+            log.info('Executing on %s', minion_id)
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
