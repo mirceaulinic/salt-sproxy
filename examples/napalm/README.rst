@@ -151,3 +151,46 @@ through this checklist: https://github.com/napalm-automation/napalm#faq.
   of the most widely used State modules for configuration management through 
   NAPALM being `Netconfig 
   <https://docs.saltstack.com/en/latest/ref/states/all/salt.states.netconfig.html>`__.
+
+.. _example-napalm-easy:
+
+Alternative setup using Docker
+------------------------------
+
+1. Clone the salt-sproxy repository and change dir:
+
+.. code-block:: bash
+
+    $ git clone https://github.com/mirceaulinic/salt-sproxy.git
+    $ cd salt-sproxy/
+
+2. Update the ``examples/napalm/junos.sls`` file with your credentials to 
+   connect to your device.
+
+3. Using the ``allinone-latest`` Docker image (see :ref:`docker`), you can run
+   from this path:
+
+.. code-block:: bash
+
+    $ docker run --rm -v $PWD/examples/napalm/pillar/:/srv/salt/pillar/ \
+        --network host \
+        -ti mirceaulinic/salt-sproxy:allinone-latest bash
+    root@2c68721d93dc:/# salt-sproxy juniper-router test.ping
+    juniper-router:
+        True
+    root@2c68721d93dc:/# salt-sproxy juniper-router net.load_config \
+        text='set system ntp server 10.10.10.1' test=True
+    juniper-router:
+        ----------
+        already_configured:
+            False
+        comment:
+            Configuration discarded.
+        diff:
+            [edit system]
+            +   ntp {
+            +       server 10.10.10.1;
+            +   }
+        loaded_config:
+        result:
+            True

@@ -84,3 +84,26 @@ Having this setup ready, you can go ahead an execute:
           2019.3.9
       cffi:
           1.12.3
+
+.. _example-101-easy:
+
+Alternative setup using Docker
+------------------------------
+
+1. Clone the salt-sproxy repository and change dir:
+
+.. code-block:: bash
+
+    $ git clone https://github.com/mirceaulinic/salt-sproxy.git
+    $ cd salt-sproxy/
+
+2. Using the ``allinone-latest`` Docker image (see :ref:`docker`), you can run
+   from this path:
+
+.. code-block:: bash
+
+    $ docker run --rm -v $PWD/examples/101/pillar/:/srv/salt/pillar/ \
+        -ti mirceaulinic/salt-sproxy:allinone-latest bash
+    root@2c68721d93dc:/# salt-sproxy minion1 test.ping -l error
+    minion1:
+        True

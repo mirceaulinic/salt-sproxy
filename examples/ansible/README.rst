@@ -159,3 +159,63 @@ Having this setup ready, you can go ahead an execute:
       ~~~ snip ~~~
   edge2.atlanta:
       ~~~ snip ~~~
+
+.. _example-ansible-easy:
+
+Alternative setup using Docker
+------------------------------
+
+1. Clone the salt-sproxy repository and change dir:
+
+.. code-block:: bash
+
+    $ git clone https://github.com/mirceaulinic/salt-sproxy.git
+    $ cd salt-sproxy/
+
+2. Update ``examples/ansible/roster`` with your Ansible inventory.
+
+
+3. Update ``examples/ansible/top.sls`` to ensure your Pillar Top file matches 
+   the name of the devices from your Roster / Ansible inventory.
+   Also, update the ``examples/ansible/eos.sls``, ``examples/ansible/junos.sls``
+   etc. files with your credentials to connect to your device(s).
+
+   To double check that the mapping is correct, you can execute:
+
+   .. code-block:: bash
+
+      $ docker run --rm -v $PWD/examples/ansible/master:/etc/salt/master \
+            -v $PWD/examples/ansible/roster:/etc/salt/roster \
+            -v $PWD/examples/ansible/pillar/:/srv/salt/pillar/ \
+            -ti mirceaulinic/salt-sproxy:allinone-latest bash
+
+      root@2c68721d93dc:/# salt-run pillar.show_pillar edge1.atlanta
+      proxy:
+          ----------
+          proxytype:
+              napalm
+          driver:
+              junos
+          hostname:
+              edge1-atlanta.salt-sproxy.digitalocean.cloud.tesuto.com
+          username:
+              test
+          password:
+              t35t1234
+
+4. Using the ``allinone-latest`` Docker image (see :ref:`docker`), you can run
+   from this path:
+
+.. code-block:: bash
+
+    $ docker run --rm -v $PWD/examples/ansible/master:/etc/salt/master \
+        -v $PWD/examples/ansible/roster:/etc/salt/roster \
+        -v $PWD/examples/ansible/pillar/:/srv/salt/pillar/ \
+        --network host \
+        -ti mirceaulinic/salt-sproxy:allinone-latest bash
+
+    root@2c68721d93dc:/# salt-sproxy -N southwest test.ping
+    edge1.la:
+        True
+    edge1.sfo:
+        True
