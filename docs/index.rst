@@ -215,6 +215,8 @@ devices, ``cr1.thn.lon`` and ``cr2.thn.lon``, respectively).
 Note that in any case (with or without the Roster), you will need to provide 
 a valid list of Minions.
 
+.. _docker:
+
 Docker
 ------
 
