@@ -64,34 +64,38 @@ def targets(tgt, tgt_type='glob', **kwargs):
     pillar = __runner__['pillar.show_pillar'](
         minion=minion_id, saltenv=saltenv, pillarenv=pillarenv
     )
-    devices = pillar[pillar_key]
+    pillar_devices = pillar[pillar_key]
     log.debug('Compiled the following list of devices from the Pillar')
-    log.debug(devices)
-    matched_devices = []
+    log.debug(pillar_devices)
+    matched_devices = {}
     if tgt_type == 'glob':
-        matched_devices = [
-            device['name']
-            for device in devices
+        matched_devices = {
+            device['name']: {'minion_opts': device}
+            for device in pillar_devices
             if fnmatch.fnmatch(str(device['name']), tgt)
-        ]
+        }
     elif tgt_type == 'list':
-        matched_devices = [
-            device['name'] for device in devices if device['name'] in tgt
-        ]
+        matched_devices = {
+            device['name']: {'minion_opts': device}
+            for device in pillar_devices
+            if device['name'] in tgt
+        }
     elif tgt_type == 'pcre':
         rgx = re.compile(tgt)
-        matched_devices = [
-            device['name'] for device in devices if rgx.search(device['name'])
-        ]
+        matched_devices = {
+            device['name']: {'minion_opts': device}
+            for device in pillar_devices
+            if rgx.search(device['name'])
+        }
     elif tgt_type in ['grain', 'grain_pcre']:
         grains = __runner__['cache.grains'](tgt, tgt_type=tgt_type)
-        matched_devices = list(grains.keys())
+        matched_devices = {device: {} for device in grains.keys()}
     elif tgt_type in ['pillar', 'pillar_pcre']:
         pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
-        matched_devices = list(pillars.keys())
+        matched_devices = {device: {} for device in pillars.keys()}
     # elif tgt_type == 'compound':
     # TODO: Implement the compound matcher, might need quite a bit of work,
     # need to evaluate if it's worth pulling all this code from
     # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
     # or find a smarter way to achieve that.
-    return {device: {} for device in matched_devices}
+    return matched_devices
