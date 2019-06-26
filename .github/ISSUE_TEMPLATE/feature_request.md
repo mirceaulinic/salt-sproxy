@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: pending triage, feature request
+labels: feature request, pending triage
 assignees: ''
 
 ---
