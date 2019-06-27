@@ -273,6 +273,7 @@ def salt_call(
     no_connect=False,
     jid=None,
     roster_opts=None,
+    test_ping=False,
     args=(),
     **kwargs
 ):
@@ -345,6 +346,11 @@ def salt_call(
     jid: ``None``
         The JID to pass on, when executing.
 
+    test_ping: ``False``
+        When using the existing Proxy Minion with the ``use_existing_proxy``
+        option, can use this argument to verify also if the Minion is
+        responsive.
+
     arg
         The list of arguments to send to the Salt function.
 
@@ -373,13 +379,24 @@ def salt_call(
                 minion_id,
             )
             log.info(
-                'If %s is not responding, you might want to run without --use-existing-proxy',
+                'If %s is not responding, you might want to run without --use-existing-proxy, or with --test-ping',
                 minion_id,
             )
-            ret = __salt__['salt.execute'](
-                minion_id, function, arg=args, kwarg=kwargs, jid=jid
-            )
-            return ret.get(minion_id)
+            test_ping_succeeded = True
+            if test_ping:
+                log.debug('Checking if the Minion %s is responsive', minion_id)
+                ret = __salt__['salt.execute'](minion_id, 'test.ping', jid=jid)
+                test_ping_succeeded = ret.get(minion_id, False)
+            if test_ping_succeeded:
+                ret = __salt__['salt.execute'](
+                    minion_id, function, arg=args, kwarg=kwargs, jid=jid
+                )
+                return ret.get(minion_id)
+            else:
+                log.info(
+                    'Looks like the Minion %s is not responsive, executing locally',
+                    minion_id,
+                )
         else:
             log.debug(
                 '%s doesn\'t seem to be a valid existing Minion, executing locally',
@@ -407,6 +424,7 @@ def salt_call(
     opts['proxy_cache_pillar'] = cache_pillar
     opts['proxy_use_cached_grains'] = use_cached_grains
     opts['proxy_no_connect'] = no_connect
+    opts['proxy_test_ping'] = test_ping
     if use_cached_grains:
         opts['proxy_cached_grains'] = minion_cache.get('grains')
     opts['proxy_use_cached_pillar'] = use_cached_pillar
@@ -457,6 +475,7 @@ def execute_devices(
     use_existing_proxy=False,
     no_connect=False,
     roster_targets=None,
+    test_ping=False,
     **kwargs
 ):
     '''
@@ -542,6 +561,11 @@ def execute_devices(
         Don't attempt to initiate the connection with the remote device.
         Default: ``False`` (it will initiate the connection).
 
+    test_ping: ``False``
+        When using the existing Proxy Minion with the ``use_existing_proxy``
+        option, can use this argument to verify also if the Minion is
+        responsive.
+
     CLI Example:
 
     .. code-block:: bash
@@ -576,6 +600,7 @@ def execute_devices(
         'use_cached_pillar': use_cached_pillar,
         'use_existing_proxy': use_existing_proxy,
         'no_connect': no_connect,
+        'test_ping': test_ping,
     }
     opts.update(kwargs)
     if events:
@@ -666,6 +691,7 @@ def execute(
     use_cached_pillar=True,
     use_existing_proxy=False,
     no_connect=False,
+    test_ping=False,
     **kwargs
 ):
     '''
@@ -761,6 +787,11 @@ def execute(
     no_connect: ``False``
         Don't attempt to initiate the connection with the remote device.
         Default: ``False`` (it will initiate the connection).
+
+    test_ping: ``False``
+        When using the existing Proxy Minion with the ``use_existing_proxy``
+        option, can use this argument to verify also if the Minion is
+        responsive.
 
     CLI Example:
 
@@ -859,5 +890,6 @@ def execute(
         use_existing_proxy=use_existing_proxy,
         no_connect=no_connect,
         roster_targets=rtargets,
+        test_ping=test_ping,
         **kwargs
     )
