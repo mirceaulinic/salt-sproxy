@@ -133,6 +133,20 @@ already familiar with a vast majority of them from the `salt
     of execution events (either from the CLI or through the :ref:`runner`), and 
     when the connection is not actually absolutely necessary.
 
+.. option:: --test-ping
+
+    .. versionadded:: 2019.7.0
+
+    When executing with ``--use-existing-proxy``, you can use this option to 
+    verify whether the Minion is responsive, and only then attempt to send out 
+    the command to be executed on the Minion, otherwise executed the function 
+    locally.
+
+    .. note::
+
+        Keep in mind that this option generates an additional event on the bus
+        for every execution.
+
 .. option:: --file-roots, --display-file-roots
 
     Display the location of the salt-sproxy installation, where you can point 
