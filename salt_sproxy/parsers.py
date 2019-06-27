@@ -287,6 +287,17 @@ class SaltStandaloneProxyOptionParser(
                 'leveraging the event-driven automation and the Salt REST API.'
             ),
         )
+        self.add_option(
+            '--no-connect',
+            dest='no_connect',
+            action='store_true',
+            default=False,
+            help=(
+                'Do not initiate the connection with the device, only use '
+                'cached data to compile data and execute Salt functions that '
+                'do not require the actual connection with the device.'
+            ),
+        )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'
         )

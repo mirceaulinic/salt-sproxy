@@ -198,28 +198,36 @@ class SProxyMinion(SMinion):
         # Reload all modules so all dunder variables are injected
         self.proxy.reload_modules()
 
-        if (
-            '{0}.init'.format(fq_proxyname) not in self.proxy
-            or '{0}.shutdown'.format(fq_proxyname) not in self.proxy
-        ):
-            errmsg = (
-                'Proxymodule {0} is missing an init() or a shutdown() or both. '.format(
-                    fq_proxyname
+        if self.opts.get('proxy_no_connect', False):
+            log.info('Requested not to initialize the connection with the device')
+        else:
+            log.debug('Trying initialize the connection with the device')
+            # When requested --no-connect, don't init the connection, but simply
+            # go ahead and execute the function requested.
+            if (
+                '{0}.init'.format(fq_proxyname) not in self.proxy
+                or '{0}.shutdown'.format(fq_proxyname) not in self.proxy
+            ):
+                errmsg = (
+                    'Proxymodule {0} is missing an init() or a shutdown() or both. '.format(
+                        fq_proxyname
+                    )
+                    + 'Check your proxymodule.  Salt-proxy aborted.'
                 )
-                + 'Check your proxymodule.  Salt-proxy aborted.'
-            )
-            log.error(errmsg)
-            self._running = False
-            raise SaltSystemExit(code=salt.defaults.exitcodes.EX_GENERIC, msg=errmsg)
+                log.error(errmsg)
+                self._running = False
+                raise SaltSystemExit(
+                    code=salt.defaults.exitcodes.EX_GENERIC, msg=errmsg
+                )
 
-        proxy_init_fn = self.proxy[fq_proxyname + '.init']
-        proxy_init_fn(self.opts)
-        if not cached_grains and self.opts.get('proxy_load_grains', True):
-            # When the Grains are loaded from the cache, no need to re-load them
-            # again.
-            loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
-            self.opts['grains'].update(loaded_grains)
-        self.functions.pack['__grains__'] = self.opts['grains']
+            proxy_init_fn = self.proxy[fq_proxyname + '.init']
+            proxy_init_fn(self.opts)
+            if not cached_grains and self.opts.get('proxy_load_grains', True):
+                # When the Grains are loaded from the cache, no need to re-load them
+                # again.
+                loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
+                self.opts['grains'].update(loaded_grains)
+            self.functions.pack['__grains__'] = self.opts['grains']
         self.grains_cache = copy.deepcopy(self.opts['grains'])
         self.ready = True
 
@@ -249,6 +257,7 @@ def salt_call(
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
+    no_connect=False,
     jid=None,
     args=(),
     **kwargs
@@ -315,6 +324,10 @@ def salt_call(
         Use the existing Proxy Minions when they are available (say on an
         already running Master).
 
+    no_connect: ``False``
+        Don't attempt to initiate the connection with the remote device.
+        Default: ``False`` (it will initiate the connection).
+
     jid: ``None``
         The JID to pass on, when executing.
 
@@ -379,6 +392,7 @@ def salt_call(
     opts['proxy_cache_grains'] = cache_grains
     opts['proxy_cache_pillar'] = cache_pillar
     opts['proxy_use_cached_grains'] = use_cached_grains
+    opts['proxy_no_connect'] = no_connect
     if use_cached_grains:
         opts['proxy_cached_grains'] = minion_cache.get('grains')
     opts['proxy_use_cached_pillar'] = use_cached_pillar
@@ -426,6 +440,7 @@ def execute_devices(
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
+    no_connect=False,
     **kwargs
 ):
     '''
@@ -507,6 +522,10 @@ def execute_devices(
         Use the existing Proxy Minions when they are available (say on an
         already running Master).
 
+    no_connect: ``False``
+        Don't attempt to initiate the connection with the remote device.
+        Default: ``False`` (it will initiate the connection).
+
     CLI Example:
 
     .. code-block:: bash
@@ -540,6 +559,7 @@ def execute_devices(
         'use_cached_grains': use_cached_grains,
         'use_cached_pillar': use_cached_pillar,
         'use_existing_proxy': use_existing_proxy,
+        'no_connect': no_connect,
     }
     opts.update(kwargs)
     if events:
@@ -562,12 +582,21 @@ def execute_devices(
     ret = {}
     batch_size = int(batch_size)
     batch_count = int(len(minions) / batch_size) + 1
+    log.info(
+        '%d devices matched the target, executing in %d batches',
+        len(minions),
+        batch_count,
+    )
     for batch_index in range(batch_count):
+        log.info('Batch #%d', batch_index)
         processes = []
         devices_batch = minions[
             batch_index * batch_size : (batch_index + 1) * batch_size
         ]
+        log.info('Devices in batch #%d:', batch_index)
+        log.info(devices_batch)
         for minion_id in devices_batch:
+            log.info('Executing on %s', minion_id)
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
@@ -615,6 +644,7 @@ def execute(
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
+    no_connect=False,
     **kwargs
 ):
     '''
@@ -706,6 +736,10 @@ def execute(
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an
         already running Master).
+
+    no_connect: ``False``
+        Don't attempt to initiate the connection with the remote device.
+        Default: ``False`` (it will initiate the connection).
 
     CLI Example:
 
@@ -801,5 +835,6 @@ def execute(
         use_cached_grains=use_cached_grains,
         use_cached_pillar=use_cached_pillar,
         use_existing_proxy=use_existing_proxy,
+        no_connect=no_connect,
         **kwargs
     )

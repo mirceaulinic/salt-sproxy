@@ -175,6 +175,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'roster',
             'timeout',
             'sync',
+            'no_connect',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:
