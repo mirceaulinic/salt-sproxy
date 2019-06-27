@@ -41,9 +41,8 @@ If you already have an Ansible inventory, simply drop it into a file, e.g.,
 
     The Ansible inventory file doesn't need to provide any connection details, 
     as they must be configured into the Pillar. If you do provide them however, 
-    they will be ignored. The Roster file (Ansible inventory in this case) 
-    needs to provide really just the name of the devices you want to manage -- 
-    everything else must go into the Pillar.
+    they could be used to override the data compiled from the Pillar.
+    See :ref:`ansible-roster-opts` for an example.
 
 With that in mind, let's consider a very simply inventory, e.g.,
 
@@ -171,6 +170,8 @@ Atlanta, to gather the LLDP neighbors for every device:
   edge2.atlanta:
      ~~~ snip ~~~
 
+.. _ansible-roster-groups:
+
 Targeting using groups
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -204,6 +205,108 @@ hierarchical inventory file above, we can use these targets:
 The nodegroups you can use for targeting depend on the names you've assigned 
 in your inventory, and sometimes may be more useful to use them vs. the device 
 name (which may not contain the area / region / country name).
+
+.. _ansible-roster-opts:
+
+Overriding Pillar data
+~~~~~~~~~~~~~~~~~~~~~~
+
+In the Roster file (Ansible inventory) you may prefer to have more specific 
+connection credentials for some particular devices. In this case, you only need 
+to specify them directly under the device, or using ``host_vars`` as normally; 
+for example, let's consider the inventory from the above, with the difference 
+that now ``edge1.raleigh`` has more specific details:
+
+.. code-block:: yaml
+
+  all:
+    children:
+      usa:
+        children:
+          northeast: ~
+          northwest:
+            children:
+              seattle:
+                hosts:
+                  edge1.seattle
+              vancouver:
+                hosts:
+                  edge1.vancouver
+          southeast:
+            children:
+              atlanta:
+                hosts:
+                  edge1.atlanta:
+                  edge2.atlanta:
+              raleigh:
+                hosts:
+                  edge1.raleigh:
+                    username: different
+                    password: not-the-same
+          southwest:
+            children:
+              san_francisco:
+                hosts:
+                  edge1.sfo
+              los_angeles:
+                hosts:
+                  edge1.la
+
+With this Roster, ``salt-sproxy`` will try to authenticate using the username 
+and password specified. The same goes to the rest of the other credentials and 
+fields required by the Proxy module you're using, i.e., ``port``, 
+``optional_args``, etc. - check the Salt documentation to understand what 
+fields you have available.
+
+.. _ansible-roster-grains:
+
+Configuring static Grains
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In a similar way to overriding Pillar data for authentication (see the 
+paragraph above), you can equally configure static Grains per device, by simply 
+providing them under the ``grains`` key, e.g.,
+
+
+.. code-block:: yaml
+
+  all:
+    children:
+      usa:
+        children:
+          northeast: ~
+          northwest:
+            children:
+              seattle:
+                hosts:
+                  edge1.seattle
+              vancouver:
+                hosts:
+                  edge1.vancouver
+          southeast:
+            children:
+              atlanta:
+                hosts:
+                  edge1.atlanta:
+                  edge2.atlanta:
+                    grains:
+                      role: transit
+                      site: atl01
+              raleigh:
+                hosts:
+                  edge1.raleigh:
+          southwest:
+            children:
+              san_francisco:
+                hosts:
+                  edge1.sfo
+              los_angeles:
+                hosts:
+                  edge1.la
+
+With the Roster above, derived from the previous examples, the 
+``edge2.atlanta`` device is going to have two static Grains associated, i.e., 
+``site`` and ``role`` with the values as configured in the Roster.
 
 .. _roster-example-pillar:
 
@@ -396,6 +499,35 @@ MySQL database:
   Check also the :ref:`example-pillar-roster` example on how to load the list of
   devices from an External Pillar, as the functionaly you may need might 
   already be implemented and available.
+
+.. _pillar-roster-grains:
+
+Configuring static Grains
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using the ``devices_pillar.sls`` file from the previous examples, you can 
+provide static Grains per device, under the ``grains`` key, e.g.,
+
+``/srv/salt/pillar/devices_pillar.sls``
+
+.. code-block:: jinja
+
+    devices:
+      {% for id in range(100) %}
+      - name: minion{{ id }}
+        grains:
+          site: site{{ id }}
+      {%- endfor %}
+
+In this case, the Grains data is dynamically generated through the Jinja loop, 
+however it could be provided in any way you'd prefer. Executing the following
+command, you can check that the Grains data is properly distributed:
+
+.. code-block:: bash
+
+    $ salt-sproxy minion17 grains.get site
+    minion17:
+        site17
 
 .. _roster-example-netbox:
 

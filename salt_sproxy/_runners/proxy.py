@@ -159,6 +159,11 @@ class SProxyMinion(SMinion):
         elif cached_pillar:
             self.opts['pillar'].update(cached_pillar)
 
+        if self.opts['roster_opts'] and self.opts.get('proxy_merge_roster_opts', True):
+            if 'proxy' not in self.opts['pillar']:
+                self.opts['pillar']['proxy'] = {}
+            self.opts['pillar']['proxy'].update(self.opts['roster_opts'])
+
         if 'proxy' not in self.opts['pillar'] and 'proxy' not in self.opts:
             errmsg = (
                 'No "proxy" configuration key found in pillar or opts '
@@ -228,6 +233,14 @@ class SProxyMinion(SMinion):
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
                 self.opts['grains'].update(loaded_grains)
             self.functions.pack['__grains__'] = self.opts['grains']
+
+        if (
+            self.opts['roster_opts']
+            and self.opts.get('proxy_merge_roster_grains', True)
+            and 'grains' in self.opts['roster_opts']
+            and isinstance(self.opts['roster_opts']['grains'], dict)
+        ):
+            self.opts['grains'].update(self.opts['roster_opts']['grains'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
         self.ready = True
 
@@ -259,6 +272,7 @@ def salt_call(
     use_existing_proxy=False,
     no_connect=False,
     jid=None,
+    roster_opts=None,
     args=(),
     **kwargs
 ):
@@ -398,6 +412,7 @@ def salt_call(
     opts['proxy_use_cached_pillar'] = use_cached_pillar
     if use_cached_pillar:
         opts['proxy_cached_pillar'] = minion_cache.get('pillar')
+    opts['roster_opts'] = roster_opts
     sa_proxy = StandaloneProxy(opts)
     kwargs = clean_kwargs(**kwargs)
     ret = None
@@ -441,6 +456,7 @@ def execute_devices(
     use_cached_pillar=True,
     use_existing_proxy=False,
     no_connect=False,
+    roster_targets=None,
     **kwargs
 ):
     '''
@@ -597,11 +613,16 @@ def execute_devices(
         log.info(devices_batch)
         for minion_id in devices_batch:
             log.info('Executing on %s', minion_id)
+            device_opts = copy.deepcopy(opts)
+            if roster_targets and isinstance(roster_targets, dict):
+                device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
+                    'minion_opts'
+                )
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
                 args=(minion_id, function, queue, event_args, jid, events),
-                kwargs=opts,
+                kwargs=device_opts,
             )
             device_proc.start()
             processes.append(device_proc)
@@ -749,6 +770,7 @@ def execute(
         salt-run proxy.execute_roster junos-edges test.ping tgt_type=nodegroup
     '''
     targets = []
+    rtargets = None
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
     if not roster or roster == 'None':
         log.info(
@@ -836,5 +858,6 @@ def execute(
         use_cached_pillar=use_cached_pillar,
         use_existing_proxy=use_existing_proxy,
         no_connect=no_connect,
+        roster_targets=rtargets,
         **kwargs
     )
