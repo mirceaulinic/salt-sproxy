@@ -280,6 +280,7 @@ maintainer(s) and community members:
 - Follow [@mirceaulinic](https://twitter.com/mirceaulinic)
 - [Google Groups](https://groups.google.com/forum/#!forum/salt-sproxy)
 - Use the ``salt-sproxy`` tag on [Stack Overflow](https://stackoverflow.com/).
+- The ``#salt-sproxy`` IRC channel on [freenode.net](https://webchat.freenode.net/).
 - The *#saltstack* channel under the
   [networktocode Slack](https://networktocode.slack.com/messages/C0NL8RRMX/).
 
