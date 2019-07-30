@@ -259,6 +259,7 @@ class SaltStandaloneProxyOptionParser(
         self.add_option(
             '--use-proxy',
             '--use-existing-proxy',
+            '--use-existing-minion',
             dest='use_existing_proxy',
             action='store_true',
             help=(
@@ -296,6 +297,17 @@ class SaltStandaloneProxyOptionParser(
                 'Do not initiate the connection with the device, only use '
                 'cached data to compile data and execute Salt functions that '
                 'do not require the actual connection with the device.'
+            ),
+        )
+        self.add_option(
+            '--test-ping',
+            dest='test_ping',
+            action='store_true',
+            default=False,
+            help=(
+                'When using together with --use-existing-proxy, this option can'
+                ' help to ensure the existing Proxy Minion is responsive (not '
+                'only up and running, by executing a ping test.'
             ),
         )
         group = self.output_options_group = optparse.OptionGroup(
