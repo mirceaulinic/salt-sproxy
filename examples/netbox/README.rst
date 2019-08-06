@@ -8,7 +8,7 @@ library installed in the same environment as ``salt-sproxy``, e.g.,
 
 .. code-block:: bash
 
-  $ pip instal pynetbox
+  $ pip install pynetbox
 
 Using the Master configuration file under `examples/netbox/master 
 <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/netbox/master>`__:
