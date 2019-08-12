@@ -129,3 +129,32 @@ Having this setup ready, you can go ahead an execute:
       ~~~ snip ~~~
   edge2.atlanta:
       ~~~ snip ~~~
+
+Alternative setup using Docker
+------------------------------
+
+1. Clone the salt-sproxy repository and change dir:
+
+.. code-block:: bash
+
+    $ git clone https://github.com/mirceaulinic/salt-sproxy.git
+    $ cd salt-sproxy/
+
+2. Update ``examples/netbox/master`` with your NetBox details (URL and token).
+
+   Alternatively, for quick testing, you can also leave the existing values, to
+   use the demo instance available at
+   [https://netbox.live](https://netbox.live/).
+
+3. Using the ``allinone-latest`` Docker image (see :ref:`docker`), you can run
+   from this path (at the repository root):
+
+.. code-block:: bash
+
+    $ docker run --rm -v $PWD/examples/netbox/master:/etc/salt/master \
+        -v $PWD/examples/netbox/pillar/:/srv/salt/pillar/ \
+        --network host \
+        -ti mirceaulinic/salt-sproxy:allinone-latest bash
+
+    root@2c68721d93dc:/# salt-sproxy \* --preview-target
+    - edge1.vlc1
