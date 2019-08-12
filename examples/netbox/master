@@ -5,4 +5,5 @@ pillar_roots:
 proxy_roster: netbox
 
 netbox:
-  url: https://url-to-your-netbox
+  url: https://netbox.live
+  token: 73a5003df5249d57e37efdeaa63b46db577f1f64

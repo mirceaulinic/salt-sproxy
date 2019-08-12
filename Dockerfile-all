@@ -7,4 +7,4 @@ COPY ./roster /etc/salt/roster
 COPY --from=napalmautomation/napalm:develop /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
 COPY --from=napalmautomation/napalm:develop /usr/local/bin/napalm /usr/local/bin/napalm
 
-RUN pip --no-cache-dir install ciscoconfparse jxmlease scp ansible pynetbox
+RUN pip --no-cache-dir install ciscoconfparse==1.3.39 jxmlease==1.0.1 scp=0.13.2 ansible==2.8.1 pynetbox==3.4.11
