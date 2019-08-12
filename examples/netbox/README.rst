@@ -143,8 +143,7 @@ Alternative setup using Docker
 2. Update ``examples/netbox/master`` with your NetBox details (URL and token).
 
    Alternatively, for quick testing, you can also leave the existing values, to
-   use the demo instance available at
-   [https://netbox.live](https://netbox.live/).
+   use the demo instance available at https://netbox.live.
 
 3. Using the ``allinone-latest`` Docker image (see :ref:`docker`), you can run
    from this path (at the repository root):
