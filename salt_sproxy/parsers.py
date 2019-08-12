@@ -239,6 +239,14 @@ class SaltStandaloneProxyOptionParser(
             help='Show the devices expected to match the target.',
         )
         self.add_option(
+            '--sync-modules',
+            dest='sync_modules',
+            action='store_true',
+            help=(
+                'Load the salt-sproxy Execution modules.'
+            ),
+        )
+        self.add_option(
             '--sync-roster',
             dest='sync_roster',
             action='store_true',
