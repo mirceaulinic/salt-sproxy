@@ -22,11 +22,14 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # Import Python std lib
 import copy
+import time
+import hashlib
 import logging
 import threading
 import multiprocessing
 
 # Import Salt modules
+import salt.cache
 import salt.wheel
 import salt.loader
 import salt.output
@@ -692,6 +695,8 @@ def execute(
     use_existing_proxy=False,
     no_connect=False,
     test_ping=False,
+    target_cache=True,
+    target_cache_timeout=60,
     **kwargs
 ):
     '''
@@ -793,6 +798,12 @@ def execute(
         option, can use this argument to verify also if the Minion is
         responsive.
 
+    target_cache: ``True``
+        Whether to use the cached target matching results.
+
+    target_cache_timeout: 60
+        The duration to cache the target results for (in seconds).
+
     CLI Example:
 
     .. code-block:: bash
@@ -844,12 +855,25 @@ def execute(
             elif tgt_type == 'glob' and tgt != '*':
                 targets = [tgt]
     else:
-        log.debug('Computing the target using the %s Roster', roster)
-        roster_modules = salt.loader.roster(__opts__, runner=__salt__)
-        if '.targets' not in roster:
-            roster = '{mod}.targets'.format(mod=roster)
-        rtargets = roster_modules[roster](tgt, tgt_type=tgt_type)
-        targets = list(rtargets.keys())
+        targets = None
+        if target_cache:
+            cache_bank = salt.cache.factory(__opts__)
+            cache_key = hashlib.sha1('{tgt}_{tgt_type}'.format(tgt=tgt, tgt_type=tgt_type).encode()).hexdigest()
+            cache_time_key = '{}_time'.format(cache_key)
+            cache_time = cache_bank.fetch('_salt_sproxy_target', cache_time_key)
+            if cache_time and time.time() - cache_time <= target_cache_timeout:
+                log.debug('Loading the targets from the cache')
+                targets = cache_bank.fetch('_salt_sproxy_target', cache_key)
+        if not targets:
+            log.debug('Computing the target using the %s Roster', roster)
+            roster_modules = salt.loader.roster(__opts__, runner=__salt__)
+            if '.targets' not in roster:
+                roster = '{mod}.targets'.format(mod=roster)
+            rtargets = roster_modules[roster](tgt, tgt_type=tgt_type)
+            targets = list(rtargets.keys())
+            if target_cache:
+                cache_bank.store('_salt_sproxy_target', cache_key, targets)
+                cache_bank.store('_salt_sproxy_target', cache_time_key, time.time())
     log.debug(
         'The target expression "%s" (%s) matched the following:', str(tgt), tgt_type
     )

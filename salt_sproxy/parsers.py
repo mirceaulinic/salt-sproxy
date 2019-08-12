@@ -310,6 +310,15 @@ class SaltStandaloneProxyOptionParser(
                 'only up and running, by executing a ping test.'
             ),
         )
+        self.add_option(
+            '--no-target-cache',
+            dest='no_target_cache',
+            action='store_true',
+            default=False,
+            help=(
+                'Do no load the list of targets from the cache.'
+            ),
+        )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'
         )

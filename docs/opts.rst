@@ -117,7 +117,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --no-connect
 
-    .. versionadded: 2019.7.0
+    .. versionadded: 2019.9.0
 
     Do not initiate the connection with the remote device. Please use this 
     option with care, as it may lead to unexptected results. The main use case 
@@ -135,7 +135,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --test-ping
 
-    .. versionadded:: 2019.7.0
+    .. versionadded:: 2019.9.0
 
     When executing with ``--use-existing-proxy``, you can use this option to 
     verify whether the Minion is responsive, and only then attempt to send out 
@@ -146,6 +146,12 @@ already familiar with a vast majority of them from the `salt
 
         Keep in mind that this option generates an additional event on the bus
         for every execution.
+
+.. option:: --no-target-cache
+
+    .. versionadded:: 2019.9.0
+
+    Avoid loading the list of targets from the cache.
 
 .. option:: --file-roots, --display-file-roots
 
@@ -295,4 +301,3 @@ Output Options
 
     Override the configured state_verbose value for minion
     output. Set to True or False. Default: none.
-
