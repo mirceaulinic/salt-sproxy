@@ -132,6 +132,15 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_path = os.path.join(curpath, '_runners')
         runner_dirs.append(runner_path)
         self.config['runner_dirs'] = runner_dirs
+        if self.config.get('sync_modules', False):
+            # Don't sync modules by default
+            log.debug('Syncing modules')
+            module_dirs = self.config.get('module_dirs', [])
+            module_path = os.path.join(curpath, '_modules')
+            module_dirs.append(module_path)
+            self.config['module_dirs'] = module_dirs
+            # No need to explicitly load the modules here, as during runtime,
+            # Salt is anyway going to load the modules on the fly.
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
         if self.config.get('sync_roster', True):

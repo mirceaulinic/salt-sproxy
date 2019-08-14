@@ -94,6 +94,18 @@ already familiar with a vast majority of them from the `salt
     Synchronise the Roster modules (both salt-sproxy native and provided by the
     user in their own environment). Default: ``True``.
 
+.. option:: --sync-modules
+
+    .. versionadded:: 2019.9.0
+
+    Load the Execution modules provided together with salt-sproxy. Beware that
+    it may override the Salt native modules, or your own extension modules.
+    Default: ``False``.
+
+    You can also add ``sync_modules: true`` into the Master config file, if you
+    want to always ensure that salt-sproxy is using the Execution modules
+    delivered with this package.
+
 .. option:: --events
 
      Whether should put the events on the Salt bus (mostly useful when having a
