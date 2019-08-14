@@ -186,6 +186,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_cached_pillar': 'use_cached_pillar',
             'no_grains': 'with_grains',
             'no_pillar': 'with_pillar',
+            'no_target_cache': 'target_cache'
         }
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):
@@ -193,6 +194,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         kwargs['events'] = self.config.get('events', False)
         kwargs['use_existing_proxy'] = self.config.get('use_existing_proxy', False)
         kwargs['test_ping'] = self.config.get('test_ping', False)
+        kwargs['target_cache_timeout'] = self.config.get('target_cache_timeout', 60)  # seconds
         kwargs['args'] = args
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
