@@ -37,9 +37,7 @@ try:
 except ImportError:
     HAS_PYNETBOX = False
 
-AUTH_ENDPOINTS = (
-    'secrets',
-)
+AUTH_ENDPOINTS = ('secrets',)
 
 
 def __virtual__():
@@ -50,7 +48,7 @@ def __virtual__():
         return (
             False,
             'The netbox execution module cannot be loaded: '
-            'pynetbox library is not installed.'
+            'pynetbox library is not installed.',
         )
     else:
         return True
@@ -125,6 +123,4 @@ def get(app, endpoint, id=None, **kwargs):
         return dict(getattr(getattr(nb, app), endpoint).get(id))
     else:
         clean_kwargs = __utils__['args.clean_kwargs'](**kwargs)
-        return dict(
-            getattr(getattr(nb, app), endpoint).get(**clean_kwargs)
-        )
+        return dict(getattr(getattr(nb, app), endpoint).get(**clean_kwargs))

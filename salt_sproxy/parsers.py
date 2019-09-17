@@ -239,12 +239,20 @@ class SaltStandaloneProxyOptionParser(
             help='Show the devices expected to match the target.',
         )
         self.add_option(
+            '--sync-grains',
+            dest='sync_grains',
+            action='store_true',
+            default=False,
+            help=(
+                'Re-sync the Grains modules. Useful if you have custom Grains '
+                'modules in your own environment.'
+            ),
+        )
+        self.add_option(
             '--sync-modules',
             dest='sync_modules',
             action='store_true',
-            help=(
-                'Load the salt-sproxy Execution modules.'
-            ),
+            help=('Load the salt-sproxy Execution modules.'),
         )
         self.add_option(
             '--sync-roster',
@@ -323,9 +331,7 @@ class SaltStandaloneProxyOptionParser(
             dest='no_target_cache',
             action='store_true',
             default=False,
-            help=(
-                'Do no load the list of targets from the cache.'
-            ),
+            help=('Do no load the list of targets from the cache.'),
         )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'

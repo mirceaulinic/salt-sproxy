@@ -132,6 +132,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_path = os.path.join(curpath, '_runners')
         runner_dirs.append(runner_path)
         self.config['runner_dirs'] = runner_dirs
+        runner_client = None
+        if self.config.get('sync_grains', True):
+            log.debug('Syncing grains')
+            runner_client = salt.runner.RunnerClient(self.config)
+            sync_grains = runner_client.cmd(
+                'saltutil.sync_grains', kwarg={'saltenv': saltenv}, print_event=False
+            )
+            log.debug(sync_grains)
         if self.config.get('sync_modules', False):
             # Don't sync modules by default
             log.debug('Syncing modules')
@@ -150,7 +158,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             roster_path = os.path.join(curpath, '_roster')
             roster_dirs.append(roster_path)
             self.config['roster_dirs'] = roster_dirs
-            runner_client = salt.runner.RunnerClient(self.config)
+            if not runner_client:
+                runner_client = salt.runner.RunnerClient(self.config)
             sync_roster = runner_client.cmd(
                 'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
             )
@@ -195,7 +204,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_cached_pillar': 'use_cached_pillar',
             'no_grains': 'with_grains',
             'no_pillar': 'with_pillar',
-            'no_target_cache': 'target_cache'
+            'no_target_cache': 'target_cache',
         }
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):
@@ -203,7 +212,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         kwargs['events'] = self.config.get('events', False)
         kwargs['use_existing_proxy'] = self.config.get('use_existing_proxy', False)
         kwargs['test_ping'] = self.config.get('test_ping', False)
-        kwargs['target_cache_timeout'] = self.config.get('target_cache_timeout', 60)  # seconds
+        kwargs['target_cache_timeout'] = self.config.get(
+            'target_cache_timeout', 60
+        )  # seconds
         kwargs['args'] = args
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
