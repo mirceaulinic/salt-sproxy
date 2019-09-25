@@ -35,6 +35,7 @@ import salt.loader
 import salt.output
 import salt.version
 import salt.utils.jid
+import salt.utils.master
 from salt.minion import SMinion
 from salt.ext.six.moves import range
 import salt.defaults.exitcodes
@@ -824,25 +825,14 @@ def execute(
             # When targeting exiting Proxies, we're going to look and match the
             # accepted keys
             log.debug('Requested to match the target based on the existing Minions')
-            wheel = salt.wheel.WheelClient(__opts__)
-            if tgt_type == 'list':
-                # accepted_minions = wheel.cmd(
-                #     'key.list', ['accepted'], print_event=False
-                # ).get('minions', [])
-                # log.debug('This Master has the following Minions accepted:')
-                # log.debug(accepted_minions)
-                # targets = [accepted for accepted in accepted_minions if accepted in tgt]
-                # TODO: temporarily deactivated the above, as I thought it might
-                # make more sense to try to execute best efforts on any of the
-                # Minions listed, and later it will be checked if it's possible
-                # to execute on an existing Minion or withing this Runner.
-                # TBD if that's the right decision, re-evaluate while it's still
-                # in beta release.
-                targets = tgt[:]
-            elif tgt_type == 'glob':
-                targets = wheel.cmd('key.name_match', [tgt], print_event=False).get(
-                    'minions', []
-                )
+            target_util = salt.utils.master.MasterPillarUtil(
+                tgt,
+                tgt_type,
+                use_cached_grains=True,
+                grains_fallback=False,
+                opts=__opts__,
+            )
+            targets = target_util._tgt_to_list()
         else:
             # Try a fuzzy match based on the exact target the user requested
             # only when not attempting to match an existing Proxy. If you do
