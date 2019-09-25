@@ -106,6 +106,12 @@ already familiar with a vast majority of them from the `salt
     want to always ensure that salt-sproxy is using the Execution modules
     delivered with this package.
 
+.. option:: --sync-grains
+
+    .. versionadded:: 2019.9.0
+
+    Synchronise the Grains modules you may have in your own environment.
+
 .. option:: --events
 
      Whether should put the events on the Salt bus (mostly useful when having a

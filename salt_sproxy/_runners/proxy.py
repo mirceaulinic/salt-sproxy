@@ -858,7 +858,9 @@ def execute(
         targets = None
         if target_cache:
             cache_bank = salt.cache.factory(__opts__)
-            cache_key = hashlib.sha1('{tgt}_{tgt_type}'.format(tgt=tgt, tgt_type=tgt_type).encode()).hexdigest()
+            cache_key = hashlib.sha1(
+                '{tgt}_{tgt_type}'.format(tgt=tgt, tgt_type=tgt_type).encode()
+            ).hexdigest()
             cache_time_key = '{}_time'.format(cache_key)
             cache_time = cache_bank.fetch('_salt_sproxy_target', cache_time_key)
             if cache_time and time.time() - cache_time <= target_cache_timeout:
