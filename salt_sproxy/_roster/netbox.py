@@ -28,10 +28,16 @@ database available in NetBox, you can configure another key, ``filters``, under
 .. hint::
 
     You can use any NetBox field as a filter.
-    
-    In Netbox v2.6 the default view permissions changed, so sproxy are not able to get the device list from Netbox by default.
-    Add `EXEMPT_VIEW_PERMISSIONS = ['*']` to the configuration.py-file to change this behavior.
-    More information [here](https://github.com/netbox-community/netbox/releases/tag/v2.6.0)
+
+.. important::
+
+    In NetBox v2.6 the default view permissions changed, so ``salt-sproxy`` may
+    not able to get the device list from NetBox by default.
+
+    Add ``EXEMPT_VIEW_PERMISSIONS = ['*']`` to the ``configuration.py`` NetBox
+    file to change this behavior.
+    See https://github.com/netbox-community/netbox/releases/tag/v2.6.0 for more
+    information
 '''
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals

@@ -1,0 +1,104 @@
+.. _release-2019.10.0:
+
+=========
+2019.10.0
+=========
+
+This release includes several new features:
+
+- Improved the granularity of the options that are loaded from the Roster. As 
+  such, this can be used to provide more specific connection parameters per 
+  device (or groups of devices). In other words, if you have one of more 
+  devices that need a more specific, username / password / port / etc. to 
+  establish the connection, you can put those into the Roster.
+
+  The available fields that you can use depend on what the Proxy module of 
+  choice requires, see 
+  https://docs.saltstack.com/en/latest/ref/proxy/all/index.html and check out 
+  the documentation of the Proxy module you're using.
+
+  You can also override the ``proxytype`` value, to use a different Proxy module
+  per device.
+
+  For example, if you're using the :ref:`pillar-roster`, you would typically 
+  have a structure as following:
+
+  .. code-block:: yaml
+
+    devices:
+      - name: device1
+      - name: device2
+      - name: device3
+
+  Where all three devices would be managed, say using the `napalm 
+  <https://docs.saltstack.com/en/latest/ref/proxy/all/salt.proxy.napalm.html>`__
+  Proxy module.
+
+  Say, if you'd like to change ``device2`` to be managed using the `junos 
+  <https://docs.saltstack.com/en/latest/ref/proxy/all/salt.proxy.junos.html>`__
+  Proxy module instead, you can update the above as:
+
+  .. code-block:: yaml
+
+    devices:
+      - name: device1
+      - name: device2
+        proxytype: junos
+      - name: device3
+
+  In a similar way, if you require to authenticate to ``device3`` using 
+  a different username, you can override that as:
+
+  .. code-block:: yaml
+
+    devices:
+      - name: device1
+      - name: device2
+        proxytype: junos
+      - name: device3
+        username: test-username
+
+  While the examples above are using the :ref:`pillar-roster`, they would work 
+  in the same way with other Rosters, such as :ref:`ansible-roster`, etc.
+
+  For a more complete example, make sure to take a look at :ref:`quick-start`.
+
+- Added ``--no-connect`` command line option, to be able to invoke Salt 
+  functions without necessarily establishing the connection with the remote 
+  device. See `--no-connect 
+  <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-no-connect>`__
+  for more details.
+
+- New option `--test-ping 
+  <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-test-ping>`__
+  which can be used in combination with
+  `--use-existing-proxy 
+  <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-use-existing-proxy>`__
+  to ensure that the existing (Proxy) Minion is alive / usable, before
+  attempting to execute the command; when non-responsive, ``salt-sproxy`` will 
+  try to execute the code locally. 
+
+- Starting with this release, when targeting through a Roster, by default, the 
+  list of targets determined using your Roster of choice, is going to be cached 
+  locally. To deactivate this behaviour and re-compute the target at every 
+  execution, you can use the `--no-target-cache 
+  <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-no-target-cache>`__
+  option. This option can also be set in the configuration file as
+  ``no_target_cache: false``.
+
+- Two new options `--sync-grains 
+  <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-sync-grains>`__
+  and `--sync-modules <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-sync-modules>`__
+  to re-sync the Execution or Grain modules that are delivered with the 
+  ``salt-sproxy`` package or from your own environment.
+
+.. important::
+
+    If you are using the :ref:`netbox-roster`, you might want to keep in mind
+    that in Netbox v2.6 the default view permissions changed, so ``salt-sproxy``
+    may not able to get the device list from Netbox by default.
+
+    Add ``EXEMPT_VIEW_PERMISSIONS = ['*']`` to the NetBox ``configuration.py``
+    file to change this behavior.
+    See https://github.com/netbox-community/netbox/releases/tag/v2.6.0 for more
+    information.

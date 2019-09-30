@@ -296,3 +296,4 @@ See Also
    salt_api
    mixed_envs
    scale
+   releases/index
