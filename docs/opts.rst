@@ -133,6 +133,29 @@ already familiar with a vast majority of them from the `salt
         This option requires a Master to be up and running. See 
         :ref:`mixed-environments` for more information.
 
+    .. important::
+
+        When using this option in combination with a Roster, ``salt-sproxy`` 
+        will firstly try to match your target based on the provided Roster, and
+        then only after that will execute the Salt function on the targets, and
+        on the existing Proxy Minions, best efforts. For example, if your target
+        matches two devices, say ``router1`` and ``switch1``, and there's an
+        available Proxy Minion running for ``router1``, then the Salt function
+        would be executed on the ``router1`` existing Minion, over the already 
+        established connection, while for ``switch1`` the connection is going to 
+        be initialised during run time.
+
+        If you want to bypass the Roster matching, and target *only* existing
+        (Proxy) Minions, make sure you don't have the ``roster`` or 
+        ``proxy_roster`` options configured, or execute with ``-r None``, e.g.,
+
+        .. code-block:: bash
+
+            $ salt-sproxy \* --preview-target --use-existing-proxy -r None
+
+        The command above would be the equivalent of the following Salt 
+        command: ``salt \* --preview-target``.
+
 .. option:: --no-connect
 
     .. versionadded: 2019.9.0
