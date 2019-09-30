@@ -158,7 +158,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --no-connect
 
-    .. versionadded: 2019.9.0
+    .. versionadded:: 2019.9.0
 
     Do not initiate the connection with the remote device. Please use this 
     option with care, as it may lead to unexptected results. The main use case 
