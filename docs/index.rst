@@ -287,6 +287,7 @@ See Also
 .. toctree::
    :maxdepth: 1
 
+   quick_start
    opts
    install
    roster
