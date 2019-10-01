@@ -279,6 +279,7 @@ documentation for these modules:
 
    roster/index
    runners/index
+   modules/index
 
 See Also
 --------
@@ -296,3 +297,4 @@ See Also
    salt_api
    mixed_envs
    scale
+   releases/index
