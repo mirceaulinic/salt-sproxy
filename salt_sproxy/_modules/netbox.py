@@ -49,14 +49,9 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
-AUTH_ENDPOINTS = (
-    'secrets',
-)
+AUTH_ENDPOINTS = ('secrets',)
 
-__func_alias__ = {
-    'filter_': 'filter',
-    'get_': 'get'
-}
+__func_alias__ = {'filter_': 'filter', 'get_': 'get'}
 
 
 def __virtual__():
@@ -67,7 +62,7 @@ def __virtual__():
         return (
             False,
             'The netbox execution module cannot be loaded: '
-            'pynetbox library is not installed.'
+            'pynetbox library is not installed.',
         )
     else:
         return True
@@ -204,7 +199,15 @@ def get_(app, endpoint, id=None, **kwargs):
 
         salt myminion netbox.get dcim devices name=my-router
     '''
-    return _dict(_get(app, endpoint, id=id, auth_required=True if app in AUTH_ENDPOINTS else False, **kwargs))
+    return _dict(
+        _get(
+            app,
+            endpoint,
+            id=id,
+            auth_required=True if app in AUTH_ENDPOINTS else False,
+            **kwargs
+        )
+    )
 
 
 def create_manufacturer(name):
@@ -291,7 +294,7 @@ def create_device_role(role, color):
         payload = {'name': role, 'slug': slugify(role), 'color': color}
         role = _add('dcim', 'device-roles', payload)
         if role:
-            return{'dcim': {'device-roles': payload}}
+            return {'dcim': {'device-roles': payload}}
         else:
             return False
 
@@ -350,11 +353,7 @@ def create_site(site):
             return False
 
 
-def create_device(name,
-                  role,
-                  model,
-                  manufacturer,
-                  site):
+def create_device(name, role, model, manufacturer, site):
     '''
     .. versionadded:: 2019.2.0
 
@@ -395,8 +394,14 @@ def create_device(name,
         log.error('%s, %s, %s', e.req.request.headers, e.request_body, e.error)
         return False
 
-    payload = {'name': name, 'display_name': name, 'slug': slugify(name), 'device_type': nb_type['id'],
-               'device_role': nb_role['id'], 'site': nb_site['id']}
+    payload = {
+        'name': name,
+        'display_name': name,
+        'slug': slugify(name),
+        'device_type': nb_type['id'],
+        'device_role': nb_role['id'],
+        'site': nb_site['id'],
+    }
     new_dev = _add('dcim', 'devices', payload)
     if new_dev:
         return {'dcim': {'devices': payload}}
@@ -433,12 +438,14 @@ def update_device(name, **kwargs):
         return False
 
 
-def create_inventory_item(device_name,
-                          item_name,
-                          manufacturer_name=None,
-                          serial='',
-                          part_id='',
-                          description=''):
+def create_inventory_item(
+    device_name,
+    item_name,
+    manufacturer_name=None,
+    serial='',
+    part_id='',
+    description='',
+):
     '''
     .. versionadded:: 2019.2.0
 
@@ -475,8 +482,14 @@ def create_inventory_item(device_name,
         if not nb_man:
             create_manufacturer(manufacturer_name)
             nb_man = get_('dcim', 'manufacturers', name=manufacturer_name)
-    payload = {'device': nb_device['id'], 'name': item_name, 'description': description, 'serial': serial,
-               'part_id': part_id, 'parent': None}
+    payload = {
+        'device': nb_device['id'],
+        'name': item_name,
+        'description': description,
+        'serial': serial,
+        'part_id': part_id,
+        'parent': None,
+    }
     if manufacturer_name:
         payload['manufacturer'] = nb_man['id']
     done = _add('dcim', 'inventory-items', payload)
@@ -523,8 +536,7 @@ def create_interface_connection(interface_a, interface_b):
 
         salt myminion netbox.create_interface_connection 123 456
     '''
-    payload = {'interface_a': interface_a,
-               'interface_b': interface_b}
+    payload = {'interface_a': interface_a, 'interface_b': interface_b}
     ret = _add('dcim', 'interface-connections', payload)
     if ret:
         return {'dcim': {'interface-connections': {ret['id']: payload}}}
@@ -553,10 +565,7 @@ def get_interfaces(device_name=None, **kwargs):
     if not device_name:
         device_name = __opts__['id']
     netbox_device = get_('dcim', 'devices', name=device_name)
-    return filter_('dcim',
-                   'interfaces',
-                   device_id=netbox_device['id'],
-                   **kwargs)
+    return filter_('dcim', 'interfaces', device_id=netbox_device['id'], **kwargs)
 
 
 def openconfig_interfaces(device_name=None):
@@ -586,18 +595,18 @@ def openconfig_interfaces(device_name=None):
         if_name, if_unit = _if_name_unit(interface['name'])
         if if_name not in oc_if:
             oc_if[if_name] = {
-                'config': {
-                    'name': if_name
-                },
-                'subinterfaces': {'subinterface': {}}
-             }
+                'config': {'name': if_name},
+                'subinterfaces': {'subinterface': {}},
+            }
         if if_unit == '0':
             oc_if[if_name]['config']['enabled'] = interface['enabled']
             if interface['description']:
                 if if_name == interface['name']:
                     # When that's a real unit 0 interface
                     # Otherwise it will inherit the description from the subif
-                    oc_if[if_name]['config']['description'] = str(interface['description'])
+                    oc_if[if_name]['config']['description'] = str(
+                        interface['description']
+                    )
                 else:
                     subif_descr = {
                         'subinterfaces': {
@@ -610,19 +619,19 @@ def openconfig_interfaces(device_name=None):
                             }
                         }
                     }
-                    oc_if[if_name] = __utils__['dictupdate.update'](oc_if[if_name], subif_descr)
+                    oc_if[if_name] = __utils__['dictupdate.update'](
+                        oc_if[if_name], subif_descr
+                    )
             if interface['mtu']:
                 oc_if[if_name]['config']['mtu'] = int(interface['mtu'])
         else:
             oc_if[if_name]['subinterfaces']['subinterface'][if_unit] = {
-                'config': {
-                    'index': int(if_unit),
-                    'enabled': interface['enabled']
-                }
+                'config': {'index': int(if_unit), 'enabled': interface['enabled']}
             }
             if interface['description']:
-                oc_if[if_name]['subinterfaces']['subinterface'][if_unit]['config']['description'] =\
-                    str(interface['description'])
+                oc_if[if_name]['subinterfaces']['subinterface'][if_unit]['config'][
+                    'description'
+                ] = str(interface['description'])
     for ipaddress in ipaddresses:
         ip, prefix_length = ipaddress['address'].split('/')
         if_name = ipaddress['interface']['name']
@@ -630,28 +639,16 @@ def openconfig_interfaces(device_name=None):
         ipvkey = 'ipv{}'.format(ipaddress['family'])
         if if_unit not in oc_if[if_name]['subinterfaces']['subinterface']:
             oc_if[if_name]['subinterfaces']['subinterface'][if_unit] = {
-                'config': {
-                    'index': int(if_unit),
-                    'enabled': True
-                }
+                'config': {'index': int(if_unit), 'enabled': True}
             }
         if ipvkey not in oc_if[if_name]['subinterfaces']['subinterface'][if_unit]:
             oc_if[if_name]['subinterfaces']['subinterface'][if_unit][ipvkey] = {
-                'addresses': {
-                    'address': {}
-                }
+                'addresses': {'address': {}}
             }
-        oc_if[if_name]['subinterfaces']['subinterface'][if_unit][ipvkey]['addresses']['address'][ip] = {
-            'config': {
-                'ip': ip,
-                'prefix_length': int(prefix_length)
-            }
-        }
-    return {
-        'interfaces': {
-            'interface': oc_if
-        }
-    }
+        oc_if[if_name]['subinterfaces']['subinterface'][if_unit][ipvkey]['addresses'][
+            'address'
+        ][ip] = {'config': {'ip': ip, 'prefix_length': int(prefix_length)}}
+    return {'interfaces': {'interface': oc_if}}
 
 
 def openconfig_lacp(device_name=None):
@@ -694,30 +691,24 @@ def openconfig_lacp(device_name=None):
                 'config': {
                     'name': parent_if,
                     'interval': 'SLOW',
-                    'lacp_mode': 'ACTIVE'
+                    'lacp_mode': 'ACTIVE',
                 },
-                'members': {
-                    'member': {}
-                }
+                'members': {'member': {}},
             }
         oc_lacp[parent_if]['members']['member'][if_name] = {}
-    return {
-        'lacp': {
-            'interfaces': {
-                'interface': oc_lacp
-            }
-        }
-    }
+    return {'lacp': {'interfaces': {'interface': oc_lacp}}}
 
 
-def create_interface(device_name,
-                     interface_name,
-                     mac_address=None,
-                     description=None,
-                     enabled=None,
-                     lag=None,
-                     lag_parent=None,
-                     form_factor=None):
+def create_interface(
+    device_name,
+    interface_name,
+    mac_address=None,
+    description=None,
+    enabled=None,
+    lag=None,
+    lag_parent=None,
+    form_factor=None,
+):
     '''
     .. versionadded:: 2019.2.0
 
@@ -751,7 +742,9 @@ def create_interface(device_name,
     if not nb_device:
         return False
     if lag_parent:
-        lag_interface = get_('dcim', 'interfaces', device_id=nb_device['id'], name=lag_parent)
+        lag_interface = get_(
+            'dcim', 'interfaces', device_id=nb_device['id'], name=lag_parent
+        )
         if not lag_interface:
             return False
     if not description:
@@ -760,8 +753,13 @@ def create_interface(device_name,
         enabled = 'false'
     # Set default form factor to 1200. This maps to SFP+ (10GE). This should be addressed by
     # the _choices endpoint.
-    payload = {'device': nb_device['id'], 'name': interface_name,
-               'description': description, 'enabled': enabled, 'form_factor': 1200}
+    payload = {
+        'device': nb_device['id'],
+        'name': interface_name,
+        'description': description,
+        'enabled': enabled,
+        'form_factor': 1200,
+    }
     if form_factor is not None:
         payload['form_factor'] = form_factor
     if lag:
@@ -770,7 +768,9 @@ def create_interface(device_name,
         payload['lag'] = lag_interface['id']
     if mac_address:
         payload['mac_address'] = mac_address
-    nb_interface = get_('dcim', 'interfaces', device_id=nb_device['id'], name=interface_name)
+    nb_interface = get_(
+        'dcim', 'interfaces', device_id=nb_device['id'], name=interface_name
+    )
     if not nb_interface:
         nb_interface = _add('dcim', 'interfaces', payload)
     if nb_interface:
@@ -799,7 +799,13 @@ def update_interface(device_name, interface_name, **kwargs):
         salt myminion netbox.update_interface edge_router ae13 mac_address=50:87:69:53:32:D0
     '''
     nb_device = get_('dcim', 'devices', name=device_name)
-    nb_interface = _get('dcim', 'interfaces', auth_required=True, device_id=nb_device['id'], name=interface_name)
+    nb_interface = _get(
+        'dcim',
+        'interfaces',
+        auth_required=True,
+        device_id=nb_device['id'],
+        name=interface_name,
+    )
     if not nb_device:
         return False
     if not nb_interface:
@@ -834,10 +840,18 @@ def delete_interface(device_name, interface_name):
         salt myminion netbox.delete_interface edge_router ae13
     '''
     nb_device = get_('dcim', 'devices', name=device_name)
-    nb_interface = _get('dcim', 'interfaces', auth_required=True, device_id=nb_device['id'], name=interface_name)
+    nb_interface = _get(
+        'dcim',
+        'interfaces',
+        auth_required=True,
+        device_id=nb_device['id'],
+        name=interface_name,
+    )
     if nb_interface:
         nb_interface.delete()
-        return {'DELETE': {'dcim': {'interfaces': {nb_interface.id: nb_interface.name}}}}
+        return {
+            'DELETE': {'dcim': {'interfaces': {nb_interface.id: nb_interface.name}}}
+        }
     return False
 
 
@@ -911,10 +925,7 @@ def get_ipaddresses(device_name=None, **kwargs):
     if not device_name:
         device_name = __opts__['id']
     netbox_device = get_('dcim', 'devices', name=device_name)
-    return filter_('ipam',
-                   'ip-addresses',
-                   device_id=netbox_device['id'],
-                   **kwargs)
+    return filter_('ipam', 'ip-addresses', device_id=netbox_device['id'], **kwargs)
 
 
 def create_ipaddress(ip_address, family, device=None, interface=None):
@@ -944,10 +955,18 @@ def create_ipaddress(ip_address, family, device=None, interface=None):
         nb_device = get_('dcim', 'devices', name=device)
         if not nb_device:
             return False
-        nb_interface = get_('dcim', 'interfaces', device_id=nb_device['id'], name=interface)
+        nb_interface = get_(
+            'dcim', 'interfaces', device_id=nb_device['id'], name=interface
+        )
         if not nb_interface:
             return False
-        nb_addr = get_('ipam', 'ip-addresses', q=ip_address, interface_id=nb_interface['id'], family=family)
+        nb_addr = get_(
+            'ipam',
+            'ip-addresses',
+            q=ip_address,
+            interface_id=nb_interface['id'],
+            family=family,
+        )
         if nb_addr:
             log.error(nb_addr)
             return False
@@ -1013,10 +1032,7 @@ def create_circuit_provider(name, asn=None):
                 'Duplicate provider with different ASN: {}: {}'.format(name, asn)
             )
     else:
-        payload = {
-            'name': name,
-            'slug': slugify(name)
-        }
+        payload = {'name': name, 'slug': slugify(name)}
         if asn:
             payload['asn'] = asn
         circuit_provider = _add('circuits', 'providers', payload)
@@ -1069,10 +1085,7 @@ def create_circuit_type(name):
     if nb_circuit_type:
         return False
     else:
-        payload = {
-            'name': name,
-            'slug': slugify(name)
-        }
+        payload = {'name': name, 'slug': slugify(name)}
         circuit_type = _add('circuits', 'circuit-types', payload)
         if circuit_type:
             return {'circuits': {'circuit-types': {circuit_type['id']: payload}}}
@@ -1110,7 +1123,7 @@ def create_circuit(name, provider_id, circuit_type, description=None):
         payload = {
             'cid': name,
             'provider': nb_circuit_provider['id'],
-            'type': nb_circuit_type['id']
+            'type': nb_circuit_type['id'],
         }
         if description:
             payload['description'] = description
@@ -1126,7 +1139,9 @@ def create_circuit(name, provider_id, circuit_type, description=None):
         return False
 
 
-def create_circuit_termination(circuit, interface, device, speed, xconnect_id=None, term_side='A'):
+def create_circuit_termination(
+    circuit, interface, device, speed, xconnect_id=None, term_side='A'
+):
     '''
     .. versionadded:: 2019.2.0
 
@@ -1156,9 +1171,7 @@ def create_circuit_termination(circuit, interface, device, speed, xconnect_id=No
     nb_interface = get_('dcim', 'interfaces', device_id=nb_device['id'], name=interface)
     nb_circuit = get_('circuits', 'circuits', cid=circuit)
     if nb_circuit and nb_device:
-        nb_termination = get_('circuits',
-                             'circuit-terminations',
-                             q=nb_circuit['cid'])
+        nb_termination = get_('circuits', 'circuit-terminations', q=nb_circuit['cid'])
         if nb_termination:
             return False
         payload = {
@@ -1166,12 +1179,16 @@ def create_circuit_termination(circuit, interface, device, speed, xconnect_id=No
             'interface': nb_interface['id'],
             'site': nb_device['site']['id'],
             'port_speed': speed,
-            'term_side': term_side
+            'term_side': term_side,
         }
         if xconnect_id:
             payload['xconnect_id'] = xconnect_id
         circuit_termination = _add('circuits', 'circuit-terminations', payload)
         if circuit_termination:
-            return {'circuits': {'circuit-terminations': {circuit_termination['id']: payload}}}
+            return {
+                'circuits': {
+                    'circuit-terminations': {circuit_termination['id']: payload}
+                }
+            }
         else:
             return circuit_termination
