@@ -279,6 +279,7 @@ documentation for these modules:
 
    roster/index
    runners/index
+   modules/index
 
 See Also
 --------
