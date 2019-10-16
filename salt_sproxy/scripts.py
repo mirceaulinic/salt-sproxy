@@ -11,6 +11,7 @@ from salt.scripts import _install_signal_handlers
 
 log = logging.getLogger(__name__)
 
+
 def sapi_sproxy(
     self, tgt, fun, tgt_type='glob', timeout=None, full_return=False, **kwargs
 ):

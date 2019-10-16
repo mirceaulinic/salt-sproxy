@@ -58,8 +58,15 @@ setup(
     entry_points={
         'console_scripts': [
             'salt-sapi=salt_sproxy.scripts:salt_sapi',
-            'salt-sproxy=salt_sproxy.scripts:salt_sproxy'
+            'salt-sproxy=salt_sproxy.scripts:salt_sproxy',
         ]
+    },
+    extras_require={
+        'api': ['cherrypy'],
+        'netbox': ['pynetbox'],
+        'napalm': ['napalm'],
+        'junos': ['junos-eznc'],
+        'netmiko': ['netmiko'],
     },
     data_files=[('man/man1', ['docs/man/salt-sproxy.1'])],
 )
