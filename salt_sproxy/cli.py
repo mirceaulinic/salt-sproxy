@@ -119,6 +119,12 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         tgt = self.config['tgt']
         fun = self.config['fun']
         args = self.config['arg']
+        if 'output' not in self.config and fun in (
+            'state.sls',
+            'state.apply',
+            'state.highstate',
+        ):
+            self.config['output'] = 'highstate'
         # To be able to reuse the proxy Runner (which is not yet available
         # natively in Salt), we can override the ``runner_dirs`` configuration
         # option to tell Salt to load that Runner too. This way, we can also
