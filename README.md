@@ -21,9 +21,6 @@ and your (Proxy) Minions at the same time.
 
 > This is NOT a SaltStack product.
 
->    This package may eventually be integrated in a future version of the 
->    official Salt releases, in this form or slightly different.
-
 Prerequisites
 -------------
 
