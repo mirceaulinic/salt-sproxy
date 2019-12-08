@@ -33,6 +33,24 @@ Suppose we have the following configuration:
     example on configuring the Salt API, however the official Salt 
     documentation should always be used as the reference.
 
+Starting with salt-sproxy 2019.12.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    $ curl -sS localhost:8080/run -H 'Accept: application/x-yaml' \
+        -d eauth='pam' \
+        -d username='mircea' \
+        -d password='pass' \
+        -d client='sproxy' \
+        -d tgt='minion1' \
+        -d fun='test.ping'
+   return:
+   - minion1: true
+
+Before salt-sproxy 2019.12.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 After starting the salt-api process, we should get the following:
 
 .. code-block:: bash
