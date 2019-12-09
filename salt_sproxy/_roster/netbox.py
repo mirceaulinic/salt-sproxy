@@ -73,5 +73,5 @@ def targets(tgt, tgt_type='glob', **kwargs):
         device['name']: {'minion_opts': {'grains': {'netbox': device}}}
         for device in netbox_devices
     }
-    engine = getattr(salt_sproxy._roster, tgt_type)
+    engine = salt_sproxy._roster.TGT_FUN[tgt_type]
     return engine(pool, tgt, opts=__opts__)

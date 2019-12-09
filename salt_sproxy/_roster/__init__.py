@@ -5,6 +5,7 @@ Various features for the Roster modules.
 '''
 import re
 import fnmatch
+import logging
 
 from salt.ext import six
 import salt.utils.minions
@@ -14,10 +15,13 @@ try:
 except ImportError:
     from salt.utils import traverse_dict_and_list
 
+log = logging.getLogger(__name__)
+
 
 def glob(pool, tgt, opts=None):
     '''
     '''
+    log.debug('Glob matching on %s ? %s', pool, tgt)
     return {
         minion: pool[minion] for minion in pool.keys() if fnmatch.fnmatch(minion, tgt)
     }
@@ -29,7 +33,8 @@ def grain(pool, tgt, opts=None):
     delimiter = opts.get('delimiter', ':')
     tgt_expr = delimiter.join(tgt.split(delimiter)[:-1])
     tgt_val = tgt.split(delimiter)[-1]
-    return {
+    log.debug('Grain matching on %s ? %s, over %s', tgt_expr, tgt_val, pool)
+    ret = {
         minion: pool[minion]
         for minion in pool.keys()
         if traverse_dict_and_list(
@@ -39,6 +44,9 @@ def grain(pool, tgt, opts=None):
         )
         == tgt_val
     }
+    log.debug('Grain match returned')
+    log.debug(ret)
+    return ret
 
 
 def grain_pcre(pool, tgt, opts=None):
@@ -48,7 +56,8 @@ def grain_pcre(pool, tgt, opts=None):
     tgt_expr = delimiter.join(tgt.split(delimiter)[:-1])
     tgt_val = tgt.split(delimiter)[-1]
     tgt_rgx = re.compile(tgt_val)
-    return {
+    log.debug('Grain regex matching on %s ? %s, over %s', tgt_expr, tgt_val, pool)
+    ret = {
         minion: pool[minion]
         for minion in pool.keys()
         if tgt_rgx.search(
@@ -56,9 +65,14 @@ def grain_pcre(pool, tgt, opts=None):
                 pool[minion].get('minion_opts', {}).get('grains', {}),
                 tgt_expr,
                 delimiter=opts.get('delimiter', ':'),
-            )
+                default='',
+            ),
+            re.I
         )
     }
+    log.debug('Grain regex match returned')
+    log.debug(ret)
+    return ret
 
 
 def pillar(pool, tgt, opts=None):
@@ -94,12 +108,14 @@ def pillar_pcre(pool, tgt, opts=None):
                 pool[minion].get('minion_opts', {}).get('pillar', {}),
                 tgt_expr,
                 delimiter=opts.get('delimiter', ':'),
-            )
+                default='',
+            ),
+            re.I
         )
     }
 
 
-def list(pool, tgt, opts=None):
+def list_(pool, tgt, opts=None):
     '''
     '''
     return {minion: pool[minion] for minion in pool.keys() if minion in tgt}
@@ -123,6 +139,17 @@ def nodegroup(pool, tgt, opts=None):
     return compound(pool, nodegroup_expr, opts=opts)
 
 
+TGT_FUN = {
+    'G': grain,
+    'P': grain_pcre,
+    'I': pillar,
+    'J': pillar_pcre,
+    'L': list_,
+    'N': nodegroup,
+    'E': pcre,
+}
+
+
 def compound(pool, tgt, opts=None):
     '''
     Execute a compound match on a pool of devices returned by the Roster. The
@@ -139,19 +166,9 @@ def compound(pool, tgt, opts=None):
         log.error('Compound target received that is neither string, list nor tuple')
         return minions
 
-    log.debug('compound_match: %s ? %s', minion_id, tgt)
-    ref = {
-        'G': grain,
-        'P': grain_pcre,
-        'I': pillar,
-        'J': pillar_pcre,
-        'L': list_,
-        'N': nodegroup,
-        'E': pcre,
-    }
-
     results = []
     opers = ['and', 'or', 'not', '(', ')']
+
 
     if isinstance(tgt, six.string_types):
         words = tgt.split()
@@ -170,14 +187,16 @@ def compound(pool, tgt, opts=None):
                 if word == 'not':
                     if not results[-1] in ('and', 'or', '('):
                         results.append('and')
+                results.append(word)
             else:
                 # seq start with binary oper, fail
                 if word not in ['(', 'not']:
                     log.error('Invalid beginning operator: %s', word)
                     return {}
+                results.append(word)
 
         elif target_info and target_info['engine']:
-            engine = ref.get(target_info['engine'])
+            engine = TGT_FUN.get(target_info['engine'])
             if not engine:
                 # If an unknown engine is called at any time, fail out
                 log.error(
@@ -186,9 +205,34 @@ def compound(pool, tgt, opts=None):
                     word,
                 )
                 return {}
-            pool = engine(pool, target_info['pattern'], opts=opts)
+            res = engine(pool, target_info['pattern'], opts=opts)
+            results.append(str(set(res.keys())))
 
         else:
-            pool = engine(pool, word, opts=opts)
+            res = glob(pool, word, opts=opts)
+            results.append(str(set(res.keys())))
 
-    return pool
+    log.debug('Collected individual results')
+    log.debug(results)
+
+    expr_chunks = []
+    for res in results:
+        if res == 'and':
+            res = '&'
+        elif res == 'or':
+            res = '|'
+        expr_chunks.append(res)
+
+    match_expr = ' '.join(expr_chunks)
+    log.debug('Matching expression: %s', match_expr)
+    matched_minions = eval(match_expr)
+    log.debug('Matched Minions')
+    log.debug(matched_minions)
+
+    return {
+        minion: pool[minion]
+        for minion in matched_minions
+    }
+
+
+TGT_FUN['compound'] = compound

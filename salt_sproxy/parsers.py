@@ -112,7 +112,7 @@ class SaltStandaloneProxyOptionParser(
         salt.utils.parsers.LogLevelMixIn,
         salt.utils.parsers.HardCrashMixin,
         salt.utils.parsers.SaltfileMixIn,
-        salt.utils.parsers.TargetOptionsMixIn,
+        salt.utils.parsers.ExtendedTargetOptionsMixIn,
         salt.utils.parsers.OutputOptionsMixIn,
         salt.utils.parsers.ArgsStdinMixIn,
         salt.utils.parsers.ProfilingPMixIn,

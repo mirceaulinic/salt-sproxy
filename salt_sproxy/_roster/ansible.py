@@ -146,7 +146,7 @@ def targets(tgt, tgt_type='glob', **kwargs):
     pool = {host: _get_hostvars(host) for host in _get_hosts_from_group('all')}
     log.debug('Ansible devices pool')
     log.debug(pool)
-    engine = getattr(salt_sproxy._roster, tgt_type)
+    engine = salt_sproxy._roster.TGT_FUN[tgt_type]
     return engine(pool, tgt, opts=__opts__)
 
 
