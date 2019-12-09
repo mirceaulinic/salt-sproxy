@@ -36,6 +36,7 @@ import salt.output
 import salt.version
 import salt.utils.jid
 import salt.utils.master
+from salt.ext import six
 from salt.minion import SMinion
 from salt.ext.six.moves import range
 import salt.defaults.exitcodes
@@ -435,6 +436,11 @@ def salt_call(
     if use_cached_pillar:
         opts['proxy_cached_pillar'] = minion_cache.get('pillar')
     opts['roster_opts'] = roster_opts
+    minion_defaults = salt.config.DEFAULT_MINION_OPTS.copy()
+    minion_defaults.update(salt.config.DEFAULT_PROXY_MINION_OPTS)
+    for opt, val in six.iteritems(minion_defaults):
+        if opt not in opts:
+            opts[opt] = val
     sa_proxy = StandaloneProxy(opts)
     kwargs = clean_kwargs(**kwargs)
     ret = None

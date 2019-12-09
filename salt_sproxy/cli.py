@@ -223,9 +223,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         )  # seconds
         kwargs['args'] = args
         self.config['arg'] = [tgt, fun, kwargs]
-        self.config['autoload_dynamic_modules'] = self.config.get(
-            'autoload_dynamic_modules', True
-        )
         runner = salt.runner.Runner(self.config)
 
         # Run this here so SystemExit isn't raised anywhere else when
