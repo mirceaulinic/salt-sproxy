@@ -41,8 +41,6 @@ database available in NetBox, you can configure another key, ``filters``, under
 '''
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals
-import re
-import fnmatch
 
 try:
     import pynetbox  # pylint: disable=unused-import
@@ -50,6 +48,8 @@ try:
     HAS_PYNETBOX = True
 except ImportError:
     HAS_PYNETBOX = False
+
+import salt_sproxy._roster
 
 __virtualname__ = 'netbox'
 
@@ -69,28 +69,9 @@ def targets(tgt, tgt_type='glob', **kwargs):
     netbox_devices = __runner__['salt.cmd'](
         'netbox.filter', 'dcim', 'devices', **netbox_filters
     )
-    if tgt_type == 'glob':
-        devices = [
-            device['name']
-            for device in netbox_devices
-            if fnmatch.fnmatch(str(device['name']), tgt)
-        ]
-    elif tgt_type == 'list':
-        devices = [device['name'] for device in netbox_devices if device['name'] in tgt]
-    elif tgt_type == 'pcre':
-        rgx = re.compile(tgt)
-        devices = [
-            device['name'] for device in netbox_devices if rgx.search(device['name'])
-        ]
-    elif tgt_type in ['grain', 'grain_pcre']:
-        grains = __runner__['cache.grains'](tgt, tgt_type=tgt_type)
-        devices = list(grains.keys())
-    elif tgt_type in ['pillar', 'pillar_pcre']:
-        pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
-        devices = list(pillars.keys())
-    # elif tgt_type == 'compound':
-    # TODO: Implement the compound matcher, might need quite a bit of work,
-    # need to evaluate if it's worth pulling all this code from
-    # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
-    # or find a smarter way to achieve that.
-    return {device: {} for device in devices}
+    pool = {
+        device['name']: {'minion_opts': {'grains': {'netbox': device}}}
+        for device in netbox_devices
+    }
+    engine = getattr(salt_sproxy._roster, tgt_type)
+    return engine(pool, tgt, opts=__opts__)
