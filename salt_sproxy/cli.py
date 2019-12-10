@@ -222,6 +222,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'target_cache_timeout', 60
         )  # seconds
         kwargs['args'] = args
+        kwargs['default_grains'] = self.config.get(
+            'sproxy_grains',
+            self.config.get('default_grains', self.config.get('grains')),
+        )
+        kwargs['default_pillar'] = self.config.get(
+            'sproxy_pillar',
+            self.config.get('default_pillar', self.config.get('pillar')),
+        )
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
 

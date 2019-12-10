@@ -287,6 +287,7 @@ See Also
 
    quick_start
    opts
+   grains
    install
    roster
    runner
