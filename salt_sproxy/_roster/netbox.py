@@ -66,6 +66,8 @@ def targets(tgt, tgt_type='glob', **kwargs):
     '''
     netbox_filters = __opts__.get('netbox', {}).get('filters', {})
     netbox_filters.update(**kwargs)
+    if tgt_type == 'glob' and not any([char in tgt for char in '*?[!']):
+        netbox_filters['name'] = tgt
     netbox_devices = __runner__['salt.cmd'](
         'netbox.filter', 'dcim', 'devices', **netbox_filters
     )

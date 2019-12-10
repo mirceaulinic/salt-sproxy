@@ -140,13 +140,21 @@ def nodegroup(pool, tgt, opts=None):
 
 
 TGT_FUN = {
+    'glob': glob,
     'G': grain,
+    'grain': grain,
     'P': grain_pcre,
+    'grain_pcre': grain_pcre,
     'I': pillar,
+    'pillar': pillar,
     'J': pillar_pcre,
+    'pillar_pcre': pillar_pcre,
     'L': list_,
+    'list': list_,
     'N': nodegroup,
+    'nodegroup': nodegroup,
     'E': pcre,
+    'pcre': pcre,
 }
 
 
