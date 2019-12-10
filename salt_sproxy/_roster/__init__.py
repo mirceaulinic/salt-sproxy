@@ -67,7 +67,7 @@ def grain_pcre(pool, tgt, opts=None):
                 delimiter=opts.get('delimiter', ':'),
                 default='',
             ),
-            re.I
+            re.I,
         )
     }
     log.debug('Grain regex match returned')
@@ -110,7 +110,7 @@ def pillar_pcre(pool, tgt, opts=None):
                 delimiter=opts.get('delimiter', ':'),
                 default='',
             ),
-            re.I
+            re.I,
         )
     }
 
@@ -169,7 +169,6 @@ def compound(pool, tgt, opts=None):
     results = []
     opers = ['and', 'or', 'not', '(', ')']
 
-
     if isinstance(tgt, six.string_types):
         words = tgt.split()
     else:
@@ -216,23 +215,59 @@ def compound(pool, tgt, opts=None):
     log.debug(results)
 
     expr_chunks = []
-    for res in results:
+    parens_count = 0
+    universe = set(pool.keys())
+    # Building the target list, using set theory operations
+    # `X and Y` becomes `X & Y`
+    # `X or Y` becomes `X | Y`
+    # `X and not Y` becomes `X - Y`
+    # `X or not Y` becomes `X | ( U - Y )` where U is the universe, in our case
+    #   being the total group of devices possibly being managed by this
+    #   salt-sproxy instance.
+    #
+    # The following iteration goes through the list of results, and replaces the
+    # CLI operational words, as per logic described above.
+    # TODO: the `and not` operation is fine, but the `or not` might be weak as
+    # it introduces another set of parens which may mess up the expression.
+    # Below, when evaluating the expression, I've added a block to catch the
+    # exception and ask for bug report
+    for index, res in enumerate(results):
+        if res == 'not':
+            res = '{} -'.format(universe)
         if res == 'and':
-            res = '&'
+            if results[index + 1] == 'not':
+                res = '-'
+                results[index + 1] = ''
+            else:
+                res = '&'
         elif res == 'or':
-            res = '|'
+            if results[index + 1] == 'not':
+                res = '| ( {} -'.format(universe)
+                parens_count += 1
+                results[index + 1] = ''
+            else:
+                res = '|'
         expr_chunks.append(res)
+    expr_chunks += ')' * parens_count
 
     match_expr = ' '.join(expr_chunks)
     log.debug('Matching expression: %s', match_expr)
-    matched_minions = eval(match_expr)
+    try:
+        matched_minions = eval(match_expr)  # pylint: disable=W0123
+    except SyntaxError:
+        log.error('Looks like this target expression is failing.')
+        if 'or not' in tgt:
+            log.error(
+                'This may be a salt-sproxy bug, please report at: \n'
+                'https://github.com/mirceaulinic/salt-sproxy/issues/new?'
+                'labels=bug%2C+pending+triage&template=bug_report.md'
+                '&title=Issue%20when%20using%20the%20compound%20target'
+            )
+        return {}
     log.debug('Matched Minions')
     log.debug(matched_minions)
 
-    return {
-        minion: pool[minion]
-        for minion in matched_minions
-    }
+    return {minion: pool[minion] for minion in matched_minions}
 
 
 TGT_FUN['compound'] = compound
