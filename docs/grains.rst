@@ -1,3 +1,5 @@
+.. _static-grains:
+
 Managing Static Grains
 ======================
 
