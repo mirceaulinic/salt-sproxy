@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 def glob(pool, tgt, opts=None):
     '''
     '''
-    log.debug('Glob matching on %s ? %s', pool, tgt)
+    log.debug('Glob matching on %s ? %s', pool.items(), tgt)
     return {
         minion: pool[minion] for minion in pool.keys() if fnmatch.fnmatch(minion, tgt)
     }
@@ -118,12 +118,14 @@ def pillar_pcre(pool, tgt, opts=None):
 def list_(pool, tgt, opts=None):
     '''
     '''
+    log.debug('List matching on %s ? %s', pool.items(), tgt)
     return {minion: pool[minion] for minion in pool.keys() if minion in tgt}
 
 
 def pcre(pool, tgt, opts=None):
     '''
     '''
+    log.debug('PCRE matching on %s ? %s', pool.items(), tgt)
     rgx = re.compile(tgt)
     return {minion: pool[minion] for minion in pool.keys() if rgx.search(minion)}
 
