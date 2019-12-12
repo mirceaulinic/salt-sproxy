@@ -239,6 +239,15 @@ class SaltStandaloneProxyOptionParser(
             help='Show the devices expected to match the target.',
         )
         self.add_option(
+            '--sync-all',
+            dest='sync_all',
+            action='store_true',
+            help=(
+                'Load the all extension modules provided with salt-sproxy, as '
+                'well as the extension modules from your own environment.'
+            ),
+        )
+        self.add_option(
             '--sync-grains',
             dest='sync_grains',
             action='store_true',
