@@ -299,6 +299,16 @@ class SaltStandaloneProxyOptionParser(
             help='Set this directory to search for additional states.'
         )
         self.add_option(
+            '-m', '--module-dirs',
+            dest='module_dirs_cli',
+            default=[],
+            action='append',
+            help=('Specify an additional directory to pull modules from. '
+                  'Multiple directories can be provided by passing '
+                  '`-m/--module-dirs` multiple times.'
+            )
+        )
+        self.add_option(
             '--display-file-roots',
             dest='display_file_roots',
             action='store_true',

@@ -161,6 +161,11 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             self.config['module_dirs'] = module_dirs
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
+        if self.config.get('module_dirs_cli'):
+            log.debug('Loading execution modules from the dirs provided via --module-dirs')
+            module_dirs = self.config.get('module_dirs', [])
+            module_dirs.extend(self.config['module_dirs_cli'])
+            self.config['module_dirs'] = module_dirs
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
         if self.config.get('sync_roster', True):
