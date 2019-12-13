@@ -473,7 +473,7 @@ def execute_devices(
     default_pillar=None,
     args=(),
     batch_size=10,
-    sync=False,
+    static=False,
     tgt=None,
     tgt_type=None,
     jid=None,
@@ -533,7 +533,7 @@ def execute_devices(
     batch_size: ``10``
         The size of each batch to execute.
 
-    sync: ``False``
+    static: ``False``
         Whether to return the results synchronously (or return them as soon
         as the device replies).
 
@@ -627,7 +627,7 @@ def execute_devices(
             },
         )
     queue = multiprocessing.Queue()
-    if not sync:
+    if not static:
         thread = threading.Thread(target=_receive_replies_async, args=(queue,))
         thread.start()
     ret = {}
@@ -664,7 +664,7 @@ def execute_devices(
         for proc in processes:
             proc.join()
     queue.put('FIN.')
-    if sync:
+    if static:
         resp = {}
         while True:
             ret = queue.get()
@@ -693,7 +693,7 @@ def execute(
     default_pillar=None,
     args=(),
     batch_size=10,
-    sync=False,
+    static=False,
     events=True,
     cache_grains=False,
     cache_pillar=False,
@@ -762,7 +762,7 @@ def execute(
     batch_size: ``10``
         The size of each batch to execute.
 
-    sync: ``False``
+    static: ``False``
         Whether to return the results synchronously (or return them as soon
         as the device replies).
 
@@ -903,7 +903,7 @@ def execute(
         default_pillar=default_pillar,
         args=args,
         batch_size=batch_size,
-        sync=sync,
+        static=static,
         events=events,
         cache_grains=cache_grains,
         cache_pillar=cache_pillar,

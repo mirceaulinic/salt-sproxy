@@ -165,13 +165,10 @@ class SaltStandaloneProxyOptionParser(
             help='Absolute path to the Roster file to use.',
         )
         self.add_option(
-            '--sync',
+            '-s', '--static',
             default=False,
             action='store_true',
-            help=(
-                'Return the replies from the devices immediately they are '
-                'received, or everything at once.'
-            ),
+            help=('Return the data from devices as a group after they all return.'),
         )
         self.add_option(
             '--cache-grains',
