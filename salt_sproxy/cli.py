@@ -21,6 +21,7 @@ from salt_sproxy.parsers import SaltStandaloneProxyOptionParser
 
 import os
 import ast
+import sys
 import logging
 
 import salt.runner
@@ -57,6 +58,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         '''
         self.parse_args()
 
+        if self.config.get('config_dump'):
+            sys.stdout.write(safe_dump(self.config, default_flow_style=False))
+            return self.config
+
         # Setup file logging!
         self.setup_logfile_logger()
         verify_log(self.config)
@@ -66,10 +71,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         if not saltenv:
             saltenv = 'base'
         if self.config.get('pillar_root'):
-            log.info('Setting and using %s as the Pillar root', self.config['pillar_root'])
+            log.info(
+                'Setting and using %s as the Pillar root', self.config['pillar_root']
+            )
             self.config['pillar_roots'] = {saltenv: self.config['pillar_root']}
         if self.config.get('file_root'):
-            log.info('Setting and using %s as the Salt file root', self.config['file_root'])
+            log.info(
+                'Setting and using %s as the Salt file root', self.config['file_root']
+            )
             self.config['file_root'] = {saltenv: self.config['file_root']}
         if self.config.get('display_file_roots'):
             print('salt-sproxy is installed at:', curpath)
@@ -162,7 +171,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
         if self.config.get('module_dirs_cli'):
-            log.debug('Loading execution modules from the dirs provided via --module-dirs')
+            log.debug(
+                'Loading execution modules from the dirs provided via --module-dirs'
+            )
             module_dirs = self.config.get('module_dirs', [])
             module_dirs.extend(self.config['module_dirs_cli'])
             self.config['module_dirs'] = module_dirs
