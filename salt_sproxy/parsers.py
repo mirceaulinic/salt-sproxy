@@ -284,7 +284,21 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
-            '--file-roots',
+            '--pillar-root',
+            default=None,
+            help='Set this directory as the base pillar root.'
+        )
+        self.add_option(
+            '--file-root',
+            default=None,
+            help='Set this directory as the base file root.'
+        )
+        self.add_option(
+            '--states-dir',
+            default=None,
+            help='Set this directory to search for additional states.'
+        )
+        self.add_option(
             '--display-file-roots',
             dest='display_file_roots',
             action='store_true',

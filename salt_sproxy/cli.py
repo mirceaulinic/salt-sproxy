@@ -65,6 +65,12 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         saltenv = self.config.get('saltenv')
         if not saltenv:
             saltenv = 'base'
+        if self.config.get('pillar_root'):
+            log.info('Setting and using %s as the Pillar root', self.config['pillar_root'])
+            self.config['pillar_roots'] = {saltenv: self.config['pillar_root']}
+        if self.config.get('file_root'):
+            log.info('Setting and using %s as the Salt file root', self.config['file_root'])
+            self.config['file_root'] = {saltenv: self.config['file_root']}
         if self.config.get('display_file_roots'):
             print('salt-sproxy is installed at:', curpath)
             print('\nYou can configure the file_roots on the Master, e.g.,\n')
@@ -170,6 +176,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
             )
             log.debug(sync_roster)
+        if self.config.get('states_dir'):
+            states_dirs = self.config.get('states_dirs', [])
+            states_dirs.append(self.config['states_dir'])
+            self.config['states_dirs'] = states_dirs
         self.config['fun'] = 'proxy.execute'
         kwargs = {}
         tmp_args = args[:]
