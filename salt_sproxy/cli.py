@@ -258,6 +258,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         )
         kwargs['preload_targeting'] = self.config.get('preload_targeting', False)
         kwargs['invasive_targeting'] = self.config.get('invasive_targeting', False)
+        kwargs['failhard'] = self.config.get('failhard', False)
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
 

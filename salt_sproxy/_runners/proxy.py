@@ -342,6 +342,7 @@ def salt_call(
     tgt_type=None,
     preload_targeting=False,
     invasive_targeting=False,
+    failhard=False,
     args=(),
     **kwargs
 ):
@@ -519,7 +520,10 @@ def salt_call(
     try:
         ret = sa_proxy.functions[function](*args, **kwargs)
     except Exception as err:
+        log.error('Exception while running %s on %s', function, opts['id'])
         log.error(err, exc_info=True)
+        if failhard:
+            raise
     finally:
         shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
         sa_proxy.proxy[shut_fun](opts)
@@ -563,6 +567,7 @@ def execute_devices(
     test_ping=False,
     preload_targeting=False,
     invasive_targeting=False,
+    failhard=False,
     **kwargs
 ):
     '''
@@ -692,6 +697,7 @@ def execute_devices(
         'test_ping': test_ping,
         'tgt': tgt,
         'tgt_type': tgt_type,
+        'failhard': failhard,
     }
     opts.update(kwargs)
     if events:
@@ -719,6 +725,7 @@ def execute_devices(
         len(minions),
         batch_count,
     )
+    stop_iteration = False
     for batch_index in range(batch_count):
         log.info('Batch #%d', batch_index)
         processes = []
@@ -743,7 +750,16 @@ def execute_devices(
             device_proc.start()
             processes.append(device_proc)
         for proc in processes:
+            if stop_iteration:
+                proc.terminate()
+                continue
+            if failhard and proc.exitcode:
+                stop_iteration = True
             proc.join()
+        if stop_iteration:
+            log.error('Exiting as an error has occurred')
+            queue.put('FIN.')
+            raise StopIteration
     queue.put('FIN.')
     if static:
         resp = {}
@@ -787,6 +803,7 @@ def execute(
     target_cache_timeout=60,
     preload_targeting=False,
     invasive_targeting=False,
+    failhard=False,
     **kwargs
 ):
     '''
@@ -1013,5 +1030,6 @@ def execute(
         test_ping=test_ping,
         preload_targeting=preload_targeting,
         invasive_targeting=invasive_targeting,
+        failhard=failhard,
         **kwargs
     )

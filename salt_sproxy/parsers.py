@@ -396,6 +396,13 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--failhard',
+            dest='failhard',
+            action='store_true',
+            default=False,
+            help='Stop execution at the first execution error',
+        )
+        self.add_option(
             '--no-target-cache',
             dest='no_target_cache',
             action='store_true',
