@@ -48,6 +48,12 @@ already familiar with a vast majority of them from the `salt
     Whether should return the entire output at once, or for every device 
     separately as they return.
 
+.. option:: --jid
+
+    .. versionadded:: 2019.12.0
+
+    Pass a custom JID (Job ID) to be used instead of generating one.
+
 .. option:: --cache-grains
 
     Cache the collected Grains. Beware that this option overwrites the existing
