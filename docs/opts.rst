@@ -34,6 +34,13 @@ already familiar with a vast majority of them from the `salt
     the configuration files for Salt master and minions. The default location
     on most systems is ``/etc/salt``.
 
+.. config:: --config-dump
+
+    .. versionadded:: 2019.12.0
+
+    Print the complete salt-sproxy configuration values (with the defaults), as 
+    YAML.
+
 .. option:: -r, --roster
 
     The Roster module to use to compile the list of targeted devices.
@@ -193,6 +200,32 @@ already familiar with a vast majority of them from the `salt
     .. versionadded:: 2019.10.0
 
     Avoid loading the list of targets from the cache.
+
+.. option:: --pillar-root
+
+    .. versionadded:: 2019.12.0
+
+    Set a specific directory as the base pillar root.
+
+.. option:: --file-root
+
+    .. versionadded:: 2019.12.0
+
+    Set a specific directory as the base file root.
+
+.. option:: --states-dir
+
+    .. versionadded:: 2019.12.0
+
+    Set a specific directory to search for additional States.
+
+.. option:: -m, --module-dirs
+
+    .. versionadded:: 2019.12.0
+
+    Specify one or more directories where to load the extension modules from.
+    Multiple directories can be provided by passing ``-m`` or 
+    ``--module-dirs`` multiple times.
 
 .. option:: --file-roots, --display-file-roots
 
