@@ -45,6 +45,20 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --sync
 
+    .. versionremoved:: 2019.12.0
+
+        This option has been replaced by ``--static`` (see below).
+
+    Whether should return the entire output at once, or for every device 
+    separately as they return.
+
+.. option:: -s, --static
+
+    .. versionadded:: 2019.12.0
+
+        Starting with this release, ``--static``, replaces the previous CLI
+        option ``--sync``, with the same functionality.
+
     Whether should return the entire output at once, or for every device 
     separately as they return.
 
