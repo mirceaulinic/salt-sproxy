@@ -156,6 +156,12 @@ already familiar with a vast majority of them from the `salt
 
     The number of devices to connect to in parallel.
 
+.. option:: --failhard
+
+    .. versionadded:: 2019.12.0
+
+    Stop the execution at the first error.
+
 .. option:: --preview-target
 
     Show the devices expected to match the target, without executing any 
