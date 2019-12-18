@@ -421,7 +421,12 @@ class SaltStandaloneProxyOptionParser(
             action='store_true',
             help='Do not display the results of the run.',
         )
-
+        self.add_option(
+            '--summary',
+            default=False,
+            action='store_true',
+            help='Display salt execution summary information.',
+        )
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
     def _mixin_after_parsed(self):

@@ -226,6 +226,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'timeout',
             'static',
             'no_connect',
+            'failhard',
+            'summary',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:
