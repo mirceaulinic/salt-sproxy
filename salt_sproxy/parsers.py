@@ -112,7 +112,7 @@ class SaltStandaloneProxyOptionParser(
         salt.utils.parsers.LogLevelMixIn,
         salt.utils.parsers.HardCrashMixin,
         salt.utils.parsers.SaltfileMixIn,
-        salt.utils.parsers.TargetOptionsMixIn,
+        salt.utils.parsers.ExtendedTargetOptionsMixIn,
         salt.utils.parsers.OutputOptionsMixIn,
         salt.utils.parsers.ArgsStdinMixIn,
         salt.utils.parsers.ProfilingPMixIn,
@@ -213,6 +213,36 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--preload-targeting',
+            default=False,
+            action='store_true',
+            help=(
+                'Preload Grains for all the devices before targeting.'
+                'This is useful to match the devices on dynamic Grains that '
+                'do not require the connection with the remote device - e.g., '
+                'Grains collected from an external API, etc.'
+            ),
+        )
+        self.add_option(
+            '--invasive-targeting',
+            default=False,
+            action='store_true',
+            help=(
+                'Collect all the possible data from every device salt-sproxy '
+                'is aware of, before distributing the commands. '
+                'In other words, this option tells salt-sproxy to connect to '
+                'every possible device defined in the Roster of choice, collect '
+                'Grains, compile Pillars, etc., and only then execute the '
+                'command against the devices matching the target expression.'
+                'Use with care, as this may significantly reduce the '
+                'performances, but this is the price paid to be able to target '
+                'using device properties. '
+                'Consider using this option in conjunction with --cache-grains '
+                'and / or --cache-pillar to cache the Grains and the Pillars to '
+                're-use them straight away next time.'
+            ),
+        )
+        self.add_option(
             '--no-pillar',
             default=False,
             action='store_true',
@@ -237,6 +267,15 @@ class SaltStandaloneProxyOptionParser(
             dest='preview_target',
             action='store_true',
             help='Show the devices expected to match the target.',
+        )
+        self.add_option(
+            '--sync-all',
+            dest='sync_all',
+            action='store_true',
+            help=(
+                'Load the all extension modules provided with salt-sproxy, as '
+                'well as the extension modules from your own environment.'
+            ),
         )
         self.add_option(
             '--sync-grains',

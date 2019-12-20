@@ -93,6 +93,7 @@ import re
 import copy
 import json
 import fnmatch
+import logging
 
 # Import Salt libs
 import salt.utils
@@ -105,6 +106,10 @@ except ImportError:
     from salt.utils import which as utils_which
     from salt.utils import to_str as utils_to_str
 
+# Import salt-sproxy modules
+import salt_sproxy._roster
+
+log = logging.getLogger(__name__)
 
 CONVERSION = {
     'ansible_ssh_host': 'host',
@@ -135,29 +140,17 @@ def targets(tgt, tgt_type='glob', **kwargs):
     )
     __context__['inventory'] = json.loads(utils_to_str(inventory))
 
-    if tgt_type == 'glob':
-        hosts = [
-            host for host in _get_hosts_from_group('all') if fnmatch.fnmatch(host, tgt)
-        ]
-    elif tgt_type == 'list':
-        hosts = [host for host in _get_hosts_from_group('all') if host in tgt]
-    elif tgt_type == 'pcre':
-        rgx = re.compile(tgt)
-        hosts = [host for host in _get_hosts_from_group('all') if rgx.search(host)]
-    elif tgt_type in ['grain', 'grain_pcre']:
-        grains = __runner__['cache.grains'](tgt, tgt_type=tgt_type)
-        hosts = list(grains.keys())
-    elif tgt_type in ['pillar', 'pillar_pcre']:
-        pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
-        hosts = list(pillars.keys())
-    # elif tgt_type == 'compound':
-    # TODO: Implement the compound matcher, might need quite a bit of work,
-    # need to evaluate if it's worth pulling all this code from
-    # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
-    # or find a smarter way to achieve that.
-    elif tgt_type == 'nodegroup':
+    if tgt_type == 'nodegroup':
         hosts = _get_hosts_from_group(tgt)
-    return {host: _get_hostvars(host) for host in hosts}
+        return {host: _get_hostvars(host) for host in hosts}
+    pool = {host: _get_hostvars(host) for host in _get_hosts_from_group('all')}
+    pool = salt_sproxy._roster.load_cache(
+        pool, __runner__, __opts__, tgt, tgt_type=tgt_type
+    )
+    log.debug('Ansible devices pool')
+    log.debug(pool)
+    engine = salt_sproxy._roster.TGT_FUN[tgt_type]
+    return engine(pool, tgt, opts=__opts__)
 
 
 def _get_hosts_from_group(group):

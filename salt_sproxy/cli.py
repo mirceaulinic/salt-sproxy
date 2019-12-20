@@ -139,14 +139,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_dirs.append(runner_path)
         self.config['runner_dirs'] = runner_dirs
         runner_client = None
-        if self.config.get('sync_grains', True):
+        if self.config.get('sync_all', False) or self.config.get('sync_grains', True):
             log.debug('Syncing grains')
             runner_client = salt.runner.RunnerClient(self.config)
             sync_grains = runner_client.cmd(
                 'saltutil.sync_grains', kwarg={'saltenv': saltenv}, print_event=False
             )
             log.debug(sync_grains)
-        if self.config.get('sync_modules', False):
+        if self.config.get('sync_all', False) or self.config.get('sync_modules', False):
             # Don't sync modules by default
             log.debug('Syncing modules')
             module_dirs = self.config.get('module_dirs', [])
@@ -157,7 +157,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             # Salt is anyway going to load the modules on the fly.
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
-        if self.config.get('sync_roster', True):
+        if self.config.get('sync_all', False) or self.config.get('sync_roster', True):
             # Sync Rosters by default
             log.debug('Syncing roster')
             roster_dirs = self.config.get('roster_dirs', [])
@@ -230,6 +230,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'sproxy_pillar',
             self.config.get('default_pillar', self.config.get('pillar')),
         )
+        kwargs['preload_targeting'] = self.config.get('preload_targeting', False)
+        kwargs['invasive_targeting'] = self.config.get('invasive_targeting', False)
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
 

@@ -589,6 +589,110 @@ expressions that match the name of the devices you have in NetBox:
   edge2.atlanta:
       ~~~ snip ~~~
 
+.. _netbox-roster-grain:
+
+Enhanced Grain targeting
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When NetBox Roster pulls the data from NetBox via the API, from the ``dcim`` 
+app, ``devices`` endpoint, it retrieves additional information about the 
+device, e.g.,
+
+.. code-block:: json
+
+    {
+        "count": 1,
+        "next": null,
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "name": "edge1.vlc1",
+                "display_name": "edge1.vlc1",
+                "device_type": {
+                    "id": 1,
+                    "url": "https://netbox.live/api/dcim/device-types/1/",
+                    "manufacturer": {
+                        "id": 5,
+                        "url": "https://netbox.live/api/dcim/manufacturers/5/",
+                        "name": "Juniper",
+                        "slug": "juniper"
+                    },
+                    "model": "MX960",
+                    "slug": "mx960",
+                    "display_name": "Juniper MX960"
+                },
+                "device_role": {
+                    "id": 7,
+                    "url": "https://netbox.live/api/dcim/device-roles/7/",
+                    "name": "Router",
+                    "slug": "router"
+                },
+                "tenant": null,
+                "platform": {
+                    "id": 3,
+                    "url": "https://netbox.live/api/dcim/platforms/3/",
+                    "name": "Juniper Junos",
+                    "slug": "juniper-junos"
+                },
+                "serial": "",
+                "asset_tag": null,
+                "site": {
+                    "id": 1,
+                    "url": "https://netbox.live/api/dcim/sites/1/",
+                    "name": "VLC1",
+                    "slug": "vlc1"
+                },
+                "rack": {
+                    "id": 1,
+                    "url": "https://netbox.live/api/dcim/racks/1/",
+                    "name": "R1",
+                    "display_name": "R1"
+                },
+                "position": 1,
+                "face": {
+                    "value": 0,
+                    "label": "Front"
+                },
+                "parent_device": null,
+                "status": {
+                    "value": 1,
+                    "label": "Active"
+                },
+                "primary_ip": null,
+                "primary_ip4": null,
+                "primary_ip6": null,
+                "cluster": null,
+                "virtual_chassis": null,
+                "vc_position": null,
+                "vc_priority": null,
+                "comments": "",
+                "local_context_data": null,
+                "tags": [],
+                "custom_fields": {},
+                "created": "2019-08-12",
+                "last_updated": "2019-08-12T11:08:21.706641Z"
+            }
+        ]
+    }
+
+All this data is by default available in the Grains when targeting, so you can 
+use the :ref:`targeting-grain` to match the devices you want to run against.
+
+Examples:
+
+- Select devices under the ``router`` role:
+
+.. code-block:: bash
+
+    salt-sproxy -G netbox:device_role:role test.ping
+
+- Select devices from the ``vlc1`` site:
+
+.. code-block:: bash
+
+    salt-sproxy -G netbox:site:slug:vlc1 test.ping
+
 .. _other-roster:
 
 Other Roster modules

@@ -286,10 +286,11 @@ See Also
    :maxdepth: 1
 
    quick_start
-   opts
-   grains
    install
    roster
+   grains
+   targeting
+   opts
    runner
    events
    salt_api

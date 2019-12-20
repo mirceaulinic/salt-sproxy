@@ -1,3 +1,5 @@
+.. _static-grains:
+
 Managing Static Grains
 ======================
 
@@ -20,6 +22,12 @@ the easiest is adding static data under the ``grains`` (or ``sproxy_grains`` or
 
 The static Grains configured in this way are going to be shared among all the 
 devices / Minions managed via *salt-sproxy*.
+
+.. important::
+
+    The static Grains configured in these ways are available to be used in your
+    target expressions. For example, the above can be used, e.g., ``salt-sproxy 
+    -G salt:role:proxy --preview-target``.
 
 To configure more specific Grains per device, or groups of devices, you have 
 the following options:
