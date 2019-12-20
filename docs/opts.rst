@@ -43,6 +43,57 @@ already familiar with a vast majority of them from the `salt
     Absolute path to the Roster file to load (when the Roster module requires 
     a file). Default: ``/etc/salt/roster``.
 
+.. option:: --invasive-targeting
+
+    .. versionadded:: 2020.1.0
+
+    The native *salt-sproxy* targeting highly depends on the data your provide 
+    mainly through the Roster system (see also :ref:`using-roster`). Through 
+    the Roster interface and other mechanisms, you are able to provide static
+    Grains (see also :ref:`static-grains`), which you can use in your targeting 
+    expressions. There are situations when you may want to target using more 
+    dynamic Grains that you probably don't want to manage statically.
+
+    In such case, the ``--invasive-targeting`` targeting can be helpful as it
+    connects to the device, retrieves the Grains, then executes the requested
+    command, *only* on the devices matched by your target.
+
+    .. important::
+
+        The maximum set of devices you can query is the devices you have 
+        defined in your Roster -- targeting in this case helps you select 
+        a subset of the devices *salt-sproxy* is aware of, based on their 
+        properties.
+
+    .. caution::
+
+        While this option can be very helpful, bear in mind that in order to 
+        retrieve all this data, *salt-sproxy* initiates the connection with ALL 
+        the devices provided through the Roster interface. That means, not only 
+        that resources consumption is expected to increase, but also the
+        execution time would similarlly be higher. Depending on your setup and
+        use case, you may want to consider using ``--cache-grains`` and / or 
+        ``--cache-pillar``. The idea is to firstly run ``--invasive-targeting``
+        together with ``--cache-grains`` and / or ``--cache-pillar``, in order
+        to cache your data, and the subsequent executions through *salt-sproxy* 
+        are going to use that data, device target matching included.
+
+.. option:: --preload-targeting
+
+    .. versionadded:: 2020.1.0
+
+    This is a lighter derivative of the ``--invasive-targeting`` option (see 
+    above), with the difference that *salt-sproxy* is not going to establish 
+    the connection with the remote device to gather the data, but will just 
+    load all the possible data without the connection. In other words, you can 
+    look at it like a combination of both ``--invasive-targeting`` and 
+    ``-no-connect`` used together.
+
+    This option is useful when the Grains and Pillars you want to use in your
+    targeting expression don't depend on the connection with the device itself,
+    but they are dynamically pulled from various systems, e.g., from an HTTP
+    API, database, etc.
+
 .. option:: --sync
 
     Whether should return the entire output at once, or for every device 
@@ -52,21 +103,21 @@ already familiar with a vast majority of them from the `salt
 
     Cache the collected Grains. Beware that this option overwrites the existing
     Grains. This may be helpful when using the ``salt-sproxy`` only, but may 
-    lead to unexpected results when running in a mixed environment.
+    lead to unexpected results when running in :ref:`mixed-environments`.
 
 .. option:: --cache-pillar
 
     Cache the collected Pillar. Beware that this option overwrites the existing
     Pillar. This may be helpful when using the ``salt-sproxy`` only, but may 
-    lead to unexpected results when running in a mixed environment.
+    lead to unexpected results when running in :ref:`mixed-environments`.
 
 .. option:: --no-cached-grains
 
-    Do not use the cached Grains (i.e., recollect regardless).
+    Do not use the cached Grains (i.e., always collect Grains).
 
 .. option:: --no-cached-pillar
 
-    Do not use the cached Pillar (i.e., recompile regardless).
+    Do not use the cached Pillar (i.e., always re-compile the Pillar).
 
 .. option:: --no-grains
 
@@ -111,6 +162,13 @@ already familiar with a vast majority of them from the `salt
     .. versionadded:: 2019.10.0
 
     Synchronise the Grains modules you may have in your own environment.
+
+.. option:: --sync-all
+
+    .. versionadded:: 2020.1.0
+
+    Load the all extension modules provided with salt-sproxy, as well as your
+    own extension modules from your environment.
 
 .. option:: --events
 
@@ -240,6 +298,8 @@ Target Selection
 The default matching that Salt utilizes is shell-style globbing around the
 minion id. See https://docs.python.org/2/library/fnmatch.html#module-fnmatch.
 
+.. seealso:: :ref:`targeting`
+
 .. option:: -E, --pcre
 
     The target expression will be interpreted as a PCRE regular expression
@@ -260,7 +320,7 @@ minion id. See https://docs.python.org/2/library/fnmatch.html#module-fnmatch.
     regular expression. To use regular expression matching with grains, use
     the --grain-pcre option.
 
-.. option:: --grain-pcre
+.. option:: -P, --grain-pcre
 
     The target expression matches values returned by the Salt grains system on
     the minions. The target expression is in the format of '<grain value>:<

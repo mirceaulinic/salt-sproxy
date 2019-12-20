@@ -29,6 +29,18 @@ the targeting in *salt-sproxy* comes with some caveats you should be aware of.
 
         salt-sproxy -G netbox:role:router --preview-target
 
+.. seealso::
+
+    When targeting making use of Grains or Pillar data that depend on the device 
+    characteristics (such as interfaces, IP addresses, OS version, platform 
+    details, and so on), or other properties retrieved from other systems, such 
+    as APIs, databases, etc., you may want to look at 
+    `--invasive-targeting 
+    <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-invasive-targeting>`__
+    or `--preload-targeting 
+    <https://salt-sproxy.readthedocs.io/en/latest/opts.html#cmdoption-preload-targeting>`__
+    options.
+
 .. _targeting-glob:
 
 Glob
@@ -95,7 +107,7 @@ device details before even connecting to it). You can however target using
 Grain data, but there are some caveats, and it's up to you to decide whether 
 you want performance or limit the resource consumption.
 
-.. info::
+.. seealso::
 
     See also: :ref:`static-grains`. Static Grains are always available, and can 
     be anytime used in your targeting, without any restrictions.

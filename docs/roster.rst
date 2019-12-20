@@ -592,7 +592,7 @@ expressions that match the name of the devices you have in NetBox:
 .. _netbox-roster-grain:
 
 Enhanced Grain targeting
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 When NetBox Roster pulls the data from NetBox via the API, from the ``dcim`` 
 app, ``devices`` endpoint, it retrieves additional information about the 
@@ -689,7 +689,7 @@ Examples:
 
 - Select devices from the ``vlc1`` site:
 
-.. code-block:: bsah
+.. code-block:: bash
 
     salt-sproxy -G netbox:site:slug:vlc1 test.ping
 
