@@ -775,6 +775,7 @@ def execute(
     args=(),
     batch_size=10,
     sync=False,
+    jid=None,
     events=True,
     cache_grains=False,
     cache_pillar=False,
@@ -848,6 +849,9 @@ def execute(
     sync: ``False``
         Whether to return the results synchronously (or return them as soon
         as the device replies).
+
+    jid: ``None``
+        The JID to pass on, when executing.
 
     events: ``True``
         Whether should push events on the Salt bus, similar to when executing
@@ -1002,6 +1006,7 @@ def execute(
         args=args,
         batch_size=batch_size,
         sync=sync,
+        jid=jid,
         events=events,
         cache_grains=cache_grains,
         cache_pillar=cache_pillar,

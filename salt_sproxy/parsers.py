@@ -165,6 +165,11 @@ class SaltStandaloneProxyOptionParser(
             help='Absolute path to the Roster file to use.',
         )
         self.add_option(
+            '--jid',
+            default=None,
+            help='Pass a JID to be used instead of generating one.',
+        )
+        self.add_option(
             '--sync',
             default=False,
             action='store_true',
