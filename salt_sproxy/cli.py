@@ -21,6 +21,7 @@ from salt_sproxy.parsers import SaltStandaloneProxyOptionParser
 
 import os
 import ast
+import sys
 import logging
 
 import salt.runner
@@ -57,6 +58,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         '''
         self.parse_args()
 
+        if self.config.get('config_dump'):
+            sys.stdout.write(safe_dump(self.config, default_flow_style=False))
+            return self.config
+
         # Setup file logging!
         self.setup_logfile_logger()
         verify_log(self.config)
@@ -65,6 +70,16 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         saltenv = self.config.get('saltenv')
         if not saltenv:
             saltenv = 'base'
+        if self.config.get('pillar_root'):
+            log.info(
+                'Setting and using %s as the Pillar root', self.config['pillar_root']
+            )
+            self.config['pillar_roots'] = {saltenv: self.config['pillar_root']}
+        if self.config.get('file_root'):
+            log.info(
+                'Setting and using %s as the Salt file root', self.config['file_root']
+            )
+            self.config['file_root'] = {saltenv: self.config['file_root']}
         if self.config.get('display_file_roots'):
             print('salt-sproxy is installed at:', curpath)
             print('\nYou can configure the file_roots on the Master, e.g.,\n')
@@ -155,6 +170,13 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             self.config['module_dirs'] = module_dirs
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
+        if self.config.get('module_dirs_cli'):
+            log.debug(
+                'Loading execution modules from the dirs provided via --module-dirs'
+            )
+            module_dirs = self.config.get('module_dirs', [])
+            module_dirs.extend(self.config['module_dirs_cli'])
+            self.config['module_dirs'] = module_dirs
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
         if self.config.get('sync_all', False) or self.config.get('sync_roster', True):
@@ -170,6 +192,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
             )
             log.debug(sync_roster)
+        if self.config.get('states_dir'):
+            states_dirs = self.config.get('states_dirs', [])
+            states_dirs.append(self.config['states_dir'])
+            self.config['states_dirs'] = states_dirs
         self.config['fun'] = 'proxy.execute'
         kwargs = {}
         tmp_args = args[:]

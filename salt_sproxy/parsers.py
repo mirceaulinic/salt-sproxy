@@ -320,7 +320,33 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
-            '--file-roots',
+            '--pillar-root',
+            default=None,
+            help='Set this directory as the base pillar root.',
+        )
+        self.add_option(
+            '--file-root',
+            default=None,
+            help='Set this directory as the base file root.',
+        )
+        self.add_option(
+            '--states-dir',
+            default=None,
+            help='Set this directory to search for additional states.',
+        )
+        self.add_option(
+            '-m',
+            '--module-dirs',
+            dest='module_dirs_cli',
+            default=[],
+            action='append',
+            help=(
+                'Specify an additional directory to pull modules from. '
+                'Multiple directories can be provided by passing '
+                '`-m/--module-dirs` multiple times.'
+            ),
+        )
+        self.add_option(
             '--display-file-roots',
             dest='display_file_roots',
             action='store_true',
@@ -339,6 +365,13 @@ class SaltStandaloneProxyOptionParser(
                 'Saves the file_roots configuration so you can start '
                 'leveraging the event-driven automation and the Salt REST API.'
             ),
+        )
+        self.add_option(
+            '--config-dump',
+            dest='config_dump',
+            default=False,
+            action='store_true',
+            help='Dump the salt-sproxy configuration values',
         )
         self.add_option(
             '--no-connect',
@@ -385,7 +418,11 @@ class SaltStandaloneProxyOptionParser(
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
     def _mixin_after_parsed(self):
-        if self.options.display_file_roots or self.options.save_file_roots:
+        if (
+            self.options.display_file_roots
+            or self.options.save_file_roots
+            or self.options.config_dump
+        ):
             # Insert dummy arg when displaying the file_roots
             self.args.append('not_a_valid_target')
             self.args.append('not_a_valid_command')
