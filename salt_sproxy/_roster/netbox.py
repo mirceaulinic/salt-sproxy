@@ -117,5 +117,8 @@ def targets(tgt, tgt_type='glob', **kwargs):
     }
     if filtered:
         return pool
+    pool = salt_sproxy._roster.load_cache(
+        pool, __runner__, __opts__, tgt, tgt_type=tgt_type
+    )
     engine = salt_sproxy._roster.TGT_FUN[tgt_type]
     return engine(pool, tgt, opts=__opts__)

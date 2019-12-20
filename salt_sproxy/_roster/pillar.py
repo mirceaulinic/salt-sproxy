@@ -68,5 +68,8 @@ def targets(tgt, tgt_type='glob', **kwargs):
     log.debug('Compiled the following list of devices from the Pillar')
     log.debug(pillar_devices)
     pool = {device['name']: {'minion_opts': device} for device in pillar_devices}
+    pool = salt_sproxy._roster.load_cache(
+        pool, __runner__, __opts__, tgt, tgt_type=tgt_type
+    )
     engine = salt_sproxy._roster.TGT_FUN[tgt_type]
     return engine(pool, tgt, opts=__opts__)

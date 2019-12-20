@@ -10,12 +10,55 @@ import logging
 from salt.ext import six
 import salt.utils.minions
 
+import salt.utils.dictupdate
+from salt.defaults import DEFAULT_TARGET_DELIM
+
 try:
-    from salt.utils.data import traverse_dict_and_list
+    from salt.utils.data import subdict_match
 except ImportError:
-    from salt.utils import traverse_dict_and_list
+    from salt.utils import subdict_match
 
 log = logging.getLogger(__name__)
+
+
+def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
+    '''
+    Load the Pillar and Grain cache, as required, and merge the Roster Grains
+    and Pillar into.
+    '''
+    if not opts.get('use_cached_grains', True) and not opts.get(
+        'use_cached_pillar', True
+    ):
+        return pool
+    log.debug('Loading cached and merging into the Roster data')
+    cache_pool = __runner__['cache.list']('minions')
+    for device in cache_pool:
+        if device not in pool:
+            continue
+        if 'minion_opts' not in pool[device]:
+            pool[device]['minion_opts'] = {'grains': {}, 'pillar': {}}
+        cache_key = 'minions/{}/data'.format(device)
+        if opts.get('use_cached_grains', True):
+            log.debug('Fetching cached Grains for %s', device)
+            cache_grains = __runner__['cache.fetch'](cache_key, 'grains')
+            if cache_grains:
+                pool[device]['minion_opts']['grains'] = salt.utils.dictupdate.merge(
+                    cache_grains,
+                    pool[device]['minion_opts'].get('grains', {}),
+                    merge_lists=True,
+                )
+        if opts.get('use_cached_pillar', True):
+            log.debug('Fetching cached Pillar for %s', device)
+            cache_pillar = __runner__['cache.fetch'](cache_key, 'pillar')
+            if cache_pillar:
+                pool[device]['minion_opts']['pillar'] = salt.utils.dictupdate.merge(
+                    cache_pillar,
+                    pool[device]['minion_opts'].get('pillar', {}),
+                    merge_lists=True,
+                )
+    log.debug('The device pool with the cached data')
+    log.debug(pool)
+    return pool
 
 
 def glob(pool, tgt, opts=None):
@@ -30,19 +73,16 @@ def glob(pool, tgt, opts=None):
 def grain(pool, tgt, opts=None):
     '''
     '''
-    delimiter = opts.get('delimiter', ':')
-    tgt_expr = delimiter.join(tgt.split(delimiter)[:-1])
-    tgt_val = tgt.split(delimiter)[-1]
-    log.debug('Grain matching on %s ? %s, over %s', tgt_expr, tgt_val, pool)
+    delimiter = opts.get('delimiter', DEFAULT_TARGET_DELIM)
+    log.debug('Grain matching on %s, over %s', tgt, pool)
     ret = {
         minion: pool[minion]
         for minion in pool.keys()
-        if traverse_dict_and_list(
+        if subdict_match(
             pool[minion].get('minion_opts', {}).get('grains', {}),
-            tgt_expr,
-            delimiter=opts.get('delimiter', ':'),
+            tgt,
+            delimiter=delimiter,
         )
-        == tgt_val
     }
     log.debug('Grain match returned')
     log.debug(ret)
@@ -52,25 +92,19 @@ def grain(pool, tgt, opts=None):
 def grain_pcre(pool, tgt, opts=None):
     '''
     '''
-    delimiter = opts.get('delimiter', ':')
-    tgt_expr = delimiter.join(tgt.split(delimiter)[:-1])
-    tgt_val = tgt.split(delimiter)[-1]
-    tgt_rgx = re.compile(tgt_val)
-    log.debug('Grain regex matching on %s ? %s, over %s', tgt_expr, tgt_val, pool)
+    delimiter = opts.get('delimiter', DEFAULT_TARGET_DELIM)
+    log.debug('Grain PCRE matching on %s, over %s', tgt, tgtpool)
     ret = {
         minion: pool[minion]
         for minion in pool.keys()
-        if tgt_rgx.search(
-            traverse_dict_and_list(
-                pool[minion].get('minion_opts', {}).get('grains', {}),
-                tgt_expr,
-                delimiter=opts.get('delimiter', ':'),
-                default='',
-            ),
-            re.I,
+        if subdict_match(
+            pool[minion].get('minion_opts', {}).get('grains', {}),
+            tgt,
+            delimiter=delimiter,
+            regex_match=True,
         )
     }
-    log.debug('Grain regex match returned')
+    log.debug('Grain PCRE match returned')
     log.debug(ret)
     return ret
 
@@ -78,41 +112,40 @@ def grain_pcre(pool, tgt, opts=None):
 def pillar(pool, tgt, opts=None):
     '''
     '''
-    delimiter = opts.get('delimiter', ':')
-    tgt_expr = delimiter.join(tgt.split(delimiter)[:-1])
-    tgt_val = tgt.split(delimiter)[-1]
-    return {
+    delimiter = opts.get('delimiter', DEFAULT_TARGET_DELIM)
+    log.debug('Pillar matching on %s, over %s', tgt, pool)
+    ret = {
         minion: pool[minion]
         for minion in pool.keys()
-        if traverse_dict_and_list(
+        if subdict_match(
             pool[minion].get('minion_opts', {}).get('pillar', {}),
-            tgt_expr,
-            delimiter=opts.get('delimiter', ':'),
+            tgt,
+            delimiter=delimiter,
         )
-        == tgt_val
     }
+    log.debug('Pillar match returned')
+    log.debug(ret)
+    return ret
 
 
 def pillar_pcre(pool, tgt, opts=None):
     '''
     '''
-    delimiter = opts.get('delimiter', ':')
-    tgt_expr = delimiter.join(tgt.split(delimiter)[:-1])
-    tgt_val = tgt.split(delimiter)[-1]
-    tgt_rgx = re.compile(tgt_val)
-    return {
+    delimiter = opts.get('delimiter', DEFAULT_TARGET_DELIM)
+    log.debug('Pillar PCRE matching on %s, over %s', tgt, tgtpool)
+    ret = {
         minion: pool[minion]
         for minion in pool.keys()
-        if tgt_rgx.search(
-            traverse_dict_and_list(
-                pool[minion].get('minion_opts', {}).get('pillar', {}),
-                tgt_expr,
-                delimiter=opts.get('delimiter', ':'),
-                default='',
-            ),
-            re.I,
+        if subdict_match(
+            pool[minion].get('minion_opts', {}).get('pillar', {}),
+            tgt,
+            delimiter=delimiter,
+            regex_match=True,
         )
     }
+    log.debug('Pillar PCRE match returned')
+    log.debug(ret)
+    return ret
 
 
 def list_(pool, tgt, opts=None):

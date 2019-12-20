@@ -144,6 +144,9 @@ def targets(tgt, tgt_type='glob', **kwargs):
         hosts = _get_hosts_from_group(tgt)
         return {host: _get_hostvars(host) for host in hosts}
     pool = {host: _get_hostvars(host) for host in _get_hosts_from_group('all')}
+    pool = salt_sproxy._roster.load_cache(
+        pool, __runner__, __opts__, tgt, tgt_type=tgt_type
+    )
     log.debug('Ansible devices pool')
     log.debug(pool)
     engine = salt_sproxy._roster.TGT_FUN[tgt_type]

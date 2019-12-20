@@ -524,11 +524,14 @@ def salt_call(
         shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
         sa_proxy.proxy[shut_fun](opts)
     if cache_grains:
-        __salt__['cache.store'](
+        log.debug('Caching Grains for %s', minion_id)
+        log.debug(sa_proxy.opts['grains'])
+        cache_store = __salt__['cache.store'](
             'minions/{}/data'.format(minion_id), 'grains', sa_proxy.opts['grains']
         )
     if cache_pillar:
-        __salt__['cache.store'](
+        log.debug('Caching Pillar for %s', minion_id)
+        cached_store = __salt__['cache.store'](
             'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
         )
     return ret
@@ -952,6 +955,8 @@ def execute(
                 targets = cache_bank.fetch('_salt_sproxy_target', cache_key)
         if not targets:
             log.debug('Computing the target using the %s Roster', roster)
+            __opts__['use_cached_grains'] = use_cached_grains
+            __opts__['use_cached_pillar'] = use_cached_pillar
             roster_modules = salt.loader.roster(__opts__, runner=__salt__)
             if '.targets' not in roster:
                 roster = '{mod}.targets'.format(mod=roster)
