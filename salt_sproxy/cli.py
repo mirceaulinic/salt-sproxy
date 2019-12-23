@@ -224,7 +224,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'cache_pillar',
             'roster',
             'timeout',
-            'sync',
+            'static',
             'no_connect',
         )
         for kwargs_opt in kwargs_opts:
