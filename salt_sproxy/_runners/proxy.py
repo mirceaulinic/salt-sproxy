@@ -86,7 +86,15 @@ is_proxy = _is_proxy
 
 
 def _salt_call_and_return(
-    minion_id, function, queue, unreachable_devices, failed_devices, arg=None, jid=None, events=True, **opts
+    minion_id,
+    function,
+    queue,
+    unreachable_devices,
+    failed_devices,
+    arg=None,
+    jid=None,
+    events=True,
+    **opts
 ):
     '''
     '''
@@ -283,7 +291,10 @@ class SProxyMinion(SMinion):
             try:
                 proxy_init_fn(self.opts)
             except Exception as exc:
-                log.error('Encountered error when starting up the connection with %s:', self.opts['id'])
+                log.error(
+                    'Encountered error when starting up the connection with %s:',
+                    self.opts['id'],
+                )
                 if self.unreachable_devices:
                     self.unreachable_devices.append(self.opts['id'])
                 raise
@@ -316,7 +327,9 @@ class SProxyMinion(SMinion):
 
 
 class StandaloneProxy(SProxyMinion):
-    def __init__(self, opts, unreachable_devices=None):  # pylint: disable=super-init-not-called
+    def __init__(
+        self, opts, unreachable_devices=None
+    ):  # pylint: disable=super-init-not-called
         self.opts = opts
         self.ready = False
         self.unreachable_devices = unreachable_devices
@@ -764,7 +777,16 @@ def execute_devices(
                 device_proc = multiprocessing.Process(
                     target=_salt_call_and_return,
                     name=minion_id,
-                    args=(minion_id, function, queue, unreachable_devices, failed_devices, event_args, jid, events),
+                    args=(
+                        minion_id,
+                        function,
+                        queue,
+                        unreachable_devices,
+                        failed_devices,
+                        event_args,
+                        jid,
+                        events,
+                    ),
                     kwargs=device_opts,
                 )
                 device_proc.start()
@@ -804,14 +826,28 @@ def execute_devices(
             return resp
         if summary:
             salt.utils.stringutils.print_cli('\n')
-            salt.utils.stringutils.print_cli('-------------------------------------------')
+            salt.utils.stringutils.print_cli(
+                '-------------------------------------------'
+            )
             salt.utils.stringutils.print_cli('Summary')
-            salt.utils.stringutils.print_cli('-------------------------------------------')
-            salt.utils.stringutils.print_cli('# of devices targeted: {0}'.format(len(minions)))
-            salt.utils.stringutils.print_cli('# of devices that did not return: {0}'.format(len(timeout_devices)))
-            salt.utils.stringutils.print_cli('# of devices with errors: {0}'.format(len(failed_devices)))
-            salt.utils.stringutils.print_cli('# of devices unreachable: {0}'.format(len(unreachable_devices)))
-            salt.utils.stringutils.print_cli('-------------------------------------------')
+            salt.utils.stringutils.print_cli(
+                '-------------------------------------------'
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices targeted: {0}'.format(len(minions))
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices that did not return: {0}'.format(len(timeout_devices))
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices with errors: {0}'.format(len(failed_devices))
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices unreachable: {0}'.format(len(unreachable_devices))
+            )
+            salt.utils.stringutils.print_cli(
+                '-------------------------------------------'
+            )
     return ''
 
 

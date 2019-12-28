@@ -165,7 +165,8 @@ class SaltStandaloneProxyOptionParser(
             help='Absolute path to the Roster file to use.',
         )
         self.add_option(
-            '-s', '--static',
+            '-s',
+            '--static',
             default=False,
             action='store_true',
             help=('Return the data from devices as a group after they all return.'),
@@ -427,6 +428,7 @@ class SaltStandaloneProxyOptionParser(
             action='store_true',
             help='Display salt execution summary information.',
         )
+
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
     def _mixin_after_parsed(self):
