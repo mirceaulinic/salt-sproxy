@@ -99,7 +99,13 @@ def _salt_call_and_return(
     '''
     '''
     opts['jid'] = jid
-    ret = salt_call(minion_id, function, unreachable_devices, failed_devices, **opts)
+    ret = salt_call(
+        minion_id,
+        function,
+        unreachable_devices=unreachable_devices,
+        failed_devices=failed_devices,
+        **opts
+    )
     if events:
         __salt__['event.send'](
             'proxy/runner/{jid}/ret/{minion_id}'.format(minion_id=minion_id, jid=jid),
@@ -281,7 +287,7 @@ class SProxyMinion(SMinion):
                 )
                 log.error(errmsg)
                 self._running = False
-                if self.unreachable_devices:
+                if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
                 raise SaltSystemExit(
                     code=salt.defaults.exitcodes.EX_GENERIC, msg=errmsg
@@ -295,7 +301,7 @@ class SProxyMinion(SMinion):
                     'Encountered error when starting up the connection with %s:',
                     self.opts['id'],
                 )
-                if self.unreachable_devices:
+                if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
                 raise
             if not cached_grains and self.opts.get('proxy_load_grains', True):
@@ -546,7 +552,7 @@ def salt_call(
     except Exception as err:
         log.error('Exception while running %s on %s', function, opts['id'])
         log.error(err, exc_info=True)
-        if failed_devices:
+        if failed_devices is not None:
             failed_devices.append(opts['id'])
         if failhard:
             raise
@@ -692,6 +698,7 @@ def execute_devices(
 
         salt-run proxy.execute "['172.17.17.1', '172.17.17.2']" test.ping driver=eos username=test password=test123
     '''
+    resp = ''
     __pub_user = kwargs.get('__pub_user')
     if not __pub_user:
         __pub_user = __utils__['user.get_specific_user']()
@@ -748,7 +755,9 @@ def execute_devices(
         thread.start()
     ret = {}
     batch_size = int(batch_size)
-    batch_count = int(len(minions) / batch_size) + 1
+    batch_count = int(len(minions) / batch_size) + (
+        1 if len(minions) % batch_size else 0
+    )
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
@@ -823,7 +832,6 @@ def execute_devices(
                 if ret == 'FIN.':
                     break
                 resp.update(ret)
-            return resp
         if summary:
             salt.utils.stringutils.print_cli('\n')
             salt.utils.stringutils.print_cli(
@@ -837,6 +845,11 @@ def execute_devices(
                 '# of devices targeted: {0}'.format(len(minions))
             )
             salt.utils.stringutils.print_cli(
+                '# of minions returned: {0}'.format(
+                    len(minions) - len(timeout_devices) - len(unreachable_devices)
+                )
+            )
+            salt.utils.stringutils.print_cli(
                 '# of devices that did not return: {0}'.format(len(timeout_devices))
             )
             salt.utils.stringutils.print_cli(
@@ -848,7 +861,7 @@ def execute_devices(
             salt.utils.stringutils.print_cli(
                 '-------------------------------------------'
             )
-    return ''
+    return resp
 
 
 def execute(
