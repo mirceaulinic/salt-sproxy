@@ -845,7 +845,7 @@ def execute_devices(
                 '# of devices targeted: {0}'.format(len(minions))
             )
             salt.utils.stringutils.print_cli(
-                '# of minions returned: {0}'.format(
+                '# of devices returned: {0}'.format(
                     len(minions) - len(timeout_devices) - len(unreachable_devices)
                 )
             )
