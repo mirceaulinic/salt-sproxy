@@ -121,7 +121,7 @@ class SaltStandaloneProxyOptionParser(
     )
 ):
 
-    default_timeout = 1
+    default_timeout = 60
 
     description = (
         '''
