@@ -806,8 +806,7 @@ def execute_devices(
                     continue
                 if failhard and proc.exitcode:
                     stop_iteration = True
-                if timeout:
-                    proc.join(timeout=timeout)
+                proc.join(timeout=timeout)
                 if proc.is_alive():
                     log.info(
                         'Terminating the process for %s, as it didn\'t reply within %d seconds',
@@ -1013,6 +1012,13 @@ def execute(
     targets = []
     rtargets = None
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
+
+    if not timeout:
+        log.warning('Timeout set as 0, will wait for the devices to reply indefinitely')
+        # Setting the timeout as None, because that's the value we need to pass
+        # to multiprocessing's join() method to wait for the devices to reply
+        # indefinitely.
+        timeout = None
 
     if preload_targeting or invasive_targeting:
         _tgt = '*'
