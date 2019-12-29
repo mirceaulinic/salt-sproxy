@@ -53,6 +53,13 @@ except ImportError:
     from salt.utils import is_proxy  # pylint: disable=unused-import
     from salt.utils import clean_kwargs
 
+try:
+    import progressbar
+
+    HAS_PROGRESSBAR = True
+except ImportError:
+    HAS_PROGRESSBAR = False
+
 # ------------------------------------------------------------------------------
 # module properties
 # ------------------------------------------------------------------------------
@@ -133,7 +140,7 @@ def _receive_replies_async(queue):
         out_fmt = salt.output.out_format(
             ret, __opts__.get('output', 'nested'), opts=__opts__
         )
-        print(out_fmt)
+        salt.utils.stringutils.print_cli(out_fmt)
 
 
 # The SProxyMinion class is back-ported from Salt 2019.2.0 (to be released soon)
@@ -602,6 +609,7 @@ def execute_devices(
     failhard=False,
     timeout=60,
     summary=True,
+    progress=False,
     **kwargs
 ):
     '''
@@ -764,6 +772,11 @@ def execute_devices(
         batch_count,
     )
     stop_iteration = False
+    progress_bar = None
+    if progress and HAS_PROGRESSBAR:
+        progress_bar = progressbar.ProgressBar(
+            max_value=len(minions), enable_colors=True, redirect_stdout=True
+        )
     with multiprocessing.Manager() as manager:
         timeout_devices = manager.list()
         failed_devices = manager.list()
@@ -776,7 +789,8 @@ def execute_devices(
             ]
             log.info('Devices in batch #%d:', batch_index)
             log.info(devices_batch)
-            for minion_id in devices_batch:
+            for minion_index, minion_id in enumerate(devices_batch):
+                device_count = batch_index * batch_size + minion_index + 1
                 log.info('Executing on %s', minion_id)
                 device_opts = copy.deepcopy(opts)
                 if roster_targets and isinstance(roster_targets, dict):
@@ -803,6 +817,8 @@ def execute_devices(
             for proc in processes:
                 if stop_iteration:
                     proc.terminate()
+                    if progress_bar:
+                        progress_bar.update(device_count)
                     continue
                 if failhard and proc.exitcode:
                     stop_iteration = True
@@ -815,15 +831,20 @@ def execute_devices(
                     )
                     timeout_devices.append(proc._name)
                 proc.terminate()
+                if progress_bar:
+                    progress_bar.update(device_count)
                 continue
             if failhard and proc.exitcode:
                 stop_iteration = True
-            proc.join()
             if stop_iteration:
                 log.error('Exiting as an error has occurred')
                 queue.put('FIN.')
+                if progress_bar:
+                    progress_bar.finish()
                 raise StopIteration
         queue.put('FIN.')
+        if progress_bar:
+            progress_bar.finish()
         if static:
             resp = {}
             while True:
@@ -895,6 +916,7 @@ def execute(
     failhard=False,
     summary=True,
     verbose=False,
+    progress=False,
     **kwargs
 ):
     '''
@@ -1131,6 +1153,7 @@ def execute(
         failhard=failhard,
         timeout=timeout,
         summary=summary,
+        progress=progress,
         **kwargs
     )
     return ret

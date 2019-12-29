@@ -428,6 +428,13 @@ class SaltStandaloneProxyOptionParser(
             action='store_true',
             help='Display salt execution summary information.',
         )
+        self.add_option(
+            '-p',
+            '--progress',
+            default=False,
+            action='store_true',
+            help='Display a progress graph.',
+        )
 
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py

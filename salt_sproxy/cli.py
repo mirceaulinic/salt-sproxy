@@ -134,12 +134,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         tgt = self.config['tgt']
         fun = self.config['fun']
         args = self.config['arg']
+        kwargs = {}
         if 'output' not in self.config and fun in (
             'state.sls',
             'state.apply',
             'state.highstate',
         ):
             self.config['output'] = 'highstate'
+        kwargs['progress'] = self.config.pop('progress', False)
         # To be able to reuse the proxy Runner (which is not yet available
         # natively in Salt), we can override the ``runner_dirs`` configuration
         # option to tell Salt to load that Runner too. This way, we can also
@@ -197,7 +199,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             states_dirs.append(self.config['states_dir'])
             self.config['states_dirs'] = states_dirs
         self.config['fun'] = 'proxy.execute'
-        kwargs = {}
         tmp_args = args[:]
         for index, arg in enumerate(tmp_args):
             if isinstance(arg, dict) and '__kwarg__' in arg:
@@ -228,6 +229,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_connect',
             'failhard',
             'summary',
+            'progress',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:
