@@ -166,7 +166,16 @@ already familiar with a vast majority of them from the `salt
 
     .. versionadded:: 2020.1.0
 
-    Display a summary of the command execution.
+    Display a summary of the command execution:
+
+    - Total number of devices targeted.
+    - Number of devices that returned without issues.
+    - Number of devices that timed out executing the command. See also ``-t`` 
+      or ``--timeout`` argument to adjust the timeout value.
+    - Number of devices with errors (i.e., there was an error while executing 
+      the command).
+    - Number of unreachable devices (i.e., couldn't establish the connection 
+      with the remote device).
 
     Example:
 
