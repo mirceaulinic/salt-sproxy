@@ -156,6 +156,32 @@ already familiar with a vast majority of them from the `salt
 
     The number of devices to connect to in parallel.
 
+.. option:: --batch-wait
+
+    .. versionadded:: 2020.1.0
+
+    Wait a specific number of seconds after each batch is done before executing 
+    the next one.
+
+.. option:: -p, --progress
+
+    .. versionadded:: 2020.1.0
+
+    Display a progress graph to visually show the execution of the command 
+    across the list of devices.
+
+    .. note::
+
+        As of release 2020.1.0, the best experience of using the progress graph 
+        is in conjunction with the ``-s`` / ``--static`` option, otherwise 
+        there's a small display issue.
+
+.. option:: --hide-timeout
+
+    .. versionadded:: 2020.1.0
+
+    Hide devices that timeout.
+
 .. option:: --failhard
 
     .. versionadded:: 2020.1.0
@@ -177,6 +203,9 @@ already familiar with a vast majority of them from the `salt
     - Number of unreachable devices (i.e., couldn't establish the connection 
       with the remote device).
 
+    In ``-v`` / ``--verbose`` mode, this output is enahnced by displaying the 
+    list of devices that did not return / with errors / unreachable.
+
     Example:
 
     .. code-block:: text
@@ -190,6 +219,19 @@ already familiar with a vast majority of them from the `salt
         # of devices with errors: 0
         # of devices unreachable: 2
         -------------------------------------------
+
+.. option:: --show-jid
+
+    .. versionadded:: 2020.1.0
+
+    Display jid without the additional output of --verbose.
+
+.. option:: -v, --verbose
+
+    .. versionadded:: 2020.1.0
+
+    Turn on command verbosity, display jid, devices per batch, and detailed
+    summary.
 
 .. option:: --preview-target
 
