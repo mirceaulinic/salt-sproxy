@@ -140,6 +140,7 @@ def _receive_replies_async(queue):
         out_fmt = salt.output.out_format(
             ret, __opts__.get('output', 'nested'), opts=__opts__
         )
+
         salt.utils.stringutils.print_cli(out_fmt)
 
 
@@ -591,6 +592,7 @@ def execute_devices(
     default_pillar=None,
     args=(),
     batch_size=10,
+    batch_wait=0,
     static=False,
     tgt=None,
     tgt_type=None,
@@ -608,8 +610,10 @@ def execute_devices(
     invasive_targeting=False,
     failhard=False,
     timeout=60,
-    summary=True,
+    summary=False,
+    verbose=False,
     progress=False,
+    hide_timeout=False,
     **kwargs
 ):
     '''
@@ -789,6 +793,10 @@ def execute_devices(
             ]
             log.info('Devices in batch #%d:', batch_index)
             log.info(devices_batch)
+            if verbose:
+                salt.utils.stringutils.print_cli(
+                    'Executing run on {0}'.format(devices_batch)
+                )
             for minion_index, minion_id in enumerate(devices_batch):
                 device_count = batch_index * batch_size + minion_index + 1
                 log.info('Executing on %s', minion_id)
@@ -829,6 +837,8 @@ def execute_devices(
                         proc._name,
                         timeout,
                     )
+                    if not hide_timeout:
+                        queue.put({proc._name: 'Minion did not return. [No response]'})
                     timeout_devices.append(proc._name)
                 proc.terminate()
                 if progress_bar:
@@ -842,6 +852,11 @@ def execute_devices(
                 if progress_bar:
                     progress_bar.finish()
                 raise StopIteration
+            if batch_wait:
+                log.debug(
+                    'Waiting %f seconds before executing the next batch', batch_wait
+                )
+                time.sleep(batch_wait)
         queue.put('FIN.')
         if progress_bar:
             progress_bar.finish()
@@ -878,6 +893,28 @@ def execute_devices(
             salt.utils.stringutils.print_cli(
                 '# of devices unreachable: {0}'.format(len(unreachable_devices))
             )
+            if verbose:
+                if timeout_devices:
+                    salt.utils.stringutils.print_cli(
+                        (
+                            '\nThe following devices didn\'t return (timeout):'
+                            '\n - {0}'.format('\n - '.join(timeout_devices))
+                        )
+                    )
+                if failed_devices:
+                    salt.utils.stringutils.print_cli(
+                        (
+                            '\nThe following devices returned "bad" output:'
+                            '\n - {0}'.format('\n - '.join(failed_devices))
+                        )
+                    )
+                if unreachable_devices:
+                    salt.utils.stringutils.print_cli(
+                        (
+                            '\nThe following devices are unreachable:'
+                            '\n - {0}'.format('\n - '.join(unreachable_devices))
+                        )
+                    )
             salt.utils.stringutils.print_cli(
                 '-------------------------------------------'
             )
@@ -900,6 +937,7 @@ def execute(
     default_pillar=None,
     args=(),
     batch_size=10,
+    batch_wait=0,
     static=False,
     events=True,
     cache_grains=False,
@@ -916,7 +954,9 @@ def execute(
     failhard=False,
     summary=True,
     verbose=False,
+    show_jid=False,
     progress=False,
+    hide_timeout=False,
     **kwargs
 ):
     '''
@@ -1123,6 +1163,11 @@ def execute(
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
             jid = salt.utils.jid.gen_jid()
+    if verbose or show_jid:
+        salt.utils.stringutils.print_cli('Executing job with jid {0}'.format(jid))
+        salt.utils.stringutils.print_cli(
+            '-------------------------------------------\n'
+        )
     if events:
         __salt__['event.send'](jid, {'minions': targets})
     return execute_devices(
@@ -1138,6 +1183,7 @@ def execute(
         default_pillar=default_pillar,
         args=args,
         batch_size=batch_size,
+        batch_wait=batch_wait,
         static=static,
         events=events,
         cache_grains=cache_grains,
@@ -1153,7 +1199,9 @@ def execute(
         failhard=failhard,
         timeout=timeout,
         summary=summary,
+        verbose=verbose,
         progress=progress,
+        hide_timeout=hide_timeout,
         **kwargs
     )
     return ret

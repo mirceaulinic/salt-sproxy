@@ -221,6 +221,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         kwargs_opts = (
             'preview_target',
             'batch_size',
+            'batch_wait',
             'cache_grains',
             'cache_pillar',
             'roster',
@@ -229,6 +230,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_connect',
             'failhard',
             'summary',
+            'verbose',
+            'show_jid',
+            'hide_timeout',
             'progress',
         )
         for kwargs_opt in kwargs_opts:

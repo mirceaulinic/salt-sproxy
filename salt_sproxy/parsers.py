@@ -429,6 +429,34 @@ class SaltStandaloneProxyOptionParser(
             help='Display salt execution summary information.',
         )
         self.add_option(
+            '-v',
+            '--verbose',
+            default=False,
+            action='store_true',
+            help='Turn on command verbosity, display jid and detailed summary.',
+        )
+        self.add_option(
+            '--show-jid',
+            default=False,
+            action='store_true',
+            help='Display jid without the additional output of --verbose.',
+        )
+        self.add_option(
+            '--hide-timeout',
+            default=False,
+            action='store_true',
+            help='Hide devices that timeout.',
+        )
+        self.add_option(
+            '--batch-wait',
+            default=0,
+            type=float,
+            help=(
+                'Wait the specified time in seconds after each batch is done'
+                'before executing the next one.'
+            ),
+        )
+        self.add_option(
             '-p',
             '--progress',
             default=False,
