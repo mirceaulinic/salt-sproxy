@@ -121,7 +121,7 @@ class SaltStandaloneProxyOptionParser(
     )
 ):
 
-    default_timeout = 1
+    default_timeout = 60
 
     description = (
         '''
@@ -165,7 +165,8 @@ class SaltStandaloneProxyOptionParser(
             help='Absolute path to the Roster file to use.',
         )
         self.add_option(
-            '-s', '--static',
+            '-s',
+            '--static',
             default=False,
             action='store_true',
             help=('Return the data from devices as a group after they all return.'),
@@ -396,6 +397,13 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--failhard',
+            dest='failhard',
+            action='store_true',
+            default=False,
+            help='Stop execution at the first execution error',
+        )
+        self.add_option(
             '--no-target-cache',
             dest='no_target_cache',
             action='store_true',
@@ -413,6 +421,47 @@ class SaltStandaloneProxyOptionParser(
             default=False,
             action='store_true',
             help='Do not display the results of the run.',
+        )
+        self.add_option(
+            '--summary',
+            default=False,
+            action='store_true',
+            help='Display salt execution summary information.',
+        )
+        self.add_option(
+            '-v',
+            '--verbose',
+            default=False,
+            action='store_true',
+            help='Turn on command verbosity, display jid and detailed summary.',
+        )
+        self.add_option(
+            '--show-jid',
+            default=False,
+            action='store_true',
+            help='Display jid without the additional output of --verbose.',
+        )
+        self.add_option(
+            '--hide-timeout',
+            default=False,
+            action='store_true',
+            help='Hide devices that timeout.',
+        )
+        self.add_option(
+            '--batch-wait',
+            default=0,
+            type=float,
+            help=(
+                'Wait the specified time in seconds after each batch is done'
+                'before executing the next one.'
+            ),
+        )
+        self.add_option(
+            '-p',
+            '--progress',
+            default=False,
+            action='store_true',
+            help='Display a progress graph.',
         )
 
     # Everything else that follows here is verbatim copy from

@@ -36,7 +36,7 @@ already familiar with a vast majority of them from the `salt
 
 .. config:: --config-dump
 
-    .. versionadded:: 2019.12.0
+    .. versionadded:: 2020.1.0
 
     Print the complete salt-sproxy configuration values (with the defaults), as 
     YAML.
@@ -103,7 +103,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --sync
 
-    .. versionremoved:: 2019.12.0
+    .. versionremoved:: 2020.1.0
 
         This option has been replaced by ``--static`` (see below).
 
@@ -112,7 +112,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: -s, --static
 
-    .. versionadded:: 2019.12.0
+    .. versionadded:: 2020.1.0
 
         Starting with this release, ``--static``, replaces the previous CLI
         option ``--sync``, with the same functionality.
@@ -155,6 +155,83 @@ already familiar with a vast majority of them from the `salt
 .. option:: -b, --batch, --batch-size
 
     The number of devices to connect to in parallel.
+
+.. option:: --batch-wait
+
+    .. versionadded:: 2020.1.0
+
+    Wait a specific number of seconds after each batch is done before executing 
+    the next one.
+
+.. option:: -p, --progress
+
+    .. versionadded:: 2020.1.0
+
+    Display a progress graph to visually show the execution of the command 
+    across the list of devices.
+
+    .. note::
+
+        As of release 2020.1.0, the best experience of using the progress graph 
+        is in conjunction with the ``-s`` / ``--static`` option, otherwise 
+        there's a small display issue.
+
+.. option:: --hide-timeout
+
+    .. versionadded:: 2020.1.0
+
+    Hide devices that timeout.
+
+.. option:: --failhard
+
+    .. versionadded:: 2020.1.0
+
+    Stop the execution at the first error.
+
+.. option:: --summary
+
+    .. versionadded:: 2020.1.0
+
+    Display a summary of the command execution:
+
+    - Total number of devices targeted.
+    - Number of devices that returned without issues.
+    - Number of devices that timed out executing the command. See also ``-t`` 
+      or ``--timeout`` argument to adjust the timeout value.
+    - Number of devices with errors (i.e., there was an error while executing 
+      the command).
+    - Number of unreachable devices (i.e., couldn't establish the connection 
+      with the remote device).
+
+    In ``-v`` / ``--verbose`` mode, this output is enahnced by displaying the 
+    list of devices that did not return / with errors / unreachable.
+
+    Example:
+
+    .. code-block:: text
+
+        -------------------------------------------
+        Summary
+        -------------------------------------------
+        # of devices targeted: 10
+        # of devices returned: 3
+        # of devices that did not return: 5
+        # of devices with errors: 0
+        # of devices unreachable: 2
+        -------------------------------------------
+
+.. option:: --show-jid
+
+    .. versionadded:: 2020.1.0
+
+    Display jid without the additional output of --verbose.
+
+.. option:: -v, --verbose
+
+    .. versionadded:: 2020.1.0
+
+    Turn on command verbosity, display jid, devices per batch, and detailed
+    summary.
 
 .. option:: --preview-target
 
@@ -275,25 +352,25 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --pillar-root
 
-    .. versionadded:: 2019.12.0
+    .. versionadded:: 2020.1.0
 
     Set a specific directory as the base pillar root.
 
 .. option:: --file-root
 
-    .. versionadded:: 2019.12.0
+    .. versionadded:: 2020.1.0
 
     Set a specific directory as the base file root.
 
 .. option:: --states-dir
 
-    .. versionadded:: 2019.12.0
+    .. versionadded:: 2020.1.0
 
     Set a specific directory to search for additional States.
 
 .. option:: -m, --module-dirs
 
-    .. versionadded:: 2019.12.0
+    .. versionadded:: 2020.1.0
 
     Specify one or more directories where to load the extension modules from.
     Multiple directories can be provided by passing ``-m`` or 
@@ -405,11 +482,11 @@ Output Options
     using the Python ``pprint`` standard library module.
 
     .. note::
-        If using ``--out=json``, you will probably want ``--sync`` as well.
+        If using ``--out=json``, you will probably want ``--static`` as well.
         Without the sync option, you will get a separate JSON string per minion
         which makes JSON output invalid as a whole.
         This is due to using an iterative outputter. So if you want to feed it
-        to a JSON parser, use ``--sync`` as well.
+        to a JSON parser, use ``--static`` as well.
 
 .. option:: --out-indent OUTPUT_INDENT, --output-indent OUTPUT_INDENT
 

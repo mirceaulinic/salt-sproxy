@@ -134,12 +134,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         tgt = self.config['tgt']
         fun = self.config['fun']
         args = self.config['arg']
+        kwargs = {}
         if 'output' not in self.config and fun in (
             'state.sls',
             'state.apply',
             'state.highstate',
         ):
             self.config['output'] = 'highstate'
+        kwargs['progress'] = self.config.pop('progress', False)
         # To be able to reuse the proxy Runner (which is not yet available
         # natively in Salt), we can override the ``runner_dirs`` configuration
         # option to tell Salt to load that Runner too. This way, we can also
@@ -197,7 +199,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             states_dirs.append(self.config['states_dir'])
             self.config['states_dirs'] = states_dirs
         self.config['fun'] = 'proxy.execute'
-        kwargs = {}
         tmp_args = args[:]
         for index, arg in enumerate(tmp_args):
             if isinstance(arg, dict) and '__kwarg__' in arg:
@@ -220,12 +221,19 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         kwargs_opts = (
             'preview_target',
             'batch_size',
+            'batch_wait',
             'cache_grains',
             'cache_pillar',
             'roster',
             'timeout',
             'static',
             'no_connect',
+            'failhard',
+            'summary',
+            'verbose',
+            'show_jid',
+            'hide_timeout',
+            'progress',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:
@@ -258,6 +266,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         )
         kwargs['preload_targeting'] = self.config.get('preload_targeting', False)
         kwargs['invasive_targeting'] = self.config.get('invasive_targeting', False)
+        kwargs['failhard'] = self.config.get('failhard', False)
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
 
