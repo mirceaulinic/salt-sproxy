@@ -41,18 +41,22 @@ simplified compared to previous versions, and a new API client has been added,
 named ``sproxy``, together with its counter-part ``sproxy_async`` for 
 asynchronous requests.
 
+.. seealso::
+
+    :ref:`salt-sapi`
+
 In order to do so, instead of starting the usual ``salt-api`` process, you'd 
 need to start a separate application named ``salt-sapi`` which is shipped 
 together with *salt-sproxy*. Everything stay the exact same as usually, the 
 only difference being the special ``sproxy`` and ``sproxy_async`` clients for 
 simplified usage.
 
-.. info::
+.. hint::
 
-    If you are already using Salt API, and would like to make use the 
-    ``sproxy`` / ``sproxy_async`` client(s), you may want to use ``salt-sapi`` 
-    instead of ``salt-api``, and you'll be able to use the Salt API as always, 
-    armed with the *salt-sproxy* clients as well.
+    If you are already using Salt API, and would like to make use of the 
+    ``sproxy`` / ``sproxy_async`` client(s), you may want to use the
+    ``salt-sapi`` instead of the ``salt-api`` program, and you'll be able to use
+    the Salt API as always, armed with the *salt-sproxy* clients as well.
 
 .. tip::
 
@@ -267,3 +271,11 @@ Or when updating the configuration:
 You can follow the same methodology with any other Salt function (including
 States) that you might want to execute against a device, without having a
 (Proxy) Minion running.
+
+See Also
+~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   salt_sapi

@@ -7,6 +7,7 @@ import logging
 import salt.netapi
 import salt.scripts
 from salt.ext import six
+import salt.utils.parsers
 from salt.scripts import _install_signal_handlers
 
 log = logging.getLogger(__name__)
@@ -61,6 +62,16 @@ salt.netapi.CLIENTS = [
     )
     if not (name == 'run' or name.startswith('_'))
 ]
+salt.utils.parsers.SaltAPIParser.description = (
+    'salt-sapi is an enhanced Salt API system that provides additional '
+    'sproxy and sproxy_async clients, to simplify the usage of salt-sproxy '
+    'through the Salt REST API'
+)
+salt.utils.parsers.SaltAPIParser.epilog = (
+    'You can find additional help about %prog issuing "man %prog" '
+    'or on https://salt-sproxy.readthedocs.io/ and '
+    'https://docs.saltstack.com/en/latest/ref/cli/salt-api.html.'
+)
 
 
 def salt_sapi():

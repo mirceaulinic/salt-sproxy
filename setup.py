@@ -68,5 +68,5 @@ setup(
         'junos': ['junos-eznc'],
         'netmiko': ['netmiko'],
     },
-    data_files=[('man/man1', ['docs/man/salt-sproxy.1'])],
+    data_files=[('man/man1', ['docs/man/salt-sproxy.1', 'docs/man/salt-sapi.1'])],
 )
