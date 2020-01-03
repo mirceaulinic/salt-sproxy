@@ -115,8 +115,9 @@ Usage examples:
         -d username='mircea' \
         -d password='pass' \
         -d client='sproxy_async' \
-        -d tgt='minion1' \
-        -d fun='test.ping'
+        -d tgt='minion\d' \
+        -d tgt_type='pcre' \
+        -d fun='test.ping' \
     {"return": [{"tag": "salt/run/20200103001109995573", "jid": "20200103001109995573"}]}
 
 Before salt-sproxy 2020.1.0
