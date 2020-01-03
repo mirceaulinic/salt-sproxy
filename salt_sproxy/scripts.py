@@ -18,7 +18,15 @@ def sapi_sproxy(
     '''
     Shortcut to invoke an arbitrary Salt function via sproxy.
     '''
-    kwargs.update({'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'sync': True})
+    kwargs.update(
+        {
+            'function': fun,
+            'tgt': tgt,
+            'tgt_type': tgt_type,
+            'static': True,
+            'sync_roster': True,
+        }
+    )
     return salt.netapi.NetapiClient.runner(
         self, 'proxy.execute', timeout=timeout, full_return=full_return, **kwargs
     )
@@ -30,7 +38,15 @@ def sapi_sproxy_async(
     '''
     Shortcut to invoke an arbitrary Salt function via sproxy, asynchronously.
     '''
-    kwargs.update({'function': fun, 'tgt': tgt, 'tgt_type': tgt_type})
+    kwargs.update(
+        {
+            'function': fun,
+            'tgt': tgt,
+            'tgt_type': tgt_type,
+            'static': True,
+            'sync_roster': True,
+        }
+    )
     return salt.netapi.NetapiClient.runner_async(
         self, 'proxy.execute', timeout=timeout, full_return=full_return, **kwargs
     )
