@@ -51,6 +51,16 @@ together with *salt-sproxy*. Everything stay the exact same as usually, the
 only difference being the special ``sproxy`` and ``sproxy_async`` clients for 
 simplified usage.
 
+A major advantage of using the ``sproxy`` / ``sproxy_async`` clients is that 
+the usage is very similar to the ``local`` / ``local_async`` clients (see 
+https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#usage), 
+the arguments you'd need to being in-line with the ones from `LocalClient 
+<https://docs.saltstack.com/en/latest/ref/clients/index.html#salt.client.LocalClient.cmd>`__: 
+``tgt`` (target expression) and ``fun`` (the name of the Salt function to 
+execute) as mandatory arguments, plus a number of optional arguments documented 
+at https://salt-sproxy.readthedocs.io/en/latest/runners/proxy.html#_runners.proxy.execute.
+See an usage example below.
+
 .. hint::
 
     If you are already using Salt API, and would like to make use of the 
