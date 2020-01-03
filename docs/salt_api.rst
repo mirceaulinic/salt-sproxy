@@ -94,7 +94,7 @@ After starting the ``salt-sapi`` process, you should get the following:
 
 That means the *salt-sproxy* Salt API is ready to receive requests.
 
-Usage example:
+Usage examples:
 
 .. code-block:: bash
 
@@ -107,6 +107,17 @@ Usage example:
         -d fun='test.ping'
    return:
    - minion1: true
+
+.. code-block:: bash
+
+    $ curl -sS localhost:8080/run -H 'Accept: application/json' \
+        -d eauth='pam' \
+        -d username='mircea' \
+        -d password='pass' \
+        -d client='sproxy_async' \
+        -d tgt='minion1' \
+        -d fun='test.ping'
+    {"return": [{"tag": "salt/run/20200103001109995573", "jid": "20200103001109995573"}]}
 
 Before salt-sproxy 2020.1.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
