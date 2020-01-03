@@ -30,6 +30,7 @@ from salt.utils.verify import check_user, verify_log
 from salt.exceptions import SaltClientError
 from salt.ext import six
 import salt.defaults.exitcodes  # pylint: disable=W0611
+import salt.utils.stringutils
 
 try:
     from salt.utils.file import fopen
@@ -81,13 +82,22 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             )
             self.config['file_root'] = {saltenv: self.config['file_root']}
         if self.config.get('display_file_roots'):
-            print('salt-sproxy is installed at:', curpath)
-            print('\nYou can configure the file_roots on the Master, e.g.,\n')
-            print('file_roots:\n  %s:\n    -' % saltenv, curpath)
-            print('\n\nOr only for the Runners:\n')
-            print('runner_dirs:\n  - %s/_runners' % curpath)
+            salt.utils.stringutils.print_cli(
+                'salt-sproxy is installed at: {}'.format(curpath)
+            )
+            salt.utils.stringutils.print_cli(
+                '\nYou can configure the file_roots on the Master, e.g.,\n'
+            )
+            salt.utils.stringutils.print_cli(
+                'file_roots:\n  {0}:\n    - {1}'.format(saltenv, curpath)
+            )
+            salt.utils.stringutils.print_cli('\n\nOr only for the Runners:\n')
+            salt.utils.stringutils.print_cli(
+                'runner_dirs:\n  - {}/_runners'.format(curpath)
+            )
             return
         if self.config.get('save_file_roots'):
+            updated = False
             with fopen(self.config['conf_file'], 'r+') as master_fp:
                 master_cfg = safe_load(master_fp)
                 if not master_cfg:
@@ -95,16 +105,33 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 file_roots = master_cfg.get('file_roots', {saltenv: []}).get(
                     saltenv, []
                 )
+                runner_dirs = master_cfg.get('runner_dirs', [])
+                sproxy_runners = os.path.join(curpath, '_runners')
                 if curpath not in file_roots:
                     file_roots.append(curpath)
                     master_cfg['file_roots'] = {saltenv: file_roots}
+                    updated = True
+                    salt.utils.stringutils.print_cli(
+                        '{} added to the file_roots:\n'.format(curpath)
+                    )
+                    salt.utils.stringutils.print_cli(
+                        'file_roots:\n  {0}\n    - {1}\n'.format(
+                            saltenv, '\n    -'.join(file_roots)
+                        )
+                    )
+                if sproxy_runners not in runner_dirs:
+                    runner_dirs.append(sproxy_runners)
+                    master_cfg['runner_dirs'] = runner_dirs
+                    updated = True
+                    salt.utils.stringutils.print_cli(
+                        '{} added to runner_dirs:\n'.format(sproxy_runners)
+                    )
+                    salt.utils.stringutils.print_cli(
+                        'runner_dirs:\n  - {0}'.format('\n  - '.join(runner_dirs))
+                    )
+                if updated:
                     master_fp.seek(0)
                     safe_dump(master_cfg, master_fp, default_flow_style=False)
-                    print('%s added to the file_roots:\n' % curpath)
-                    print(
-                        'file_roots:\n  %s:\n    -' % saltenv,
-                        '\n    - '.join([fr for fr in file_roots]),
-                    )
                     log.debug('Syncing Runners on the Master')
                     runner_client = salt.runner.RunnerClient(self.config)
                     sync_runners = runner_client.cmd(
@@ -115,10 +142,12 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                     log.debug('saltutil.sync_runners output:')
                     log.debug(sync_runners)
                 else:
-                    print(
-                        'The %s path is already included into the file_roots' % curpath
+                    salt.utils.stringutils.print_cli(
+                        'The {} path is already included into the file_roots and runner_dirs'.format(
+                            curpath
+                        )
                     )
-                print(
+                salt.utils.stringutils.print_cli(
                     '\nNow you can start using salt-sproxy for '
                     'event-driven automation, and the Salt REST API.\n'
                     'See https://salt-sproxy.readthedocs.io/en/latest/salt_api.html'
