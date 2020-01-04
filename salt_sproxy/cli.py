@@ -135,11 +135,11 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                     log.debug('Syncing Runners on the Master')
                     runner_client = salt.runner.RunnerClient(self.config)
                     sync_runners = runner_client.cmd(
-                        'saltutil.sync_runners',
+                        'saltutil.sync_all',
                         kwarg={'saltenv': saltenv},
                         print_event=False,
                     )
-                    log.debug('saltutil.sync_runners output:')
+                    log.debug('saltutil.sync_all output:')
                     log.debug(sync_runners)
                 else:
                     salt.utils.stringutils.print_cli(
