@@ -1,0 +1,16 @@
+pillar_roots:
+  base:
+    - /srv/salt/pillar
+
+file_roots:
+  base:
+    - /srv/salt/extmods
+
+rest_cherrypy:
+  port: 8080
+  disable_ssl: true
+
+external_auth:
+  auto:
+    '*':
+      - '@runner'

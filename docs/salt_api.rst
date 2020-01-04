@@ -29,9 +29,10 @@ Suppose we have the following configuration:
 
 .. hint::
 
-    Consider looking at the :ref:`example-salt-api` example for a more complete
-    example on configuring the Salt API, however the official Salt 
-    documentation should always be used as the reference.
+    Consider looking at the :ref:`example-salt-api` and :ref:`example-salt-sapi`
+    examples for end-to-end examples on configuring the Salt API or
+    ``salt-sapi``, however the official Salt documentation should always be
+    used as the reference.
 
 Starting with salt-sproxy 2020.1.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
