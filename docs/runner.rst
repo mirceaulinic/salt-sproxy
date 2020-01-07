@@ -33,12 +33,21 @@ After installing salt-sproxy, you can execute the following command:
     runner_dirs:
       - /home/mircea/venvs/salt-sproxy/lib/python3.6/site-packages/salt_sproxy/_runners
 
+1.a. Update the ``file_roots`` and / or ``runner_dirs`` manually
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 As suggested in the output, you can directly reference the salt-sproxy 
 installation path to start using the ``proxy`` Runner (and other extension 
 modules included in the package).
 
+After updating the master configuration file, make sure to execute ``salt-run 
+saltutil.sync_all`` or ``salt-run saltutil.sync_runners``.
+
+1.b. Use the ``--save-file-roots`` CLI argument to update the master config
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 A simpler alternative is executing with ``--save-file-roots`` which adds the 
-path for you, e.g.,
+path for you, and synchronizes the extension modules provided together with e.g.,
 
 .. code-block:: bash
 
@@ -52,6 +61,12 @@ path for you, e.g.,
     Now you can start using salt-sproxy for event-driven automation, and the Salt REST API.
     See https://salt-sproxy.readthedocs.io/en/latest/salt_api.html
     and https://salt-sproxy.readthedocs.io/en/latest/events.html for more details.
+
+.. note::
+
+    While this option will preserve the configuration you have (but appending 
+    another path to ``file_roots`` and / or ``runner_dirs``), it may re-arrange 
+    (visually) the contents - however without any side effects.
 
 2. Copy the source file
 -----------------------

@@ -957,6 +957,11 @@ def execute(
     show_jid=False,
     progress=False,
     hide_timeout=False,
+    saltenv='base',
+    sync_roster=False,
+    sync_modules=False,
+    sync_grains=False,
+    sync_all=False,
     **kwargs
 ):
     '''
@@ -1074,6 +1079,13 @@ def execute(
     targets = []
     rtargets = None
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
+
+    if sync_roster:
+        __salt__['saltutil.sync_roster'](saltenv=saltenv)
+    if sync_modules:
+        __salt__['saltutil.sync_modules'](saltenv=saltenv)
+    if sync_all:
+        __salt__['saltutil.sync_all'](saltenv=saltenv)
 
     if not timeout:
         log.warning('Timeout set as 0, will wait for the devices to reply indefinitely')

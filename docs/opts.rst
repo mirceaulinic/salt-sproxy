@@ -34,7 +34,7 @@ already familiar with a vast majority of them from the `salt
     the configuration files for Salt master and minions. The default location
     on most systems is ``/etc/salt``.
 
-.. config:: --config-dump
+.. option:: --config-dump
 
     .. versionadded:: 2020.1.0
 
@@ -103,7 +103,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --sync
 
-    .. versionremoved:: 2020.1.0
+    .. deprecated:: 2020.1.0
 
         This option has been replaced by ``--static`` (see below).
 
