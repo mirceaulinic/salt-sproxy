@@ -301,6 +301,12 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--saltenv',
+            dest='saltenv',
+            action='store_true',
+            help='The Salt environment name to load module and files from',
+        )
+        self.add_option(
             '--events',
             dest='events',
             action='store_true',
