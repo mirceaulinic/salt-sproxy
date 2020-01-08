@@ -263,6 +263,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'show_jid',
             'hide_timeout',
             'progress',
+            'returner',
+            'returner_config',
+            'returner_kwargs',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:

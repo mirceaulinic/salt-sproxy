@@ -463,6 +463,30 @@ class SaltStandaloneProxyOptionParser(
             action='store_true',
             help='Display a progress graph.',
         )
+        self.add_option(
+            '--return',
+            dest='returner',
+            default='',
+            metavar='RETURNER',
+            help=(
+                'The name of the Returner module to use for sending data to '
+                'various external systems.'
+            ),
+        )
+        self.add_option(
+            '--return-config',
+            dest='returner_config',
+            default='',
+            metavar='RETURNER_CONF',
+            help='Specify an alternative Returner config.',
+        )
+        self.add_option(
+            '--return-kwargs',
+            dest='returner_kwargs',
+            default={},
+            metavar='RETURNER_KWARGS',
+            help='Set Returner options at the command line.',
+        )
 
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
