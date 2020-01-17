@@ -268,6 +268,12 @@ already familiar with a vast majority of them from the `salt
     Load the all extension modules provided with salt-sproxy, as well as your
     own extension modules from your environment.
 
+.. option:: --saltenv
+
+    .. versionadded:: 2020.1.0
+
+    The Salt environment name where to load extension modules and files from.
+
 .. option:: --events
 
      Whether should put the events on the Salt bus (mostly useful when having a

@@ -185,14 +185,32 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_dirs.append(runner_path)
         self.config['runner_dirs'] = runner_dirs
         runner_client = None
-        if self.config.get('sync_all', False) or self.config.get('sync_grains', True):
-            log.debug('Syncing grains')
+        sync_all = self.config.get('sync_all', False)
+        sync_grains = self.config.get('sync_grains', True)
+        sync_modules = self.config.get('sync_modules', False)
+        sync_roster = self.config.get('sync_roster', True)
+        if any([sync_all, sync_grains, sync_modules, sync_roster]):
             runner_client = salt.runner.RunnerClient(self.config)
-            sync_grains = runner_client.cmd(
+        if sync_all:
+            log.debug('Sync all')
+            sync_all_ret = runner_client.cmd(
+                'saltutil.sync_all', kwarg={'saltenv': saltenv}, print_event=False
+            )
+            log.debug(sync_all_ret)
+        if sync_grains and not sync_all:
+            log.debug('Syncing grains')
+            sync_grains_ret = runner_client.cmd(
                 'saltutil.sync_grains', kwarg={'saltenv': saltenv}, print_event=False
             )
-            log.debug(sync_grains)
-        if self.config.get('sync_all', False) or self.config.get('sync_modules', False):
+            log.debug(sync_grains_ret)
+        if self.config.get('module_dirs_cli'):
+            log.debug(
+                'Loading execution modules from the dirs provided via --module-dirs'
+            )
+            module_dirs = self.config.get('module_dirs', [])
+            module_dirs.extend(self.config['module_dirs_cli'])
+            self.config['module_dirs'] = module_dirs
+        if sync_modules and not sync_all:
             # Don't sync modules by default
             log.debug('Syncing modules')
             module_dirs = self.config.get('module_dirs', [])
@@ -201,28 +219,23 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             self.config['module_dirs'] = module_dirs
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
-        if self.config.get('module_dirs_cli'):
-            log.debug(
-                'Loading execution modules from the dirs provided via --module-dirs'
+            sync_modules_ret = runner_client.cmd(
+                'saltutil.sync_modules', kwarg={'saltenv': saltenv}, print_event=False
             )
-            module_dirs = self.config.get('module_dirs', [])
-            module_dirs.extend(self.config['module_dirs_cli'])
-            self.config['module_dirs'] = module_dirs
+            log.debug(sync_modules_ret)
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
-        if self.config.get('sync_all', False) or self.config.get('sync_roster', True):
+        if sync_roster and not sync_all:
             # Sync Rosters by default
             log.debug('Syncing roster')
             roster_dirs = self.config.get('roster_dirs', [])
             roster_path = os.path.join(curpath, '_roster')
             roster_dirs.append(roster_path)
             self.config['roster_dirs'] = roster_dirs
-            if not runner_client:
-                runner_client = salt.runner.RunnerClient(self.config)
-            sync_roster = runner_client.cmd(
+            sync_roster_ret = runner_client.cmd(
                 'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
             )
-            log.debug(sync_roster)
+            log.debug(sync_roster_ret)
         if self.config.get('states_dir'):
             states_dirs = self.config.get('states_dirs', [])
             states_dirs.append(self.config['states_dir'])
