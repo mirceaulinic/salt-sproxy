@@ -306,6 +306,7 @@ class SProxyMinion(SMinion):
             proxy_init_fn = self.proxy[fq_proxyname + '.init']
             try:
                 proxy_init_fn(self.opts)
+                self.connected = True
             except Exception as exc:
                 log.error(
                     'Encountered error when starting up the connection with %s:',
@@ -347,6 +348,7 @@ class StandaloneProxy(SProxyMinion):
         self, opts, unreachable_devices=None
     ):  # pylint: disable=super-init-not-called
         self.opts = opts
+        self.connected = False
         self.ready = False
         self.unreachable_devices = unreachable_devices
         self.gen_modules()
@@ -592,8 +594,9 @@ def salt_call(
             else:
                 log.warning('Returner %s is not available. Check that the dependencies are properly installed')
     finally:
-        shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
-        sa_proxy.proxy[shut_fun](opts)
+        if sa_proxy.connected:
+            shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
+            sa_proxy.proxy[shut_fun](opts)
     if cache_grains:
         log.debug('Caching Grains for %s', minion_id)
         log.debug(sa_proxy.opts['grains'])
