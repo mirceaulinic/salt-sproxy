@@ -112,7 +112,7 @@ class SaltStandaloneProxyOptionParser(
         salt.utils.parsers.LogLevelMixIn,
         salt.utils.parsers.HardCrashMixin,
         salt.utils.parsers.SaltfileMixIn,
-        salt.utils.parsers.TargetOptionsMixIn,
+        salt.utils.parsers.ExtendedTargetOptionsMixIn,
         salt.utils.parsers.OutputOptionsMixIn,
         salt.utils.parsers.ArgsStdinMixIn,
         salt.utils.parsers.ProfilingPMixIn,
@@ -121,7 +121,7 @@ class SaltStandaloneProxyOptionParser(
     )
 ):
 
-    default_timeout = 1
+    default_timeout = 60
 
     description = (
         '''
@@ -165,13 +165,11 @@ class SaltStandaloneProxyOptionParser(
             help='Absolute path to the Roster file to use.',
         )
         self.add_option(
-            '--sync',
+            '-s',
+            '--static',
             default=False,
             action='store_true',
-            help=(
-                'Return the replies from the devices immediately they are '
-                'received, or everything at once.'
-            ),
+            help=('Return the data from devices as a group after they all return.'),
         )
         self.add_option(
             '--cache-grains',
@@ -213,6 +211,36 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--preload-targeting',
+            default=False,
+            action='store_true',
+            help=(
+                'Preload Grains for all the devices before targeting.'
+                'This is useful to match the devices on dynamic Grains that '
+                'do not require the connection with the remote device - e.g., '
+                'Grains collected from an external API, etc.'
+            ),
+        )
+        self.add_option(
+            '--invasive-targeting',
+            default=False,
+            action='store_true',
+            help=(
+                'Collect all the possible data from every device salt-sproxy '
+                'is aware of, before distributing the commands. '
+                'In other words, this option tells salt-sproxy to connect to '
+                'every possible device defined in the Roster of choice, collect '
+                'Grains, compile Pillars, etc., and only then execute the '
+                'command against the devices matching the target expression.'
+                'Use with care, as this may significantly reduce the '
+                'performances, but this is the price paid to be able to target '
+                'using device properties. '
+                'Consider using this option in conjunction with --cache-grains '
+                'and / or --cache-pillar to cache the Grains and the Pillars to '
+                're-use them straight away next time.'
+            ),
+        )
+        self.add_option(
             '--no-pillar',
             default=False,
             action='store_true',
@@ -237,6 +265,15 @@ class SaltStandaloneProxyOptionParser(
             dest='preview_target',
             action='store_true',
             help='Show the devices expected to match the target.',
+        )
+        self.add_option(
+            '--sync-all',
+            dest='sync_all',
+            action='store_true',
+            help=(
+                'Load the all extension modules provided with salt-sproxy, as '
+                'well as the extension modules from your own environment.'
+            ),
         )
         self.add_option(
             '--sync-grains',
@@ -264,6 +301,12 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--saltenv',
+            dest='saltenv',
+            action='store_true',
+            help='The Salt environment name to load module and files from',
+        )
+        self.add_option(
             '--events',
             dest='events',
             action='store_true',
@@ -284,7 +327,33 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
-            '--file-roots',
+            '--pillar-root',
+            default=None,
+            help='Set this directory as the base pillar root.',
+        )
+        self.add_option(
+            '--file-root',
+            default=None,
+            help='Set this directory as the base file root.',
+        )
+        self.add_option(
+            '--states-dir',
+            default=None,
+            help='Set this directory to search for additional states.',
+        )
+        self.add_option(
+            '-m',
+            '--module-dirs',
+            dest='module_dirs_cli',
+            default=[],
+            action='append',
+            help=(
+                'Specify an additional directory to pull modules from. '
+                'Multiple directories can be provided by passing '
+                '`-m/--module-dirs` multiple times.'
+            ),
+        )
+        self.add_option(
             '--display-file-roots',
             dest='display_file_roots',
             action='store_true',
@@ -303,6 +372,13 @@ class SaltStandaloneProxyOptionParser(
                 'Saves the file_roots configuration so you can start '
                 'leveraging the event-driven automation and the Salt REST API.'
             ),
+        )
+        self.add_option(
+            '--config-dump',
+            dest='config_dump',
+            default=False,
+            action='store_true',
+            help='Dump the salt-sproxy configuration values',
         )
         self.add_option(
             '--no-connect',
@@ -327,6 +403,13 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--failhard',
+            dest='failhard',
+            action='store_true',
+            default=False,
+            help='Stop execution at the first execution error',
+        )
+        self.add_option(
             '--no-target-cache',
             dest='no_target_cache',
             action='store_true',
@@ -345,11 +428,56 @@ class SaltStandaloneProxyOptionParser(
             action='store_true',
             help='Do not display the results of the run.',
         )
+        self.add_option(
+            '--summary',
+            default=False,
+            action='store_true',
+            help='Display salt execution summary information.',
+        )
+        self.add_option(
+            '-v',
+            '--verbose',
+            default=False,
+            action='store_true',
+            help='Turn on command verbosity, display jid and detailed summary.',
+        )
+        self.add_option(
+            '--show-jid',
+            default=False,
+            action='store_true',
+            help='Display jid without the additional output of --verbose.',
+        )
+        self.add_option(
+            '--hide-timeout',
+            default=False,
+            action='store_true',
+            help='Hide devices that timeout.',
+        )
+        self.add_option(
+            '--batch-wait',
+            default=0,
+            type=float,
+            help=(
+                'Wait the specified time in seconds after each batch is done'
+                'before executing the next one.'
+            ),
+        )
+        self.add_option(
+            '-p',
+            '--progress',
+            default=False,
+            action='store_true',
+            help='Display a progress graph.',
+        )
 
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
     def _mixin_after_parsed(self):
-        if self.options.display_file_roots or self.options.save_file_roots:
+        if (
+            self.options.display_file_roots
+            or self.options.save_file_roots
+            or self.options.config_dump
+        ):
             # Insert dummy arg when displaying the file_roots
             self.args.append('not_a_valid_target')
             self.args.append('not_a_valid_command')

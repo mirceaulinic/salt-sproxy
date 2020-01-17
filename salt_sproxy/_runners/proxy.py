@@ -36,10 +36,13 @@ import salt.output
 import salt.version
 import salt.utils.jid
 import salt.utils.master
+from salt.ext import six
 from salt.minion import SMinion
 from salt.ext.six.moves import range
+import salt.utils.stringutils
 import salt.defaults.exitcodes
 from salt.exceptions import SaltSystemExit
+from salt.defaults import DEFAULT_TARGET_DELIM
 
 import salt.utils.napalm
 
@@ -49,6 +52,13 @@ try:
 except ImportError:
     from salt.utils import is_proxy  # pylint: disable=unused-import
     from salt.utils import clean_kwargs
+
+try:
+    import progressbar
+
+    HAS_PROGRESSBAR = True
+except ImportError:
+    HAS_PROGRESSBAR = False
 
 # ------------------------------------------------------------------------------
 # module properties
@@ -83,12 +93,26 @@ is_proxy = _is_proxy
 
 
 def _salt_call_and_return(
-    minion_id, function, queue, arg=None, jid=None, events=True, **opts
+    minion_id,
+    function,
+    queue,
+    unreachable_devices,
+    failed_devices,
+    arg=None,
+    jid=None,
+    events=True,
+    **opts
 ):
     '''
     '''
     opts['jid'] = jid
-    ret = salt_call(minion_id, function, **opts)
+    ret = salt_call(
+        minion_id,
+        function,
+        unreachable_devices=unreachable_devices,
+        failed_devices=failed_devices,
+        **opts
+    )
     if events:
         __salt__['event.send'](
             'proxy/runner/{jid}/ret/{minion_id}'.format(minion_id=minion_id, jid=jid),
@@ -116,7 +140,8 @@ def _receive_replies_async(queue):
         out_fmt = salt.output.out_format(
             ret, __opts__.get('output', 'nested'), opts=__opts__
         )
-        print(out_fmt)
+
+        salt.utils.stringutils.print_cli(out_fmt)
 
 
 # The SProxyMinion class is back-ported from Salt 2019.2.0 (to be released soon)
@@ -129,6 +154,23 @@ class SProxyMinion(SMinion):
     generate all of the salt minion functions and present them with these
     functions for general use.
     '''
+
+    def _matches_target(self):
+        match_func = self.matchers.get(
+            '{0}_match.match'.format(self.opts['__tgt_type']), None
+        )
+        if match_func is None:
+            return False
+        if self.opts['__tgt_type'] in ('grain', 'grain_pcre', 'pillar'):
+            delimiter = self.opts.get('delimiter', DEFAULT_TARGET_DELIM)
+            if not match_func(self.opts['__tgt'], delimiter=delimiter):
+                return False
+        elif not match_func(self.opts['__tgt']):
+            return False
+        else:
+            if not self.matchers['glob_match.match'](self.opts['__tgt']):
+                return False
+        return True
 
     def gen_modules(self, initial_load=False):
         '''
@@ -143,11 +185,22 @@ class SProxyMinion(SMinion):
         cached_grains = None
         if self.opts.get('proxy_use_cached_grains', True):
             cached_grains = self.opts.pop('proxy_cached_grains', None)
+
         if not cached_grains and self.opts.get('proxy_preload_grains', True):
             loaded_grains = salt.loader.grains(self.opts)
             self.opts['grains'].update(loaded_grains)
         elif cached_grains:
             self.opts['grains'].update(cached_grains)
+
+        if (
+            self.opts['roster_opts']
+            and self.opts.get('proxy_merge_roster_grains', True)
+            and 'grains' in self.opts['roster_opts']
+            and isinstance(self.opts['roster_opts']['grains'], dict)
+        ):
+            # Merge the Grains from the Roster opts
+            log.debug('Merging Grains with the Roster provided ones')
+            self.opts['grains'].update(self.opts['roster_opts']['grains'])
 
         cached_pillar = None
         if self.opts.get('proxy_use_cached_pillar', True):
@@ -167,6 +220,23 @@ class SProxyMinion(SMinion):
             if 'proxy' not in self.opts['pillar']:
                 self.opts['pillar']['proxy'] = {}
             self.opts['pillar']['proxy'].update(self.opts['roster_opts'])
+
+        if self.opts.get('preload_targeting', False) or self.opts.get(
+            'invasive_targeting', False
+        ):
+            log.debug('Loading the Matchers modules')
+            self.matchers = salt.loader.matchers(self.opts)
+
+        if self.opts.get('preload_targeting', False):
+            log.debug(
+                'Preload targeting requested, trying to see if %s matches the target %s (%s)',
+                self.opts['id'],
+                str(self.opts['__tgt']),
+                self.opts['__tgt_type'],
+            )
+            matched = self._matches_target()
+            if not matched:
+                return
 
         if 'proxy' not in self.opts['pillar'] and 'proxy' not in self.opts:
             errmsg = (
@@ -218,40 +288,65 @@ class SProxyMinion(SMinion):
                 or '{0}.shutdown'.format(fq_proxyname) not in self.proxy
             ):
                 errmsg = (
-                    'Proxymodule {0} is missing an init() or a shutdown() or both. '.format(
-                        fq_proxyname
+                    '[{0}] Proxymodule {1} is missing an init() or a shutdown() or both. '.format(
+                        self.opts['id'], fq_proxyname
                     )
                     + 'Check your proxymodule.  Salt-proxy aborted.'
                 )
                 log.error(errmsg)
                 self._running = False
+                if self.unreachable_devices is not None:
+                    self.unreachable_devices.append(self.opts['id'])
                 raise SaltSystemExit(
                     code=salt.defaults.exitcodes.EX_GENERIC, msg=errmsg
                 )
 
             proxy_init_fn = self.proxy[fq_proxyname + '.init']
-            proxy_init_fn(self.opts)
+            try:
+                proxy_init_fn(self.opts)
+            except Exception as exc:
+                log.error(
+                    'Encountered error when starting up the connection with %s:',
+                    self.opts['id'],
+                )
+                if self.unreachable_devices is not None:
+                    self.unreachable_devices.append(self.opts['id'])
+                raise
             if not cached_grains and self.opts.get('proxy_load_grains', True):
                 # When the Grains are loaded from the cache, no need to re-load them
                 # again.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
                 self.opts['grains'].update(loaded_grains)
             self.functions.pack['__grains__'] = self.opts['grains']
-
-        if (
-            self.opts['roster_opts']
-            and self.opts.get('proxy_merge_roster_grains', True)
-            and 'grains' in self.opts['roster_opts']
-            and isinstance(self.opts['roster_opts']['grains'], dict)
-        ):
-            self.opts['grains'].update(self.opts['roster_opts']['grains'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
+
+        if self.opts.get('invasive_targeting', False):
+            log.info(
+                'Invasive targeting requested, trying to see if %s matches the target %s (%s)',
+                self.opts['id'],
+                str(self.opts['__tgt']),
+                self.opts['__tgt_type'],
+            )
+            matched = self._matches_target()
+            if not matched:
+                # Didn't match, shutting down this Proxy Minion, and exiting.
+                log.debug(
+                    '%s does not match the target expression, aborting', self.opts['id']
+                )
+                proxy_shut_fn = self.proxy[fq_proxyname + '.shutdown']
+                proxy_shut_fn(self.opts)
+                return
+
         self.ready = True
 
 
 class StandaloneProxy(SProxyMinion):
-    def __init__(self, opts):  # pylint: disable=super-init-not-called
+    def __init__(
+        self, opts, unreachable_devices=None
+    ):  # pylint: disable=super-init-not-called
         self.opts = opts
+        self.ready = False
+        self.unreachable_devices = unreachable_devices
         self.gen_modules()
 
 
@@ -263,6 +358,8 @@ class StandaloneProxy(SProxyMinion):
 def salt_call(
     minion_id,
     function=None,
+    unreachable_devices=None,
+    failed_devices=None,
     with_grains=True,
     with_pillar=True,
     preload_grains=True,
@@ -278,6 +375,12 @@ def salt_call(
     jid=None,
     roster_opts=None,
     test_ping=False,
+    tgt=None,
+    tgt_type=None,
+    preload_targeting=False,
+    invasive_targeting=False,
+    failhard=False,
+    timeout=60,
     args=(),
     **kwargs
 ):
@@ -410,6 +513,8 @@ def salt_call(
     opts['id'] = minion_id
     opts['pillarenv'] = __opts__.get('pillarenv', 'base')
     opts['__cli'] = __opts__.get('__cli', 'salt-call')
+    opts['__tgt'] = tgt
+    opts['__tgt_type'] = tgt_type
     if 'saltenv' not in opts:
         opts['saltenv'] = 'base'
     if not default_grains:
@@ -426,6 +531,8 @@ def salt_call(
     opts['proxy_preload_grains'] = preload_grains
     opts['proxy_cache_grains'] = cache_grains
     opts['proxy_cache_pillar'] = cache_pillar
+    opts['preload_targeting'] = preload_targeting
+    opts['invasive_targeting'] = invasive_targeting
     opts['proxy_use_cached_grains'] = use_cached_grains
     opts['proxy_no_connect'] = no_connect
     opts['proxy_test_ping'] = test_ping
@@ -435,22 +542,40 @@ def salt_call(
     if use_cached_pillar:
         opts['proxy_cached_pillar'] = minion_cache.get('pillar')
     opts['roster_opts'] = roster_opts
-    sa_proxy = StandaloneProxy(opts)
+    minion_defaults = salt.config.DEFAULT_MINION_OPTS.copy()
+    minion_defaults.update(salt.config.DEFAULT_PROXY_MINION_OPTS)
+    for opt, val in six.iteritems(minion_defaults):
+        if opt not in opts:
+            opts[opt] = val
+    sa_proxy = StandaloneProxy(opts, unreachable_devices)
+    if not sa_proxy.ready:
+        log.debug(
+            'The SProxy Minion for %s is not able to start up, aborting', opts['id']
+        )
+        return
     kwargs = clean_kwargs(**kwargs)
     ret = None
     try:
         ret = sa_proxy.functions[function](*args, **kwargs)
     except Exception as err:
+        log.error('Exception while running %s on %s', function, opts['id'])
         log.error(err, exc_info=True)
+        if failed_devices is not None:
+            failed_devices.append(opts['id'])
+        if failhard:
+            raise
     finally:
         shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
         sa_proxy.proxy[shut_fun](opts)
     if cache_grains:
-        __salt__['cache.store'](
+        log.debug('Caching Grains for %s', minion_id)
+        log.debug(sa_proxy.opts['grains'])
+        cache_store = __salt__['cache.store'](
             'minions/{}/data'.format(minion_id), 'grains', sa_proxy.opts['grains']
         )
     if cache_pillar:
-        __salt__['cache.store'](
+        log.debug('Caching Pillar for %s', minion_id)
+        cached_store = __salt__['cache.store'](
             'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
         )
     return ret
@@ -467,7 +592,8 @@ def execute_devices(
     default_pillar=None,
     args=(),
     batch_size=10,
-    sync=False,
+    batch_wait=0,
+    static=False,
     tgt=None,
     tgt_type=None,
     jid=None,
@@ -480,6 +606,14 @@ def execute_devices(
     no_connect=False,
     roster_targets=None,
     test_ping=False,
+    preload_targeting=False,
+    invasive_targeting=False,
+    failhard=False,
+    timeout=60,
+    summary=False,
+    verbose=False,
+    progress=False,
+    hide_timeout=False,
     **kwargs
 ):
     '''
@@ -527,7 +661,7 @@ def execute_devices(
     batch_size: ``10``
         The size of each batch to execute.
 
-    sync: ``False``
+    static: ``False``
         Whether to return the results synchronously (or return them as soon
         as the device replies).
 
@@ -576,6 +710,7 @@ def execute_devices(
 
         salt-run proxy.execute "['172.17.17.1', '172.17.17.2']" test.ping driver=eos username=test password=test123
     '''
+    resp = ''
     __pub_user = kwargs.get('__pub_user')
     if not __pub_user:
         __pub_user = __utils__['user.get_specific_user']()
@@ -597,6 +732,8 @@ def execute_devices(
         'preload_pillar': preload_pillar,
         'default_grains': default_grains,
         'default_pillar': default_pillar,
+        'preload_targeting': preload_targeting,
+        'invasive_targeting': invasive_targeting,
         'args': args,
         'cache_grains': cache_grains,
         'cache_pillar': cache_pillar,
@@ -605,6 +742,10 @@ def execute_devices(
         'use_existing_proxy': use_existing_proxy,
         'no_connect': no_connect,
         'test_ping': test_ping,
+        'tgt': tgt,
+        'tgt_type': tgt_type,
+        'failhard': failhard,
+        'timeout': timeout,
     }
     opts.update(kwargs)
     if events:
@@ -621,54 +762,163 @@ def execute_devices(
             },
         )
     queue = multiprocessing.Queue()
-    if not sync:
+    if not static:
         thread = threading.Thread(target=_receive_replies_async, args=(queue,))
         thread.start()
     ret = {}
     batch_size = int(batch_size)
-    batch_count = int(len(minions) / batch_size) + 1
+    batch_count = int(len(minions) / batch_size) + (
+        1 if len(minions) % batch_size else 0
+    )
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
         batch_count,
     )
-    for batch_index in range(batch_count):
-        log.info('Batch #%d', batch_index)
-        processes = []
-        devices_batch = minions[
-            batch_index * batch_size : (batch_index + 1) * batch_size
-        ]
-        log.info('Devices in batch #%d:', batch_index)
-        log.info(devices_batch)
-        for minion_id in devices_batch:
-            log.info('Executing on %s', minion_id)
-            device_opts = copy.deepcopy(opts)
-            if roster_targets and isinstance(roster_targets, dict):
-                device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
-                    'minion_opts'
+    stop_iteration = False
+    progress_bar = None
+    if progress and HAS_PROGRESSBAR:
+        progress_bar = progressbar.ProgressBar(
+            max_value=len(minions), enable_colors=True, redirect_stdout=True
+        )
+    with multiprocessing.Manager() as manager:
+        timeout_devices = manager.list()
+        failed_devices = manager.list()
+        unreachable_devices = manager.list()
+        for batch_index in range(batch_count):
+            log.info('Batch #%d', batch_index)
+            processes = []
+            devices_batch = minions[
+                batch_index * batch_size : (batch_index + 1) * batch_size
+            ]
+            log.info('Devices in batch #%d:', batch_index)
+            log.info(devices_batch)
+            if verbose:
+                salt.utils.stringutils.print_cli(
+                    'Executing run on {0}'.format(devices_batch)
                 )
-            device_proc = multiprocessing.Process(
-                target=_salt_call_and_return,
-                name=minion_id,
-                args=(minion_id, function, queue, event_args, jid, events),
-                kwargs=device_opts,
+            for minion_index, minion_id in enumerate(devices_batch):
+                device_count = batch_index * batch_size + minion_index + 1
+                log.info('Executing on %s', minion_id)
+                device_opts = copy.deepcopy(opts)
+                if roster_targets and isinstance(roster_targets, dict):
+                    device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
+                        'minion_opts'
+                    )
+                device_proc = multiprocessing.Process(
+                    target=_salt_call_and_return,
+                    name=minion_id,
+                    args=(
+                        minion_id,
+                        function,
+                        queue,
+                        unreachable_devices,
+                        failed_devices,
+                        event_args,
+                        jid,
+                        events,
+                    ),
+                    kwargs=device_opts,
+                )
+                device_proc.start()
+                processes.append(device_proc)
+            for proc in processes:
+                if stop_iteration:
+                    proc.terminate()
+                    if progress_bar:
+                        progress_bar.update(device_count)
+                    continue
+                if failhard and proc.exitcode:
+                    stop_iteration = True
+                proc.join(timeout=timeout)
+                if proc.is_alive():
+                    log.info(
+                        'Terminating the process for %s, as it didn\'t reply within %d seconds',
+                        proc._name,
+                        timeout,
+                    )
+                    if not hide_timeout:
+                        queue.put({proc._name: 'Minion did not return. [No response]'})
+                    timeout_devices.append(proc._name)
+                proc.terminate()
+                if progress_bar:
+                    progress_bar.update(device_count)
+                continue
+            if failhard and proc.exitcode:
+                stop_iteration = True
+            if stop_iteration:
+                log.error('Exiting as an error has occurred')
+                queue.put('FIN.')
+                if progress_bar:
+                    progress_bar.finish()
+                raise StopIteration
+            if batch_wait:
+                log.debug(
+                    'Waiting %f seconds before executing the next batch', batch_wait
+                )
+                time.sleep(batch_wait)
+        queue.put('FIN.')
+        if progress_bar:
+            progress_bar.finish()
+        if static:
+            resp = {}
+            while True:
+                ret = queue.get()
+                if ret == 'FIN.':
+                    break
+                resp.update(ret)
+        if summary:
+            salt.utils.stringutils.print_cli('\n')
+            salt.utils.stringutils.print_cli(
+                '-------------------------------------------'
             )
-            device_proc.start()
-            processes.append(device_proc)
-        for proc in processes:
-            proc.join()
-    queue.put('FIN.')
-    if sync:
-        resp = {}
-        while True:
-            ret = queue.get()
-            if ret == 'FIN.':
-                break
-            resp.update(ret)
-        return resp
-    else:
-        # TODO: Collect the exit code and exit with sys.exit() when non-zero
-        return ''
+            salt.utils.stringutils.print_cli('Summary')
+            salt.utils.stringutils.print_cli(
+                '-------------------------------------------'
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices targeted: {0}'.format(len(minions))
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices returned: {0}'.format(
+                    len(minions) - len(timeout_devices) - len(unreachable_devices)
+                )
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices that did not return: {0}'.format(len(timeout_devices))
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices with errors: {0}'.format(len(failed_devices))
+            )
+            salt.utils.stringutils.print_cli(
+                '# of devices unreachable: {0}'.format(len(unreachable_devices))
+            )
+            if verbose:
+                if timeout_devices:
+                    salt.utils.stringutils.print_cli(
+                        (
+                            '\nThe following devices didn\'t return (timeout):'
+                            '\n - {0}'.format('\n - '.join(timeout_devices))
+                        )
+                    )
+                if failed_devices:
+                    salt.utils.stringutils.print_cli(
+                        (
+                            '\nThe following devices returned "bad" output:'
+                            '\n - {0}'.format('\n - '.join(failed_devices))
+                        )
+                    )
+                if unreachable_devices:
+                    salt.utils.stringutils.print_cli(
+                        (
+                            '\nThe following devices are unreachable:'
+                            '\n - {0}'.format('\n - '.join(unreachable_devices))
+                        )
+                    )
+            salt.utils.stringutils.print_cli(
+                '-------------------------------------------'
+            )
+    return resp
 
 
 def execute(
@@ -687,7 +937,8 @@ def execute(
     default_pillar=None,
     args=(),
     batch_size=10,
-    sync=False,
+    batch_wait=0,
+    static=False,
     events=True,
     cache_grains=False,
     cache_pillar=False,
@@ -698,6 +949,19 @@ def execute(
     test_ping=False,
     target_cache=True,
     target_cache_timeout=60,
+    preload_targeting=False,
+    invasive_targeting=False,
+    failhard=False,
+    summary=True,
+    verbose=False,
+    show_jid=False,
+    progress=False,
+    hide_timeout=False,
+    saltenv='base',
+    sync_roster=False,
+    sync_modules=False,
+    sync_grains=False,
+    sync_all=False,
     **kwargs
 ):
     '''
@@ -756,7 +1020,7 @@ def execute(
     batch_size: ``10``
         The size of each batch to execute.
 
-    sync: ``False``
+    static: ``False``
         Whether to return the results synchronously (or return them as soon
         as the device replies).
 
@@ -815,6 +1079,28 @@ def execute(
     targets = []
     rtargets = None
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
+
+    if sync_roster:
+        __salt__['saltutil.sync_roster'](saltenv=saltenv)
+    if sync_modules:
+        __salt__['saltutil.sync_modules'](saltenv=saltenv)
+    if sync_all:
+        __salt__['saltutil.sync_all'](saltenv=saltenv)
+
+    if not timeout:
+        log.warning('Timeout set as 0, will wait for the devices to reply indefinitely')
+        # Setting the timeout as None, because that's the value we need to pass
+        # to multiprocessing's join() method to wait for the devices to reply
+        # indefinitely.
+        timeout = None
+
+    if preload_targeting or invasive_targeting:
+        _tgt = '*'
+        _tgt_type = 'glob'
+    else:
+        _tgt = tgt
+        _tgt_type = tgt_type
+
     if not roster or roster == 'None':
         log.info(
             'No Roster specified. Please use the ``roster`` argument, or set the ``proxy_roster`` option in the '
@@ -846,7 +1132,7 @@ def execute(
                 targets = [tgt]
     else:
         targets = None
-        if target_cache:
+        if target_cache and not (invasive_targeting or preload_targeting):
             cache_bank = salt.cache.factory(__opts__)
             cache_key = hashlib.sha1(
                 '{tgt}_{tgt_type}'.format(tgt=tgt, tgt_type=tgt_type).encode()
@@ -858,17 +1144,24 @@ def execute(
                 targets = cache_bank.fetch('_salt_sproxy_target', cache_key)
         if not targets:
             log.debug('Computing the target using the %s Roster', roster)
+            __opts__['use_cached_grains'] = use_cached_grains
+            __opts__['use_cached_pillar'] = use_cached_pillar
             roster_modules = salt.loader.roster(__opts__, runner=__salt__)
             if '.targets' not in roster:
                 roster = '{mod}.targets'.format(mod=roster)
-            rtargets = roster_modules[roster](tgt, tgt_type=tgt_type)
+            rtargets = roster_modules[roster](_tgt, tgt_type=_tgt_type)
             targets = list(rtargets.keys())
-            if target_cache:
+            if target_cache and not (invasive_targeting or preload_targeting):
                 cache_bank.store('_salt_sproxy_target', cache_key, targets)
                 cache_bank.store('_salt_sproxy_target', cache_time_key, time.time())
-    log.debug(
-        'The target expression "%s" (%s) matched the following:', str(tgt), tgt_type
-    )
+    if preload_targeting or invasive_targeting:
+        log.debug(
+            'Loaded everything from the Roster, to start collecting Grains and Pillars:'
+        )
+    else:
+        log.debug(
+            'The target expression "%s" (%s) matched the following:', str(tgt), tgt_type
+        )
     log.debug(targets)
     if not targets:
         return 'No devices matched your target. Please review your tgt / tgt_type arguments, or the Roster data source'
@@ -882,6 +1175,11 @@ def execute(
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
             jid = salt.utils.jid.gen_jid()
+    if verbose or show_jid:
+        salt.utils.stringutils.print_cli('Executing job with jid {0}'.format(jid))
+        salt.utils.stringutils.print_cli(
+            '-------------------------------------------\n'
+        )
     if events:
         __salt__['event.send'](jid, {'minions': targets})
     return execute_devices(
@@ -897,7 +1195,8 @@ def execute(
         default_pillar=default_pillar,
         args=args,
         batch_size=batch_size,
-        sync=sync,
+        batch_wait=batch_wait,
+        static=static,
         events=events,
         cache_grains=cache_grains,
         cache_pillar=cache_pillar,
@@ -907,5 +1206,14 @@ def execute(
         no_connect=no_connect,
         roster_targets=rtargets,
         test_ping=test_ping,
+        preload_targeting=preload_targeting,
+        invasive_targeting=invasive_targeting,
+        failhard=failhard,
+        timeout=timeout,
+        summary=summary,
+        verbose=verbose,
+        progress=progress,
+        hide_timeout=hide_timeout,
         **kwargs
     )
+    return ret

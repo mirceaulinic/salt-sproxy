@@ -62,7 +62,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'salt-sproxy'
-copyright = u'2019, Mircea Ulinic'
+copyright = u'2019-2020, Mircea Ulinic'
 author = u'Mircea Ulinic'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -182,7 +182,10 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, 'salt-sproxy', u'salt-sproxy Documentation', [author], 1)]
+man_pages = [
+    (master_doc, 'salt-sproxy', u'salt-sproxy Documentation', [author], 1),
+    ('salt_sapi', 'salt-sapi', u'salt-sapi Documentation', [author], 1),
+]
 
 
 # -- Options for Texinfo output -------------------------------------------

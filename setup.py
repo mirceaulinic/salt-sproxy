@@ -16,7 +16,7 @@ with open("requirements.txt", "r") as fs:
 
 setup(
     name='salt-sproxy',
-    version='2019.10.0',
+    version='2020.1.0',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
@@ -24,7 +24,7 @@ setup(
     description='Salt plugin for interacting with network devices, without running Minions',
     long_description=long_description,
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
         'Topic :: Utilities',
@@ -55,6 +55,18 @@ setup(
     keywords=('salt', 'network', 'automation', 'cli', 'proxy', 'minion'),
     include_package_data=True,
     install_requires=reqs,
-    entry_points={'console_scripts': ['salt-sproxy=salt_sproxy.scripts:salt_sproxy']},
-    data_files=[('man/man1', ['docs/man/salt-sproxy.1'])],
+    entry_points={
+        'console_scripts': [
+            'salt-sapi=salt_sproxy.scripts:salt_sapi',
+            'salt-sproxy=salt_sproxy.scripts:salt_sproxy',
+        ]
+    },
+    extras_require={
+        'api': ['cherrypy'],
+        'netbox': ['pynetbox'],
+        'napalm': ['napalm'],
+        'junos': ['junos-eznc'],
+        'netmiko': ['netmiko'],
+    },
+    data_files=[('man/man1', ['docs/man/salt-sproxy.1', 'docs/man/salt-sapi.1'])],
 )

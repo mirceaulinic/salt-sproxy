@@ -29,11 +29,116 @@ Suppose we have the following configuration:
 
 .. hint::
 
-    Consider looking at the :ref:`example-salt-api` example for a more complete
-    example on configuring the Salt API, however the official Salt 
-    documentation should always be used as the reference.
+    Consider looking at the :ref:`example-salt-api` and :ref:`example-salt-sapi`
+    examples for end-to-end examples on configuring the Salt API or
+    ``salt-sapi``, however the official Salt documentation should always be
+    used as the reference.
 
-After starting the salt-api process, we should get the following:
+Starting with salt-sproxy 2020.1.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Beginning with the *salt-sproxy* release 2020.1.0, the usage has been 
+simplified compared to previous versions, and a new API client has been added, 
+named ``sproxy``, together with its counter-part ``sproxy_async`` for 
+asynchronous requests.
+
+.. seealso::
+
+    :ref:`salt-sapi`
+
+In order to do so, instead of starting the usual ``salt-api`` process, you'd 
+need to start a separate application named ``salt-sapi`` which is shipped 
+together with *salt-sproxy*. Everything stay the exact same as usually, the 
+only difference being the special ``sproxy`` and ``sproxy_async`` clients for 
+simplified usage.
+
+A major advantage of using the ``sproxy`` / ``sproxy_async`` clients is that 
+the usage is very similar to the ``local`` / ``local_async`` clients (see 
+https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#usage), 
+the arguments you'd need to being in-line with the ones from `LocalClient 
+<https://docs.saltstack.com/en/latest/ref/clients/index.html#salt.client.LocalClient.cmd>`__: 
+``tgt`` (target expression) and ``fun`` (the name of the Salt function to 
+execute) as mandatory arguments, plus a number of optional arguments documented 
+at https://salt-sproxy.readthedocs.io/en/latest/runners/proxy.html#_runners.proxy.execute.
+See an usage example below.
+
+.. hint::
+
+    If you are already using Salt API, and would like to make use of the 
+    ``sproxy`` / ``sproxy_async`` client(s), you may want to use the
+    ``salt-sapi`` instead of the ``salt-api`` program, and you'll be able to use
+    the Salt API as always, armed with the *salt-sproxy* clients as well.
+
+.. tip::
+
+    As mentioned in 
+    https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#best-practices,
+
+        Running asynchronous jobs results in being able to process [...] 17x
+        more commands per second (as the ``sproxy_async`` requests make use of 
+        the ``RunnerClient`` interface).
+
+    Running with ``sproxy_async`` will return you a JID with you can then later
+    use to gather the job returns:
+
+         Job returns can be fetched from Salt's job cache via the
+         ``/jobs/<jid>`` endpoint, or they can be collected into a data store
+         using Salt's Returner system.
+
+        See 
+        https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#jobs 
+        for further details.
+
+After starting the ``salt-sapi`` process, you should get the following:
+
+.. code-block:: bash
+
+    $ curl -i localhost:8080
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: CherryPy/18.3.0
+    Date: Thu, 02 Jan 2020 23:13:28 GMT
+    Allow: GET, HEAD, POST
+    Access-Control-Allow-Origin: *
+    Access-Control-Expose-Headers: GET, POST
+    Access-Control-Allow-Credentials: true
+    Vary: Accept-Encoding
+    Content-Length: 172
+
+    {"return": "Welcome", "clients": ["local", "local_async", "local_batch", "local_subset", "runner", "runner_async", "sproxy", "sproxy_async", "ssh", "wheel", "wheel_async"]}
+
+That means the *salt-sproxy* Salt API is ready to receive requests.
+
+Usage examples:
+
+.. code-block:: bash
+
+    $ curl -sS localhost:8080/run -H 'Accept: application/x-yaml' \
+        -d eauth='pam' \
+        -d username='mircea' \
+        -d password='pass' \
+        -d client='sproxy' \
+        -d tgt='minion1' \
+        -d fun='test.ping'
+   return:
+   - minion1: true
+
+.. code-block:: bash
+
+    $ curl -sS localhost:8080/run -H 'Accept: application/json' \
+        -d eauth='pam' \
+        -d username='mircea' \
+        -d password='pass' \
+        -d client='sproxy_async' \
+        -d tgt='minion\d' \
+        -d tgt_type='pcre' \
+        -d fun='test.ping' \
+    {"return": [{"tag": "salt/run/20200103001109995573", "jid": "20200103001109995573"}]}
+
+Before salt-sproxy 2020.1.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After starting the ``salt-api`` process, we should get the following:
 
 .. code-block:: bash
 
@@ -177,3 +282,11 @@ Or when updating the configuration:
 You can follow the same methodology with any other Salt function (including
 States) that you might want to execute against a device, without having a
 (Proxy) Minion running.
+
+See Also
+~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   salt_sapi

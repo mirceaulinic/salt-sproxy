@@ -41,8 +41,8 @@ database available in NetBox, you can configure another key, ``filters``, under
 '''
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals
-import re
-import fnmatch
+
+import logging
 
 try:
     import pynetbox  # pylint: disable=unused-import
@@ -51,7 +51,11 @@ try:
 except ImportError:
     HAS_PYNETBOX = False
 
+import salt_sproxy._roster
+
 __virtualname__ = 'netbox'
+
+log = logging.getLogger(__name__)
 
 
 def __virtual__():
@@ -60,37 +64,61 @@ def __virtual__():
     return __virtualname__
 
 
+def _setval(key, val, dict_=None, delim=':'):
+    '''
+    Set a value under the dictionary hierarchy identified
+    under the key. The target 'foo:bar:baz' returns the
+    dictionary hierarchy {'foo': {'bar': {'baz': {}}}}.
+    '''
+    if not dict_:
+        dict_ = {}
+    prev_hier = dict_
+    dict_hier = key.split(delim)
+    for each in dict_hier[:-1]:
+        if isinstance(each, str):
+            if each not in prev_hier:
+                prev_hier[each] = {}
+            prev_hier = prev_hier[each]
+        else:
+            prev_hier[each] = [{}]
+            prev_hier = prev_hier[each]
+    prev_hier[dict_hier[-1]] = val
+    return dict_
+
+
 def targets(tgt, tgt_type='glob', **kwargs):
     '''
     Return the targets from NetBox.
     '''
     netbox_filters = __opts__.get('netbox', {}).get('filters', {})
     netbox_filters.update(**kwargs)
+    filtered = False
+    if tgt_type == 'list' or (
+        tgt_type == 'glob' and not any([char in tgt for char in '*?[!'])
+    ):
+        netbox_filters['name'] = tgt
+        filtered = True
+    elif tgt_type == 'grain' and tgt.startswith('netbox:'):
+        levels = tgt.split('netbox:')[1].split(':')
+        if len(levels) > 2:
+            netbox_filters[levels[0]] = _setval(':'.join(levels[1:-1]), levels[-1])
+            filtered = True
+        elif len(levels) == 2:
+            netbox_filters[levels[0]] = levels[1]
+            filtered = True
+    log.debug('Querying NetBox with the following filters')
+    log.debug(netbox_filters)
     netbox_devices = __runner__['salt.cmd'](
         'netbox.filter', 'dcim', 'devices', **netbox_filters
     )
-    if tgt_type == 'glob':
-        devices = [
-            device['name']
-            for device in netbox_devices
-            if fnmatch.fnmatch(str(device['name']), tgt)
-        ]
-    elif tgt_type == 'list':
-        devices = [device['name'] for device in netbox_devices if device['name'] in tgt]
-    elif tgt_type == 'pcre':
-        rgx = re.compile(tgt)
-        devices = [
-            device['name'] for device in netbox_devices if rgx.search(device['name'])
-        ]
-    elif tgt_type in ['grain', 'grain_pcre']:
-        grains = __runner__['cache.grains'](tgt, tgt_type=tgt_type)
-        devices = list(grains.keys())
-    elif tgt_type in ['pillar', 'pillar_pcre']:
-        pillars = __runner__['cache.pillar'](tgt, tgt_type=tgt_type)
-        devices = list(pillars.keys())
-    # elif tgt_type == 'compound':
-    # TODO: Implement the compound matcher, might need quite a bit of work,
-    # need to evaluate if it's worth pulling all this code from
-    # https://github.com/saltstack/salt/blob/develop/salt/matchers/compound_match.py
-    # or find a smarter way to achieve that.
-    return {device: {} for device in devices}
+    pool = {
+        device['name']: {'minion_opts': {'grains': {'netbox': device}}}
+        for device in netbox_devices
+    }
+    if filtered:
+        return pool
+    pool = salt_sproxy._roster.load_cache(
+        pool, __runner__, __opts__, tgt, tgt_type=tgt_type
+    )
+    engine = salt_sproxy._roster.TGT_FUN[tgt_type]
+    return engine(pool, tgt, opts=__opts__)

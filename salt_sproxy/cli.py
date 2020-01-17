@@ -21,6 +21,7 @@ from salt_sproxy.parsers import SaltStandaloneProxyOptionParser
 
 import os
 import ast
+import sys
 import logging
 
 import salt.runner
@@ -29,6 +30,7 @@ from salt.utils.verify import check_user, verify_log
 from salt.exceptions import SaltClientError
 from salt.ext import six
 import salt.defaults.exitcodes  # pylint: disable=W0611
+import salt.utils.stringutils
 
 try:
     from salt.utils.file import fopen
@@ -57,6 +59,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         '''
         self.parse_args()
 
+        if self.config.get('config_dump'):
+            sys.stdout.write(safe_dump(self.config, default_flow_style=False))
+            return self.config
+
         # Setup file logging!
         self.setup_logfile_logger()
         verify_log(self.config)
@@ -65,14 +71,33 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         saltenv = self.config.get('saltenv')
         if not saltenv:
             saltenv = 'base'
+        if self.config.get('pillar_root'):
+            log.info(
+                'Setting and using %s as the Pillar root', self.config['pillar_root']
+            )
+            self.config['pillar_roots'] = {saltenv: self.config['pillar_root']}
+        if self.config.get('file_root'):
+            log.info(
+                'Setting and using %s as the Salt file root', self.config['file_root']
+            )
+            self.config['file_root'] = {saltenv: self.config['file_root']}
         if self.config.get('display_file_roots'):
-            print('salt-sproxy is installed at:', curpath)
-            print('\nYou can configure the file_roots on the Master, e.g.,\n')
-            print('file_roots:\n  %s:\n    -' % saltenv, curpath)
-            print('\n\nOr only for the Runners:\n')
-            print('runner_dirs:\n  - %s/_runners' % curpath)
+            salt.utils.stringutils.print_cli(
+                'salt-sproxy is installed at: {}'.format(curpath)
+            )
+            salt.utils.stringutils.print_cli(
+                '\nYou can configure the file_roots on the Master, e.g.,\n'
+            )
+            salt.utils.stringutils.print_cli(
+                'file_roots:\n  {0}:\n    - {1}'.format(saltenv, curpath)
+            )
+            salt.utils.stringutils.print_cli('\n\nOr only for the Runners:\n')
+            salt.utils.stringutils.print_cli(
+                'runner_dirs:\n  - {}/_runners'.format(curpath)
+            )
             return
         if self.config.get('save_file_roots'):
+            updated = False
             with fopen(self.config['conf_file'], 'r+') as master_fp:
                 master_cfg = safe_load(master_fp)
                 if not master_cfg:
@@ -80,30 +105,49 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 file_roots = master_cfg.get('file_roots', {saltenv: []}).get(
                     saltenv, []
                 )
+                runner_dirs = master_cfg.get('runner_dirs', [])
+                sproxy_runners = os.path.join(curpath, '_runners')
                 if curpath not in file_roots:
                     file_roots.append(curpath)
                     master_cfg['file_roots'] = {saltenv: file_roots}
+                    updated = True
+                    salt.utils.stringutils.print_cli(
+                        '{} added to the file_roots:\n'.format(curpath)
+                    )
+                    salt.utils.stringutils.print_cli(
+                        'file_roots:\n  {0}\n    - {1}\n'.format(
+                            saltenv, '\n    -'.join(file_roots)
+                        )
+                    )
+                if sproxy_runners not in runner_dirs:
+                    runner_dirs.append(sproxy_runners)
+                    master_cfg['runner_dirs'] = runner_dirs
+                    updated = True
+                    salt.utils.stringutils.print_cli(
+                        '{} added to runner_dirs:\n'.format(sproxy_runners)
+                    )
+                    salt.utils.stringutils.print_cli(
+                        'runner_dirs:\n  - {0}'.format('\n  - '.join(runner_dirs))
+                    )
+                if updated:
                     master_fp.seek(0)
                     safe_dump(master_cfg, master_fp, default_flow_style=False)
-                    print('%s added to the file_roots:\n' % curpath)
-                    print(
-                        'file_roots:\n  %s:\n    -' % saltenv,
-                        '\n    - '.join([fr for fr in file_roots]),
-                    )
                     log.debug('Syncing Runners on the Master')
                     runner_client = salt.runner.RunnerClient(self.config)
                     sync_runners = runner_client.cmd(
-                        'saltutil.sync_runners',
+                        'saltutil.sync_all',
                         kwarg={'saltenv': saltenv},
                         print_event=False,
                     )
-                    log.debug('saltutil.sync_runners output:')
+                    log.debug('saltutil.sync_all output:')
                     log.debug(sync_runners)
                 else:
-                    print(
-                        'The %s path is already included into the file_roots' % curpath
+                    salt.utils.stringutils.print_cli(
+                        'The {} path is already included into the file_roots and runner_dirs'.format(
+                            curpath
+                        )
                     )
-                print(
+                salt.utils.stringutils.print_cli(
                     '\nNow you can start using salt-sproxy for '
                     'event-driven automation, and the Salt REST API.\n'
                     'See https://salt-sproxy.readthedocs.io/en/latest/salt_api.html'
@@ -119,6 +163,14 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         tgt = self.config['tgt']
         fun = self.config['fun']
         args = self.config['arg']
+        kwargs = {}
+        if 'output' not in self.config and fun in (
+            'state.sls',
+            'state.apply',
+            'state.highstate',
+        ):
+            self.config['output'] = 'highstate'
+        kwargs['progress'] = self.config.pop('progress', False)
         # To be able to reuse the proxy Runner (which is not yet available
         # natively in Salt), we can override the ``runner_dirs`` configuration
         # option to tell Salt to load that Runner too. This way, we can also
@@ -133,14 +185,32 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_dirs.append(runner_path)
         self.config['runner_dirs'] = runner_dirs
         runner_client = None
-        if self.config.get('sync_grains', True):
-            log.debug('Syncing grains')
+        sync_all = self.config.get('sync_all', False)
+        sync_grains = self.config.get('sync_grains', True)
+        sync_modules = self.config.get('sync_modules', False)
+        sync_roster = self.config.get('sync_roster', True)
+        if any([sync_all, sync_grains, sync_modules, sync_roster]):
             runner_client = salt.runner.RunnerClient(self.config)
-            sync_grains = runner_client.cmd(
+        if sync_all:
+            log.debug('Sync all')
+            sync_all_ret = runner_client.cmd(
+                'saltutil.sync_all', kwarg={'saltenv': saltenv}, print_event=False
+            )
+            log.debug(sync_all_ret)
+        if sync_grains and not sync_all:
+            log.debug('Syncing grains')
+            sync_grains_ret = runner_client.cmd(
                 'saltutil.sync_grains', kwarg={'saltenv': saltenv}, print_event=False
             )
-            log.debug(sync_grains)
-        if self.config.get('sync_modules', False):
+            log.debug(sync_grains_ret)
+        if self.config.get('module_dirs_cli'):
+            log.debug(
+                'Loading execution modules from the dirs provided via --module-dirs'
+            )
+            module_dirs = self.config.get('module_dirs', [])
+            module_dirs.extend(self.config['module_dirs_cli'])
+            self.config['module_dirs'] = module_dirs
+        if sync_modules and not sync_all:
             # Don't sync modules by default
             log.debug('Syncing modules')
             module_dirs = self.config.get('module_dirs', [])
@@ -149,23 +219,28 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             self.config['module_dirs'] = module_dirs
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
+            sync_modules_ret = runner_client.cmd(
+                'saltutil.sync_modules', kwarg={'saltenv': saltenv}, print_event=False
+            )
+            log.debug(sync_modules_ret)
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
-        if self.config.get('sync_roster', True):
+        if sync_roster and not sync_all:
             # Sync Rosters by default
             log.debug('Syncing roster')
             roster_dirs = self.config.get('roster_dirs', [])
             roster_path = os.path.join(curpath, '_roster')
             roster_dirs.append(roster_path)
             self.config['roster_dirs'] = roster_dirs
-            if not runner_client:
-                runner_client = salt.runner.RunnerClient(self.config)
-            sync_roster = runner_client.cmd(
+            sync_roster_ret = runner_client.cmd(
                 'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
             )
-            log.debug(sync_roster)
+            log.debug(sync_roster_ret)
+        if self.config.get('states_dir'):
+            states_dirs = self.config.get('states_dirs', [])
+            states_dirs.append(self.config['states_dir'])
+            self.config['states_dirs'] = states_dirs
         self.config['fun'] = 'proxy.execute'
-        kwargs = {}
         tmp_args = args[:]
         for index, arg in enumerate(tmp_args):
             if isinstance(arg, dict) and '__kwarg__' in arg:
@@ -188,12 +263,19 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         kwargs_opts = (
             'preview_target',
             'batch_size',
+            'batch_wait',
             'cache_grains',
             'cache_pillar',
             'roster',
             'timeout',
-            'sync',
+            'static',
             'no_connect',
+            'failhard',
+            'summary',
+            'verbose',
+            'show_jid',
+            'hide_timeout',
+            'progress',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:
@@ -216,6 +298,17 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'target_cache_timeout', 60
         )  # seconds
         kwargs['args'] = args
+        kwargs['default_grains'] = self.config.get(
+            'sproxy_grains',
+            self.config.get('default_grains', self.config.get('grains')),
+        )
+        kwargs['default_pillar'] = self.config.get(
+            'sproxy_pillar',
+            self.config.get('default_pillar', self.config.get('pillar')),
+        )
+        kwargs['preload_targeting'] = self.config.get('preload_targeting', False)
+        kwargs['invasive_targeting'] = self.config.get('invasive_targeting', False)
+        kwargs['failhard'] = self.config.get('failhard', False)
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
 
