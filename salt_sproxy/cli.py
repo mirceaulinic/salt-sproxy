@@ -178,6 +178,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         # or backports - for example the Ansible Roster which doesn't work fine
         # pre Salt 2018.3 (in case anyone would like to use it).
         file_roots = self.config.get('file_roots', {saltenv: []})
+        if saltenv not in file_roots:
+            file_roots[saltenv] = []
         file_roots[saltenv].append(curpath)
         self.config['file_roots'] = file_roots
         runner_dirs = self.config.get('runner_dirs', [])
@@ -276,6 +278,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'show_jid',
             'hide_timeout',
             'progress',
+            'returner',
+            'returner_config',
+            'returner_kwargs',
         )
         for kwargs_opt in kwargs_opts:
             if getattr(self.options, kwargs_opt) is not None:

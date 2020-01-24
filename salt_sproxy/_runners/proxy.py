@@ -45,6 +45,7 @@ from salt.exceptions import SaltSystemExit
 from salt.defaults import DEFAULT_TARGET_DELIM
 
 import salt.utils.napalm
+import salt.utils.dictupdate
 
 try:
     from salt.utils.platform import is_proxy
@@ -200,7 +201,9 @@ class SProxyMinion(SMinion):
         ):
             # Merge the Grains from the Roster opts
             log.debug('Merging Grains with the Roster provided ones')
-            self.opts['grains'].update(self.opts['roster_opts']['grains'])
+            self.opts['grains'] = salt.utils.dictupdate.merge(
+                self.opts['roster_opts']['grains'], self.opts['grains']
+            )
 
         cached_pillar = None
         if self.opts.get('proxy_use_cached_pillar', True):
@@ -214,12 +217,17 @@ class SProxyMinion(SMinion):
                 pillarenv=self.opts.get('pillarenv'),
             ).compile_pillar()
         elif cached_pillar:
-            self.opts['pillar'].update(cached_pillar)
+            self.opts['pillar'] = salt.utils.dictupdate.merge(
+                cached_pillar, self.opts['pillar']
+            )
 
         if self.opts['roster_opts'] and self.opts.get('proxy_merge_roster_opts', True):
             if 'proxy' not in self.opts['pillar']:
                 self.opts['pillar']['proxy'] = {}
-            self.opts['pillar']['proxy'].update(self.opts['roster_opts'])
+            self.opts['pillar']['proxy'] = salt.utils.dictupdate.merge(
+                self.opts['pillar']['proxy'], self.opts['roster_opts']
+            )
+            self.opts['pillar']['proxy'].pop('name', None)
 
         if self.opts.get('preload_targeting', False) or self.opts.get(
             'invasive_targeting', False
@@ -258,10 +266,11 @@ class SProxyMinion(SMinion):
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
         self.functions.pack['__grains__'] = self.opts['grains']
-        self.returners = salt.loader.returners(
-            self.opts, self.functions, proxy=self.proxy
-        )
-        self.functions['sys.reload_modules'] = self.gen_modules
+        self.returners = None
+        if self.opts['returner']:
+            self.returners = salt.loader.returners(
+                self.opts, self.functions, proxy=self.proxy
+            )
 
         fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
@@ -280,7 +289,7 @@ class SProxyMinion(SMinion):
         if self.opts.get('proxy_no_connect', False):
             log.info('Requested not to initialize the connection with the device')
         else:
-            log.debug('Trying initialize the connection with the device')
+            log.debug('Trying to initialize the connection with the device')
             # When requested --no-connect, don't init the connection, but simply
             # go ahead and execute the function requested.
             if (
@@ -304,6 +313,7 @@ class SProxyMinion(SMinion):
             proxy_init_fn = self.proxy[fq_proxyname + '.init']
             try:
                 proxy_init_fn(self.opts)
+                self.connected = True
             except Exception as exc:
                 log.error(
                     'Encountered error when starting up the connection with %s:',
@@ -316,7 +326,9 @@ class SProxyMinion(SMinion):
                 # When the Grains are loaded from the cache, no need to re-load them
                 # again.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
-                self.opts['grains'].update(loaded_grains)
+                self.opts['grains'] = salt.utils.dictupdate.merge(
+                    self.opts['grains'], loaded_grains
+                )
             self.functions.pack['__grains__'] = self.opts['grains']
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
@@ -345,6 +357,7 @@ class StandaloneProxy(SProxyMinion):
         self, opts, unreachable_devices=None
     ):  # pylint: disable=super-init-not-called
         self.opts = opts
+        self.connected = False
         self.ready = False
         self.unreachable_devices = unreachable_devices
         self.gen_modules()
@@ -381,6 +394,9 @@ def salt_call(
     invasive_targeting=False,
     failhard=False,
     timeout=60,
+    returner='',
+    returner_config='',
+    returner_kwargs={},
     args=(),
     **kwargs
 ):
@@ -542,6 +558,7 @@ def salt_call(
     if use_cached_pillar:
         opts['proxy_cached_pillar'] = minion_cache.get('pillar')
     opts['roster_opts'] = roster_opts
+    opts['returner'] = returner
     minion_defaults = salt.config.DEFAULT_MINION_OPTS.copy()
     minion_defaults.update(salt.config.DEFAULT_PROXY_MINION_OPTS)
     for opt, val in six.iteritems(minion_defaults):
@@ -564,9 +581,31 @@ def salt_call(
             failed_devices.append(opts['id'])
         if failhard:
             raise
+    else:
+        if returner:
+            returner_fun = '{}.returner'.format(returner)
+            if returner_fun in sa_proxy.returners:
+                log.error('Sending the response from %s to the %s Returner', opts['id'], returner)
+                ret_data = {
+                    'id': opts['id'],
+                    'jid': jid,
+                    'fun': function,
+                    'fun_args': args,
+                    'return': ret,
+                    'ret_config': returner_config,
+                    'ret_kwargs': returner_kwargs,
+                }
+                try:
+                    sa_proxy.returners[returner_fun](ret_data)
+                except Exception as err:
+                    log.error('Exception while sending the response from %s to the %s returner', opts['id'], returner)
+                    log.error(err, exc_info=True)
+            else:
+                log.warning('Returner %s is not available. Check that the dependencies are properly installed')
     finally:
-        shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
-        sa_proxy.proxy[shut_fun](opts)
+        if sa_proxy.connected:
+            shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
+            sa_proxy.proxy[shut_fun](opts)
     if cache_grains:
         log.debug('Caching Grains for %s', minion_id)
         log.debug(sa_proxy.opts['grains'])
@@ -614,6 +653,9 @@ def execute_devices(
     verbose=False,
     progress=False,
     hide_timeout=False,
+    returner='',
+    returner_config='',
+    returner_kwargs={},
     **kwargs
 ):
     '''
@@ -746,6 +788,9 @@ def execute_devices(
         'tgt_type': tgt_type,
         'failhard': failhard,
         'timeout': timeout,
+        'returner': returner,
+        'returner_config': returner_config,
+        'returner_kwargs': returner_kwargs,
     }
     opts.update(kwargs)
     if events:
@@ -962,6 +1007,9 @@ def execute(
     sync_modules=False,
     sync_grains=False,
     sync_all=False,
+    returner='',
+    returner_config='',
+    returner_kwargs={},
     **kwargs
 ):
     '''
@@ -1214,6 +1262,9 @@ def execute(
         verbose=verbose,
         progress=progress,
         hide_timeout=hide_timeout,
+        returner=returner,
+        returner_config=returner_config,
+        returner_kwargs=returner_kwargs,
         **kwargs
     )
     return ret
