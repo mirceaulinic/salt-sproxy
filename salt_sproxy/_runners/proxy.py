@@ -45,6 +45,7 @@ from salt.exceptions import SaltSystemExit
 from salt.defaults import DEFAULT_TARGET_DELIM
 
 import salt.utils.napalm
+import salt.utils.dictupdate
 
 try:
     from salt.utils.platform import is_proxy
@@ -200,7 +201,9 @@ class SProxyMinion(SMinion):
         ):
             # Merge the Grains from the Roster opts
             log.debug('Merging Grains with the Roster provided ones')
-            self.opts['grains'].update(self.opts['roster_opts']['grains'])
+            self.opts['grains'] = salt.utils.dictupdate.merge(
+                self.opts['roster_opts']['grains'], self.opts['grains']
+            )
 
         cached_pillar = None
         if self.opts.get('proxy_use_cached_pillar', True):
@@ -214,12 +217,17 @@ class SProxyMinion(SMinion):
                 pillarenv=self.opts.get('pillarenv'),
             ).compile_pillar()
         elif cached_pillar:
-            self.opts['pillar'].update(cached_pillar)
+            self.opts['pillar'] = salt.utils.dictupdate.merge(
+                cached_pillar, self.opts['pillar']
+            )
 
         if self.opts['roster_opts'] and self.opts.get('proxy_merge_roster_opts', True):
             if 'proxy' not in self.opts['pillar']:
                 self.opts['pillar']['proxy'] = {}
-            self.opts['pillar']['proxy'].update(self.opts['roster_opts'])
+            self.opts['pillar']['proxy'] = salt.utils.dictupdate.merge(
+                self.opts['pillar']['proxy'], self.opts['roster_opts']
+            )
+            self.opts['pillar']['proxy'].pop('name', None)
 
         if self.opts.get('preload_targeting', False) or self.opts.get(
             'invasive_targeting', False
@@ -263,7 +271,6 @@ class SProxyMinion(SMinion):
             self.returners = salt.loader.returners(
                 self.opts, self.functions, proxy=self.proxy
             )
-        self.functions['sys.reload_modules'] = self.gen_modules
 
         fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
@@ -282,7 +289,7 @@ class SProxyMinion(SMinion):
         if self.opts.get('proxy_no_connect', False):
             log.info('Requested not to initialize the connection with the device')
         else:
-            log.debug('Trying initialize the connection with the device')
+            log.debug('Trying to initialize the connection with the device')
             # When requested --no-connect, don't init the connection, but simply
             # go ahead and execute the function requested.
             if (
@@ -319,7 +326,9 @@ class SProxyMinion(SMinion):
                 # When the Grains are loaded from the cache, no need to re-load them
                 # again.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
-                self.opts['grains'].update(loaded_grains)
+                self.opts['grains'] = salt.utils.dictupdate.merge(
+                    self.opts['grains'], loaded_grains
+                )
             self.functions.pack['__grains__'] = self.opts['grains']
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
