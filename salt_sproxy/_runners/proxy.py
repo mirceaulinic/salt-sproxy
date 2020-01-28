@@ -266,16 +266,10 @@ class SProxyMinion(SMinion):
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
         self.functions.pack['__grains__'] = self.opts['grains']
-        self.returners = None
-        if self.opts['returner']:
-            self.returners = salt.loader.returners(
-                self.opts, self.functions, proxy=self.proxy
-            )
 
         fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
         self.proxy.pack['__salt__'] = self.functions
-        self.proxy.pack['__ret__'] = self.returners
         self.proxy.pack['__pillar__'] = self.opts['pillar']
 
         # No need to inject the proxy into utils, as we don't need scheduler for
@@ -348,6 +342,16 @@ class SProxyMinion(SMinion):
                 proxy_shut_fn = self.proxy[fq_proxyname + '.shutdown']
                 proxy_shut_fn(self.opts)
                 return
+
+        # Late load the Returners, as they might need Grains, which may not be
+        # properly or completely loaded before this.
+        self.returners = None
+        if self.opts['returner']:
+            self.returners = salt.loader.returners(
+                self.opts, self.functions, proxy=self.proxy
+            )
+        self.proxy.pack['__ret__'] = self.returners
+
 
         self.ready = True
 
