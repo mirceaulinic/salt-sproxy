@@ -265,7 +265,7 @@ class SProxyMinion(SMinion):
         self.functions = salt.loader.minion_mods(
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
-        self.functions.pack['__grains__'] = self.opts['grains']
+        self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
 
         fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
@@ -319,11 +319,18 @@ class SProxyMinion(SMinion):
             if not cached_grains and self.opts.get('proxy_load_grains', True):
                 # When the Grains are loaded from the cache, no need to re-load them
                 # again.
+
+                grains = copy.deepcopy(self.opts['grains'])
+                # Copy the existing Grains loaded so far, otherwise
+                # salt.loader.grains is going to wipe what's under the grains
+                # key in the opts.
+                # After loading, merge with the previous loaded grains, which
+                # may contain other grains from different sources, e.g., roster.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
                 self.opts['grains'] = salt.utils.dictupdate.merge(
-                    self.opts['grains'], loaded_grains
+                    grains, loaded_grains
                 )
-            self.functions.pack['__grains__'] = self.opts['grains']
+            self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
         if self.opts.get('invasive_targeting', False):
@@ -351,7 +358,6 @@ class SProxyMinion(SMinion):
                 self.opts, self.functions, proxy=self.proxy
             )
         self.proxy.pack['__ret__'] = self.returners
-
 
         self.ready = True
 
