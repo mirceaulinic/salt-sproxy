@@ -327,9 +327,7 @@ class SProxyMinion(SMinion):
                 # After loading, merge with the previous loaded grains, which
                 # may contain other grains from different sources, e.g., roster.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
-                self.opts['grains'] = salt.utils.dictupdate.merge(
-                    grains, loaded_grains
-                )
+                self.opts['grains'] = salt.utils.dictupdate.merge(grains, loaded_grains)
             self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
@@ -595,7 +593,11 @@ def salt_call(
         if returner:
             returner_fun = '{}.returner'.format(returner)
             if returner_fun in sa_proxy.returners:
-                log.error('Sending the response from %s to the %s Returner', opts['id'], returner)
+                log.error(
+                    'Sending the response from %s to the %s Returner',
+                    opts['id'],
+                    returner,
+                )
                 ret_data = {
                     'id': opts['id'],
                     'jid': jid,
@@ -608,10 +610,16 @@ def salt_call(
                 try:
                     sa_proxy.returners[returner_fun](ret_data)
                 except Exception as err:
-                    log.error('Exception while sending the response from %s to the %s returner', opts['id'], returner)
+                    log.error(
+                        'Exception while sending the response from %s to the %s returner',
+                        opts['id'],
+                        returner,
+                    )
                     log.error(err, exc_info=True)
             else:
-                log.warning('Returner %s is not available. Check that the dependencies are properly installed')
+                log.warning(
+                    'Returner %s is not available. Check that the dependencies are properly installed'
+                )
     finally:
         if sa_proxy.connected:
             shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
@@ -1206,11 +1214,7 @@ def execute(
                 log.debug('Gathering the cached Grains from the existing Minions')
                 cache_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
                 for target, target_grains in cache_grains.items():
-                    rtargets[target] = {
-                        'minion_opts': {
-                            'grains': target_grains
-                        }
-                    }
+                    rtargets[target] = {'minion_opts': {'grains': target_grains}}
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
