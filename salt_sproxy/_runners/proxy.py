@@ -1201,13 +1201,24 @@ def execute(
                 log.debug('Loading the targets from the cache')
                 targets = cache_bank.fetch('_salt_sproxy_target', cache_key)
         if not targets:
+            rtargets = {}
+            if use_existing_proxy:
+                log.debug('Gathering the cached Grains from the existing Minions')
+                cache_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
+                for target, target_grains in cache_grains.items():
+                    rtargets[target] = {
+                        'minion_opts': {
+                            'grains': target_grains
+                        }
+                    }
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
             roster_modules = salt.loader.roster(__opts__, runner=__salt__)
             if '.targets' not in roster:
                 roster = '{mod}.targets'.format(mod=roster)
-            rtargets = roster_modules[roster](_tgt, tgt_type=_tgt_type)
+            rtargets_roster = roster_modules[roster](_tgt, tgt_type=_tgt_type)
+            rtargets = salt.utils.dictupdate.merge(rtargets, rtargets_roster)
             targets = list(rtargets.keys())
             if target_cache and not (invasive_targeting or preload_targeting):
                 cache_bank.store('_salt_sproxy_target', cache_key, targets)
