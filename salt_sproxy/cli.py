@@ -33,7 +33,7 @@ import salt.defaults.exitcodes  # pylint: disable=W0611
 import salt.utils.stringutils
 
 try:
-    from salt.utils.file import fopen
+    from salt.utils.files import fopen
     from salt.utils.yamldumper import safe_dump
     from salt.utils.yamlloader import safe_load
     from salt.utils.profile import output_profile
