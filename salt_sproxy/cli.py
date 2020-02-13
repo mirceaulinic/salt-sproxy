@@ -39,10 +39,7 @@ try:
     from salt.utils.profile import output_profile
     from salt.utils.profile import activate_profile
 except ImportError:
-    try:
-        from salt.utils.file import fopen # support for prior to salt 3000
-    except ImportError:
-        from salt.utils import fopen
+    from salt.utils import fopen
     from salt.utils.yamldumper import safe_dump
     from salt.utils.yamlloader import load as safe_load
     from salt.utils import output_profile
