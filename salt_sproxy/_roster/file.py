@@ -29,13 +29,15 @@ def targets(tgt, tgt_type='glob', **kwargs):
     '''
     template = get_roster_file(__opts__)
     rend = salt.loader.render(__opts__, {})
-    pool = compile_template(template,
-                            rend,
-                            __opts__['renderer'],
-                            __opts__['renderer_blacklist'],
-                            __opts__['renderer_whitelist'],
-                            mask_value='passw*',
-                            **kwargs)
+    pool = compile_template(
+        template,
+        rend,
+        __opts__['renderer'],
+        __opts__['renderer_blacklist'],
+        __opts__['renderer_whitelist'],
+        mask_value='passw*',
+        **kwargs
+    )
     pool = {host: {'minion_opts': conf} for host, conf in pool.items()}
     pool = salt_sproxy._roster.load_cache(
         pool, __runner__, __opts__, tgt, tgt_type=tgt_type

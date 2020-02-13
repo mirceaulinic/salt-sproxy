@@ -26,10 +26,18 @@ def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
     Load the Pillar and Grain cache, as required, and merge the Roster Grains
     and Pillar into.
     '''
+    if tgt_type in ('glob', 'pcre', 'list'):
+        # When the target type is glob, pcre, or list, we don't require grains
+        # or pillar loaded from the cache, because the targeting won't depend on
+        # those.
+        return pool
     if not opts.get('use_cached_grains', True) and not opts.get(
         'use_cached_pillar', True
     ):
         return pool
+    # NOTE: It wouldn't be feasible to use the cache.grains or cache.pillar
+    # Runners as they rely on fetching data from the Master, for Minions that
+    # are accepted. What we're doing here is reading straight from the cache.
     log.debug('Loading cached and merging into the Roster data')
     cache_pool = __runner__['cache.list']('minions')
     for device in cache_pool:
@@ -38,7 +46,12 @@ def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
         if 'minion_opts' not in pool[device]:
             pool[device]['minion_opts'] = {'grains': {}, 'pillar': {}}
         cache_key = 'minions/{}/data'.format(device)
-        if opts.get('use_cached_grains', True):
+        if opts.get('use_cached_grains', True) and tgt_type in (
+            'compound',
+            'grain',
+            'grain_pcre',
+            'nodegroup',
+        ):
             log.debug('Fetching cached Grains for %s', device)
             cache_grains = __runner__['cache.fetch'](cache_key, 'grains')
             if cache_grains:
@@ -47,7 +60,12 @@ def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
                     pool[device]['minion_opts'].get('grains', {}),
                     merge_lists=True,
                 )
-        if opts.get('use_cached_pillar', True):
+        if opts.get('use_cached_pillar', True) and tgt_type in (
+            'compound',
+            'pillar',
+            'pillar_pcre',
+            'nodegroup',
+        ):
             log.debug('Fetching cached Pillar for %s', device)
             cache_pillar = __runner__['cache.fetch'](cache_key, 'pillar')
             if cache_pillar:
