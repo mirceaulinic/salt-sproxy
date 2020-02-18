@@ -56,6 +56,67 @@ run would be without ``--invasive-targeting``), as the Grains / Pillar data is
 already available and will be used in determining the targets from your 
 expression.
 
+New Roster module: ``file``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using the new :ref:`file-roster`, you can provide the universe of devices 
+*salt-sproxy* can possibly manage through an arbitrary SLS file (therefore this 
+file can be provided in any of the supported format: Jinja+YAML, YAML, JSON, 
+Python, etc. - see `the list of available Renderers 
+<https://docs.saltstack.com/en/latest/ref/renderers/>`__ for more options). The 
+path to this file defaults to ``/etc/salt/roster``, or you can override it 
+using the ``roster_file`` configuration option (or from the command line using 
+``--roster-file``), providing the absolute path.
+
+Example File Roster (as YAML):
+
+``/etc/salt/roster``
+
+.. code-block:: yaml
+
+  device1:
+    grains:
+      site: site1
+  device2:
+    grains:
+      site: site2
+
+Example File Roster (as Jinja+YAML) - manage 100 device, with a simple Jinja 
++ YAML auto-generated Roster:
+
+``/etc/salt/roster``
+
+.. code-block:: yaml
+
+  {%- for i in range(100) %}
+  device{{ i }}:
+    grains:
+      site: site1
+  {%- endfor %}
+
+Example File Roster (as JSON):
+
+``/etc/salt/roster``
+
+.. code-block:: json
+
+  {
+    "device1": {
+      "grains": {
+        "site": "site1"
+      }
+    },
+    "device2": {
+      "grains": {
+        "site": "site1"
+      }
+    }
+  }
+
+Using any of these, you'll be able to execute ``salt-sproxy -G site:site1 
+test.ping`` (to target all devices that have the ``site`` Grain set as 
+``site1``) or ``salt-sproxy 'device*' test.ping``, etc.
+
 salt-sapi
 ~~~~~~~~~
 
