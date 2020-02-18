@@ -36,7 +36,7 @@ into a file:
     driver: iosxr
   switch1:
     driver: eos
-  fw1
+  fw1:
     driver: panos
     host: fw1.firewall.as1234.net
 
