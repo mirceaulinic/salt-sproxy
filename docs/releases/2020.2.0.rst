@@ -117,10 +117,29 @@ Using any of these, you'll be able to execute ``salt-sproxy -G site:site1
 test.ping`` (to target all devices that have the ``site`` Grain set as 
 ``site1``) or ``salt-sproxy 'device*' test.ping``, etc.
 
+.. tip::
+
+    Remember that being interpreted as an SLS, you can also invoke Salt 
+    functions, using the ``__salt__`` global variable. For example, to retrieve 
+    and build the list of devices dynamically using an HTTP query, you can do, 
+    e.g.,
+
+    .. code-block:: sls
+
+      {%- set ret = __salt__.http.query('https://netbox.live/api/dcim/devices/', decode=true) %}
+      {%- for device in ret.dict.results %}
+      {{ device.name }}:
+        grains:
+          site: {{ device.site.slug }}
+      {%- endfor %}
+
+    As always, for higher complexity, consider using the `pure Python Renderer 
+    <https://docs.saltstack.com/en/latest/ref/renderers/all/salt.renderers.py.html#module-salt.renderers.py>`__.
+
 salt-sapi
 ~~~~~~~~~
 
-In order to simplify the usage of the REST API calls to devices managed 
+iIn order to simplify the usage of the REST API calls to devices managed 
 through *salt-sproxy*, beginning with this release, there's an additional 
 program distributed with *salt-sproxy*, ``salt-sapi`` that leverages the usual
 Salt API features, and on top, it provides an additional client for *sproxy*.
