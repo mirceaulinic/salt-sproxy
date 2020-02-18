@@ -46,6 +46,8 @@ into a file:
     (combinations of the Salt `Renderer modules 
     <https://docs.saltstack.com/en/latest/ref/renderers/>`__) - Jinja + YAML, 
     YAML, JSON, pure Python, JSON5, HJSON, etc.
+    
+    For more examples, see also :ref:`example-file-roster`.
 
 3. Configure
 ------------
