@@ -36,7 +36,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --config-dump
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Print the complete salt-sproxy configuration values (with the defaults), as 
     YAML.
@@ -52,7 +52,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --invasive-targeting
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     The native *salt-sproxy* targeting highly depends on the data your provide 
     mainly through the Roster system (see also :ref:`using-roster`). Through 
@@ -87,7 +87,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --preload-targeting
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     This is a lighter derivative of the ``--invasive-targeting`` option (see 
     above), with the difference that *salt-sproxy* is not going to establish 
@@ -103,7 +103,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --sync
 
-    .. deprecated:: 2020.1.0
+    .. deprecated:: 2020.2.0
 
         This option has been replaced by ``--static`` (see below).
 
@@ -112,7 +112,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: -s, --static
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
         Starting with this release, ``--static``, replaces the previous CLI
         option ``--sync``, with the same functionality.
@@ -158,39 +158,39 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --batch-wait
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Wait a specific number of seconds after each batch is done before executing 
     the next one.
 
 .. option:: -p, --progress
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Display a progress graph to visually show the execution of the command 
     across the list of devices.
 
     .. note::
 
-        As of release 2020.1.0, the best experience of using the progress graph 
+        As of release 2020.2.0, the best experience of using the progress graph 
         is in conjunction with the ``-s`` / ``--static`` option, otherwise 
         there's a small display issue.
 
 .. option:: --hide-timeout
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Hide devices that timeout.
 
 .. option:: --failhard
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Stop the execution at the first error.
 
 .. option:: --summary
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Display a summary of the command execution:
 
@@ -222,13 +222,13 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --show-jid
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Display jid without the additional output of --verbose.
 
 .. option:: -v, --verbose
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Turn on command verbosity, display jid, devices per batch, and detailed
     summary.
@@ -263,14 +263,14 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --sync-all
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Load the all extension modules provided with salt-sproxy, as well as your
     own extension modules from your environment.
 
 .. option:: --saltenv
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     The Salt environment name where to load extension modules and files from.
 
@@ -358,25 +358,25 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --pillar-root
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Set a specific directory as the base pillar root.
 
 .. option:: --file-root
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Set a specific directory as the base file root.
 
 .. option:: --states-dir
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Set a specific directory to search for additional States.
 
 .. option:: -m, --module-dirs
 
-    .. versionadded:: 2020.1.0
+    .. versionadded:: 2020.2.0
 
     Specify one or more directories where to load the extension modules from.
     Multiple directories can be provided by passing ``-m`` or 
