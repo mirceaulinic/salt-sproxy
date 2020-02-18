@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "SALT-SPROXY" "1" "Jan 03, 2020" "" "salt-sproxy"
+.TH "SALT-SPROXY" "1" "Feb 20, 2020" "" "salt-sproxy"
 .SH NAME
 salt-sproxy \- salt-sproxy Documentation
 .
@@ -35,7 +35,7 @@ Salt plugin to automate the management and configuration of network devices at
 scale, without running (Proxy) Minions.
 .sp
 Using \fBsalt\-sproxy\fP, you can continue to benefit from the scalability,
-flexibility and extensibility of Salt, while you don\(aqt have to manage thousands
+flexibility and extensibility of Salt, while you don’t have to manage thousands
 of (Proxy) Minion services. However, you are able to use both \fBsalt\-sproxy\fP
 and your (Proxy) Minions at the same time.
 .sp
@@ -119,13 +119,13 @@ or others that you might have in your own environment. See
 \fI\%https://docs.saltstack.com/en/latest/topics/proxyminion/index.html\fP to
 understand how to write a new Proxy module if you require.
 .sp
-For example, let\(aqs take a look at how we can manage a network device through
+For example, let’s take a look at how we can manage a network device through
 the \fI\%NAPALM Proxy\fP:
 .sp
 In the above, in the same Python virtual environment as previously make sure
 you have \fBNAPALM\fP installed, by executing \fBpip install napalm\fP (see
 \fI\%https://napalm.readthedocs.io/en/latest/installation/index.html\fP for further
-installation requirements, depending on the platform you\(aqre running on). The
+installation requirements, depending on the platform you’re running on). The
 connection credentials for the \fBjuniper\-router\fP are stored in the
 \fB/srv/salt/pillar/junos.sls\fP Pillar, and we can go ahead and start executing
 arbitrary Salt commands, e.g., \fI\%net.arp\fP
@@ -194,7 +194,7 @@ cr1.thn.lon:
 One of the most important differences between \fBsalt\fP and \fBsalt\-sproxy\fP is
 that the former is aware of the devices available, thanks to the fact that the
 Minions connect to the Master, therefore \fBsalt\fP has the list of targets
-already available. \fBsalt\-sproxy\fP does not have this, as it doesn\(aqt require
+already available. \fBsalt\-sproxy\fP does not have this, as it doesn’t require
 the Proxy Minions to be up and connected to the Master. For this reason, you
 will need to provide it a list of devices, or a \fI\%Roster file\fP that provides
 the list of available devices.
@@ -214,7 +214,7 @@ key followed by a globexpression: \fB"os:Arch*"\fP\&.
 .IP \(bu 2
 \fB\-P\fP, \fB\-\-grain\-pcre\fP: Instead of using shell globs to evaluate the target
 use a grain value to identify targets, the syntax for the target is the grain
-key followed by a pcre regular expression: "os:Arch.*".
+key followed by a pcre regular expression: “os:Arch.*”.
 .IP \(bu 2
 \fB\-N\fP, \fB\-\-nodegroup\fP: Instead of using shell globs to evaluate the target
 use one of the predefined nodegroups to identify a list of targets.
@@ -266,10 +266,10 @@ list of devices.
 .sp
 The Roster can also be specified on the fly, using the \fB\-R\fP or \fB\-\-roster\fP
 options, e.g., \fBsalt\-sproxy cr1.thn.lon test.ping \-\-roster=flat\fP\&. In this
-example, we\(aqd be using the \fI\%flat Roster module\fP
+example, we’d be using the \fI\%flat Roster module\fP
 to determine the list of devices matched by a specific target.
 .sp
-When you don\(aqt specify the Roster into the Master config, or from the CLI, you
+When you don’t specify the Roster into the Master config, or from the CLI, you
 can use \fBsalt\-sproxy\fP to target on or more devices using the \fBglob\fP or
 \fBlist\fP target types, e.g., \fBsalt\-sproxy cr1.thn.lon test.ping\fP (glob) or
 \fBsalt\-sproxy \-L cr1.thn.lon,cr2.thn.lon test.ping\fP (to target a list of
@@ -289,7 +289,7 @@ merged into the \fBmaster\fP branch with several libraries such as
 \fI\%NAPALM\fP,
 \fI\%Netmiko\fP,
 \fI\%ciscoconfparse\fP, or Ansible
-which you may need for your modules or Roster (if you\(aqd want to use the
+which you may need for your modules or Roster (if you’d want to use the
 \fI\%Ansible Roster\fP,
 for  example).
 .sp
@@ -320,9 +320,9 @@ export SALT_PROXY_PILLAR_DIR=/path/to/pillars/dir
 .UNINDENT
 .UNINDENT
 .sp
-With this setup, you would be able to go ahead and execute "as normally" (with
+With this setup, you would be able to go ahead and execute “as normally” (with
 the difference that the code is executed inside the container, however from the
-CLI it won\(aqt look different):
+CLI it won’t look different):
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -1610,6 +1610,291 @@ return:
 .fi
 .UNINDENT
 .UNINDENT
+.SS salt\-sapi
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+This functionality makes use of the \fBsproxy\fP and \fBsproxy_async\fP clients
+added in release 2020.2.0 through the \fBsalt\-sapi\fP entry point. See
+\fI\%https://salt\-sproxy.readthedocs.io/en/latest/salt_api.html\fP and
+\fI\%https://salt\-sproxy.readthedocs.io/en/latest/salt_sapi.html\fP for more
+details.
+.UNINDENT
+.UNINDENT
+.sp
+\fBIMPORTANT:\fP
+.INDENT 0.0
+.INDENT 3.5
+In the configuration examples below, for simplicity, I\(aqve used the \fI\%auto\fP
+external authentication, and disabled the SSL for the Salt API. This setup
+is highly discouraged in production.
+.UNINDENT
+.UNINDENT
+.sp
+Using the Master configuration file under \fI\%examples/salt_sapi/master\fP:
+.sp
+\fB/etc/salt/master\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+pillar_roots:
+  base:
+    \- /srv/salt/pillar
+
+file_roots:
+  base:
+    \- /srv/salt/extmods
+
+rest_cherrypy:
+  port: 8080
+  disable_ssl: true
+
+external_auth:
+  auto:
+    \(aq*\(aq:
+      \- \(aq@runner\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpillar_roots\fP option points to \fB/srv/salt/pillar\fP, so to be able to
+use this example, either create a symlink to the \fBpillar\fP directory in this
+example, or copy the files.
+For example, if you just cloned this repository:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/pillar
+$ git clone git@github.com:mirceaulinic/salt\-sproxy.git
+$ cp salt\-sproxy/examples/salt_sapi/master /etc/salt/master
+$ cp salt\-sproxy/examples/salt_sapi/pillar/*.sls /srv/salt/pillar/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The contents of Pillar files:
+.sp
+\fB/srv/salt/pillar/top.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+base:
+  mininon1:
+    \- dummy
+  juniper\-router:
+    \- junos
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/dummy.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: dummy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fB/srv/salt/pillar/junos.sls\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+proxy:
+  proxytype: napalm
+  driver: junos
+  host: juniper.salt\-sproxy.digitalocean.cloud.tesuto.com
+  username: test
+  password: t35t1234
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The \fBtop.sls\fP, \fBdummy.sls\fP, and \fBjunos.sls\fP are a combination of the
+previous examples, \fI\%101\fP and
+\fI\%napalm\fP,
+which is going to allow use to execute against both the dummy device and
+a real network device.
+.UNINDENT
+.UNINDENT
+.sp
+In the example Master configuration file above, there\(aqs also a section for the
+\fBfile_roots\fP\&. As documented in \fI\%The Proxy Runner\fP section of the
+documentation, you are going to reference the \fI\%proxy Runner\fP, e.g.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ mkdir \-p /srv/salt/extmods/_runners
+$ cp salt\-sproxy/salt_sproxy/_runners/proxy.py /srv/salt/extmods/_runners/
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Or symlink:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ ln \-s /path/to/git/clone/salt\-sproxy/salt_sproxy /srv/salt/extmods
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With the \fBrest_cherrypy\fP section, the Salt API will be listening to HTTP
+requests over port 8080, and SSL being disabled (not recommended in production):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+rest_cherrypy:
+  port: 8080
+  disable_ssl: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+One another part of the configuration is the external authentication:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+external_auth:
+  auto:
+    \(aq*\(aq:
+      \- \(aq@runner\(aq
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+This grants access to anyone to execute any Runner (again, don\(aqt do this in
+production).
+.sp
+With this setup, we can start the Salt Master and the Salt API (running in
+background):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ salt\-master \-d
+$ salt\-sapi \-d
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+To verify that the REST API is ready, execute:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-i localhost:8080
+HTTP/1.1 200 OK
+Content\-Type: application/json
+Server: CherryPy/18.1.1
+Date: Wed, 01 Jan 2020 07:58:32 GMT
+Allow: GET, HEAD, POST
+Access\-Control\-Allow\-Origin: *
+Access\-Control\-Expose\-Headers: GET, POST
+Access\-Control\-Allow\-Credentials: true
+Vary: Accept\-Encoding
+Content\-Length: 146
+
+{"return": "Welcome", "clients": ["local", "local_async", "local_batch", "local_subset", "runner", "runner_async", "sproxy", "sproxy_async", "ssh", "wheel", "wheel_async"]}
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Now we can go ahead and execute the CLI command from \fI\%example 101\fP, by making
+an HTTP request:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqauto\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqsproxy\(aq \e
+  \-d tgt=\(aqminion1\(aq \e
+  \-d fun=\(aqtest.ping\(aq
+return:
+\- minion1: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Notice that \fBeauth\fP field in this case is \fBauto\fP as this is what we\(aqve
+configured in the \fBexternal_auth\fP on the Master.
+.sp
+Similarly, you can now execute the Salt functions from the \fI\%NAPALM example\fP, against
+a network device, by making an HTTP request:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqauto\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqsproxy\(aq \e
+  \-d tgt=\(aqjuniper\-router\(aq \e
+  \-d fun=\(aqnet.arp\(aq
+return:
+\- juniper\-router:
+    comment: \(aq\(aq
+    out:
+    \- age: 891.0
+      interface: fxp0.0
+      ip: 10.96.0.1
+      mac: 92:99:00:0A:00:00
+    \- age: 1001.0
+      interface: fxp0.0
+      ip: 10.96.0.13
+      mac: 92:99:00:0A:00:00
+    \- age: 902.0
+      interface: em1.0
+      ip: 128.0.0.16
+      mac: 02:42:AC:12:00:02
+    result: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
 .SH EXTENSION MODULES
 .sp
 \fBsalt\-sproxy\fP is delivered together with a few extension modules that are
@@ -1617,249 +1902,13 @@ dynamically loaded and immediately available. Please see below the
 documentation for these modules:
 .SS Extension Roster Modules
 .SS Ansible Roster
-.sp
-Read in an Ansible inventory file or script
-.sp
-Flat inventory files should be in the regular ansible inventory format.
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-[servers]
-salt.gtmanfred.com ansible_ssh_user=gtmanfred ansible_ssh_host=127.0.0.1 ansible_ssh_port=22 ansible_ssh_pass=\(aqpassword\(aq
-
-[desktop]
-home ansible_ssh_user=gtmanfred ansible_ssh_host=12.34.56.78 ansible_ssh_port=23 ansible_ssh_pass=\(aqpassword\(aq
-
-[computers:children]
-desktop
-servers
-
-[names:vars]
-http_port=80
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-then salt\-ssh can be used to hit any of them
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-[~]# salt\-ssh \-N all test.ping
-salt.gtmanfred.com:
-    True
-home:
-    True
-[~]# salt\-ssh \-N desktop test.ping
-home:
-    True
-[~]# salt\-ssh \-N computers test.ping
-salt.gtmanfred.com:
-    True
-home:
-    True
-[~]# salt\-ssh salt.gtmanfred.com test.ping
-salt.gtmanfred.com:
-    True
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-There is also the option of specifying a dynamic inventory, and generating it on the fly
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-#!/bin/bash
-echo \(aq{
-  "servers": [
-    "salt.gtmanfred.com"
-  ],
-  "desktop": [
-    "home"
-  ],
-  "computers": {
-    "hosts": [],
-    "children": [
-      "desktop",
-      "servers"
-    ]
-  },
-  "_meta": {
-    "hostvars": {
-      "salt.gtmanfred.com": {
-        "ansible_ssh_user": "gtmanfred",
-        "ansible_ssh_host": "127.0.0.1",
-        "ansible_sudo_pass": "password",
-        "ansible_ssh_port": 22
-      },
-      "home": {
-        "ansible_ssh_user": "gtmanfred",
-        "ansible_ssh_host": "12.34.56.78",
-        "ansible_sudo_pass": "password",
-        "ansible_ssh_port": 23
-      }
-    }
-  }
-}\(aq
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-This is the format that an inventory script needs to output to work with ansible, and thus here.
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-[~]# salt\-ssh \-\-roster\-file /etc/salt/hosts salt.gtmanfred.com test.ping
-salt.gtmanfred.com:
-        True
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-Any of the [groups] or direct hostnames will return.  The \(aqall\(aq is special, and returns everything.
-.INDENT 0.0
-.TP
-.B _roster.ansible.targets(tgt, tgt_type=\(aqglob\(aq, **kwargs)
-Return the targets from the ansible inventory_file
-Default: /etc/salt/roster
-.UNINDENT
 .SS NetBox Roster
-.sp
-Load devices from \fI\%NetBox\fP, and make
-them available for salt\-ssh or salt\-sproxy (or any other program that doesn\(aqt
-require (Proxy) Minions running).
-.sp
-Make sure that the following options are configured on the Master:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-netbox:
-  url: <NETBOX_URL>
-  token: <NETBOX_USERNAME_API_TOKEN (OPTIONAL)>
-  keyfile: </PATH/TO/NETBOX/KEY (OPTIONAL)>
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-If you want to pre\-filter the devices, so it won\(aqt try to pull the whole
-database available in NetBox, you can configure another key, \fBfilters\fP, under
-\fBnetbox\fP, e.g.,
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-netbox:
-  url: <NETBOX_URL>
-  filters:
-    site: <SITE>
-    status: <STATUS>
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-\fBHINT:\fP
-.INDENT 0.0
-.INDENT 3.5
-You can use any NetBox field as a filter.
-.UNINDENT
-.UNINDENT
-.sp
-\fBIMPORTANT:\fP
-.INDENT 0.0
-.INDENT 3.5
-In NetBox v2.6 the default view permissions changed, so \fBsalt\-sproxy\fP may
-not able to get the device list from NetBox by default.
-.sp
-Add \fBEXEMPT_VIEW_PERMISSIONS = [\(aq*\(aq]\fP to the \fBconfiguration.py\fP NetBox
-file to change this behavior.
-See \fI\%https://github.com/netbox\-community/netbox/releases/tag/v2.6.0\fP for more
-information
-.UNINDENT
-.UNINDENT
-.INDENT 0.0
-.TP
-.B _roster.netbox.targets(tgt, tgt_type=\(aqglob\(aq, **kwargs)
-Return the targets from NetBox.
-.UNINDENT
 .SS Pillar Roster
-.sp
-Load the list of devices from the Pillar.
-.sp
-Simply configure the \fBroster\fP option to point to this module, while making
-sure that the data is available. As the Pillar is data associated with a
-specific Minion ID, you may need to ensure that the Pillar is correctly
-associated with the Minion configured (default \fB*\fP), under the exact key
-required (default \fBdevices\fP). To adjust these options, you can provide the
-following under the \fBroster_pillar\fP option in the Master configuration:
-.INDENT 0.0
-.TP
-.B minion_id: \fB*\fP
-The ID of the Minion to compile the data for. Default: \fB*\fP (any Minion).
-.TP
-.B pillar_key: \fBdevices\fP
-The Pillar field to pull the list of devices from. Default: \fBdevices\fP\&.
-.TP
-.B saltenv: \fBbase\fP
-The Salt environment to use when compiling the Pillar data.
-.TP
-.B pillarenv
-The Pillar environment to use when compiling the Pillar data.
-.UNINDENT
-.sp
-Configuration example:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.nf
-.ft C
-roster: pillar
-roster_pillar:
-  minion_id: sproxy
-  pillar_key: minions
-.ft P
-.fi
-.UNINDENT
-.UNINDENT
-.sp
-With the following configuration, when executing
-\fBsalt\-run pillar.show_pillar sproxy\fP you should have under \fBminions\fP the
-list of devices / Minions you want to manage.
-.sp
-\fBHINT:\fP
-.INDENT 0.0
-.INDENT 3.5
-The Pillar data can either be provided as files, or using one or more
-External Pillars. Check out
-\fI\%https://docs.saltstack.com/en/latest/ref/pillar/all/index.html\fP
-for the complete list of available Pillar modules you can use.
-.UNINDENT
-.UNINDENT
-.INDENT 0.0
-.TP
-.B _roster.pillar.targets(tgt, tgt_type=\(aqglob\(aq, **kwargs)
-Return the targets from External Pillar requested.
-.UNINDENT
 .SS Extension Runners
 .SS Proxy Runner
 .sp
 Salt Runner to invoke arbitrary commands on network devices that are not
-managed via a Proxy or regular Minion. Therefore, this Runner doesn\(aqt
+managed via a Proxy or regular Minion. Therefore, this Runner doesn’t
 necessarily require the targets to be up and running, as it will connect to
 collect the Grains, compile the Pillar, then execute the commands.
 .INDENT 0.0
@@ -1893,7 +1942,7 @@ salt \(aq*\(aq sys.reload_modules
 .UNINDENT
 .INDENT 0.0
 .TP
-.B _runners.proxy.execute(tgt, function=None, tgt_type=\(aqglob\(aq, roster=None, preview_target=False, target_details=False, timeout=60, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, args=(), batch_size=10, batch_wait=0, static=False, events=True, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, no_connect=False, test_ping=False, target_cache=True, target_cache_timeout=60, preload_targeting=False, invasive_targeting=False, failhard=False, summary=True, verbose=False, show_jid=False, progress=False, hide_timeout=False, saltenv=\(aqbase\(aq, sync_roster=False, sync_modules=False, sync_grains=False, sync_all=False, **kwargs)
+.B _runners.proxy.execute(tgt, function=None, tgt_type=\(aqglob\(aq, roster=None, preview_target=False, target_details=False, timeout=60, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, args=(), batch_size=10, batch_wait=0, static=False, events=True, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, no_connect=False, test_ping=False, target_cache=True, target_cache_timeout=60, preload_targeting=False, invasive_targeting=False, failhard=False, summary=True, verbose=False, show_jid=False, progress=False, hide_timeout=False, saltenv=\(aqbase\(aq, sync_roster=False, sync_modules=False, sync_grains=False, sync_all=False, returner=\(aq\(aq, returner_config=\(aq\(aq, returner_kwargs={}, **kwargs)
 Invoke a Salt function on the list of devices matched by the Roster
 subsystem.
 .INDENT 7.0
@@ -1993,7 +2042,7 @@ Use the existing Proxy Minions when they are available (say on an
 already running Master).
 .TP
 .B no_connect: \fBFalse\fP
-Don\(aqt attempt to initiate the connection with the remote device.
+Don’t attempt to initiate the connection with the remote device.
 Default: \fBFalse\fP (it will initiate the connection).
 .TP
 .B test_ping: \fBFalse\fP
@@ -2023,7 +2072,7 @@ salt\-run proxy.execute_roster junos\-edges test.ping tgt_type=nodegroup
 .UNINDENT
 .INDENT 0.0
 .TP
-.B _runners.proxy.execute_devices(minions, function, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, args=(), batch_size=10, batch_wait=0, static=False, tgt=None, tgt_type=None, jid=None, events=True, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, no_connect=False, roster_targets=None, test_ping=False, preload_targeting=False, invasive_targeting=False, failhard=False, timeout=60, summary=False, verbose=False, progress=False, hide_timeout=False, **kwargs)
+.B _runners.proxy.execute_devices(minions, function, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, args=(), batch_size=10, batch_wait=0, static=False, tgt=None, tgt_type=None, jid=None, events=True, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, no_connect=False, roster_targets=None, test_ping=False, preload_targeting=False, invasive_targeting=False, failhard=False, timeout=60, summary=False, verbose=False, progress=False, hide_timeout=False, returner=\(aq\(aq, returner_config=\(aq\(aq, returner_kwargs={}, **kwargs)
 Execute a Salt function on a group of network devices identified by their
 Minion ID, as listed under the \fBminions\fP argument.
 .INDENT 7.0
@@ -2112,7 +2161,7 @@ Use the existing Proxy Minions when they are available (say on an
 already running Master).
 .TP
 .B no_connect: \fBFalse\fP
-Don\(aqt attempt to initiate the connection with the remote device.
+Don’t attempt to initiate the connection with the remote device.
 Default: \fBFalse\fP (it will initiate the connection).
 .TP
 .B test_ping: \fBFalse\fP
@@ -2135,7 +2184,7 @@ salt\-run proxy.execute "[\(aq172.17.17.1\(aq, \(aq172.17.17.2\(aq]" test.ping d
 .UNINDENT
 .INDENT 0.0
 .TP
-.B _runners.proxy.salt_call(minion_id, function=None, unreachable_devices=None, failed_devices=None, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, no_connect=False, jid=None, roster_opts=None, test_ping=False, tgt=None, tgt_type=None, preload_targeting=False, invasive_targeting=False, failhard=False, timeout=60, args=(), **kwargs)
+.B _runners.proxy.salt_call(minion_id, function=None, unreachable_devices=None, failed_devices=None, with_grains=True, with_pillar=True, preload_grains=True, preload_pillar=True, default_grains=None, default_pillar=None, cache_grains=False, cache_pillar=False, use_cached_grains=True, use_cached_pillar=True, use_existing_proxy=False, no_connect=False, jid=None, roster_opts=None, test_ping=False, tgt=None, tgt_type=None, preload_targeting=False, invasive_targeting=False, failhard=False, timeout=60, returner=\(aq\(aq, returner_config=\(aq\(aq, returner_kwargs={}, args=(), **kwargs)
 Invoke a Salt Execution Function that requires or invokes an NAPALM
 functionality (directly or indirectly).
 .INDENT 7.0
@@ -2207,7 +2256,7 @@ Use the existing Proxy Minions when they are available (say on an
 already running Master).
 .TP
 .B no_connect: \fBFalse\fP
-Don\(aqt attempt to initiate the connection with the remote device.
+Don’t attempt to initiate the connection with the remote device.
 Default: \fBFalse\fP (it will initiate the connection).
 .TP
 .B jid: \fBNone\fP
@@ -2485,7 +2534,7 @@ salt myminion netbox.create_device_role router
 New in version 2019.2.0.
 
 .sp
-Create a device type. If the manufacturer doesn\(aqt exist, create a new manufacturer.
+Create a device type. If the manufacturer doesn’t exist, create a new manufacturer.
 .INDENT 7.0
 .TP
 .B model
@@ -3099,7 +3148,7 @@ salt \(aq*\(aq netbox.openconfig_lacp device_name=cr1.thn.lon
 .INDENT 0.0
 .TP
 .B _modules.netbox.slugify(value)
-\(aq
+‘
 Slugify given value.
 Credit to Djangoproject \fI\%https://docs.djangoproject.com/en/2.0/_modules/django/utils/text/#slugify\fP
 .UNINDENT
@@ -3638,9 +3687,9 @@ the most important differences is that \fBsalt\fP is aware of what Minions are
 connected to the Master, therefore it is easy to know what Minions would be
 matched by a certain target expression (see
 \fI\%https://docs.saltstack.com/en/latest/topics/targeting/\fP for further details). In
-contrast, by definition, \fBsalt\-sproxy\fP doesn\(aqt suppose there are any (Proxy)
+contrast, by definition, \fBsalt\-sproxy\fP doesn’t suppose there are any (Proxy)
 Minions running, so it cannot possibly know what Minions would be matched by an
-arbitrary expression. For this reasoning, we need to "help" it by providing
+arbitrary expression. For this reasoning, we need to “help” it by providing
 the list of all the devices it should be aware of. This is done through the
 \fI\%Roster\fP
 interface; even though this Salt subsystem has initially been developed for
@@ -3655,7 +3704,7 @@ via the CLI, or through the Master configuration file. See opts, in
 particular \fB\-r\fP (or \fB\-roster\fP), and \fB\-\-roster\-file\fP (when the Roster
 module loads the list of devices from a file).
 .sp
-For example, let\(aqs see how we can use the ansible\-roster\&.
+For example, let’s see how we can use the ansible\-roster\&.
 .SS Roster usage example: Ansible
 .sp
 If you already have an Ansible inventory, simply drop it into a file, e.g.,
@@ -3664,14 +3713,14 @@ If you already have an Ansible inventory, simply drop it into a file, e.g.,
 \fBNOTE:\fP
 .INDENT 0.0
 .INDENT 3.5
-The Ansible inventory file doesn\(aqt need to provide any connection details,
+The Ansible inventory file doesn’t need to provide any connection details,
 as they must be configured into the Pillar. If you do provide them however,
 they could be used to override the data compiled from the Pillar.
 See \fI\%Overriding Pillar data\fP for an example.
 .UNINDENT
 .UNINDENT
 .sp
-With that in mind, let\(aqs consider a very simply inventory, e.g.,
+With that in mind, let’s consider a very simply inventory, e.g.,
 .sp
 \fB/etc/salt/roster\fP:
 .INDENT 0.0
@@ -3746,7 +3795,7 @@ $ salt\-sproxy \(aqrouter*\(aq \-\-preview\-target
 \fBHINT:\fP
 .INDENT 0.0
 .INDENT 3.5
-If you don\(aqt provide the Roster name and the path to the Roster file, into
+If you don’t provide the Roster name and the path to the Roster file, into
 the Master config file, you can specify them on the command line, e.g.,
 .INDENT 0.0
 .INDENT 3.5
@@ -3791,7 +3840,7 @@ $ salt\-sproxy \-E \(aq(switch|router)1\(aq \-\-preview\-target
 .UNINDENT
 .UNINDENT
 .sp
-The inventory file doesn\(aqt necessarily need to be flat, can be as complex as
+The inventory file doesn’t necessarily need to be flat, can be as complex as
 you want, e.g.,
 .INDENT 0.0
 .INDENT 3.5
@@ -3884,7 +3933,7 @@ $ salt\-sproxy \-N atlanta \-\-preview\-target
 .UNINDENT
 .UNINDENT
 .sp
-The nodegroups you can use for targeting depend on the names you\(aqve assigned
+The nodegroups you can use for targeting depend on the names you’ve assigned
 in your inventory, and sometimes may be more useful to use them vs. the device
 name (which may not contain the area / region / country name).
 .SS Overriding Pillar data
@@ -3892,7 +3941,7 @@ name (which may not contain the area / region / country name).
 In the Roster file (Ansible inventory) you may prefer to have more specific
 connection credentials for some particular devices. In this case, you only need
 to specify them directly under the device, or using \fBhost_vars\fP as normally;
-for example, let\(aqs consider the inventory from the above, with the difference
+for example, let’s consider the inventory from the above, with the difference
 that now \fBedge1.raleigh\fP has more specific details:
 .INDENT 0.0
 .INDENT 3.5
@@ -3938,7 +3987,7 @@ all:
 .sp
 With this Roster, \fBsalt\-sproxy\fP will try to authenticate using the username
 and password specified. The same goes to the rest of the other credentials and
-fields required by the Proxy module you\(aqre using, i.e., \fBport\fP,
+fields required by the Proxy module you’re using, i.e., \fBport\fP,
 \fBoptional_args\fP, etc. \- check the Salt documentation to understand what
 fields you have available.
 .SS Configuring static Grains
@@ -4000,7 +4049,7 @@ providing the list of devices and their properties.
 To use the pillar\-roster you only need to ensure that you can access the
 list of devices you want to manage into a Pillar. The Pillar system is designed
 to provide data (from whatever source, i.e., HTTP API, database, or any file
-format you may prefer) to one specific Minion (or some / all). That doesn\(aqt
+format you may prefer) to one specific Minion (or some / all). That doesn’t
 mean that the Minion must be up and running, but simply just that one or more
 Minions have access to this data.
 .sp
@@ -4281,7 +4330,7 @@ devices:
 .UNINDENT
 .sp
 In this case, the Grains data is dynamically generated through the Jinja loop,
-however it could be provided in any way you\(aqd prefer. Executing the following
+however it could be provided in any way you’d prefer. Executing the following
 command, you can check that the Grains data is properly distributed:
 .INDENT 0.0
 .INDENT 3.5
@@ -4297,7 +4346,7 @@ minion17:
 .UNINDENT
 .SS Roster usage example: NetBox
 .sp
-The netbox\-roster is a good example of a Roster modules that doesn\(aqt
+The netbox\-roster is a good example of a Roster modules that doesn’t
 work with files, rather gathers the data from
 \fI\%NetBox\fP via the \fI\%API\fP\&.
 .sp
@@ -4306,7 +4355,7 @@ work with files, rather gathers the data from
 .INDENT 3.5
 The NetBox Roster module is currently not available in the official Salt
 releases, and it is distributed as part of the \fBsalt\-sproxy\fP package and
-dynamically loaded on runtime, so you don\(aqt need to worry about that,
+dynamically loaded on runtime, so you don’t need to worry about that,
 simply reference it, configure the details as documented and start using
 it straight away.
 .UNINDENT
@@ -4553,7 +4602,7 @@ To configure static Grains for one specific device, you can put your data as
 described in
 \fI\%https://docs.saltstack.com/en/latest/topics/grains/#grains\-in\-etc\-salt\-grains\fP,
 more specifically under the \fB/etc/salt/proxy.d/\fP directory. For example, if
-you\(aqd want to configure for the device \fBrouter1\fP, you\(aqd have the following
+you’d want to configure for the device \fBrouter1\fP, you’d have the following
 file:
 .sp
 \fB/etc/salt/proxy.d/router1/grains\fP
@@ -4581,13 +4630,13 @@ instance and so on. See using\-roster for more details, usage examples
 and documentation for each of the available Roster options.
 .sp
 To put it in other words, the Roster provides the totality (or the universe) of
-devices you have. When you\(aqre executing a command, you may want to execute
+devices you have. When you’re executing a command, you may want to execute
 a command against all these devices, or only a subset of them. There are
 several targeting selection mechanisms, as presented below.
 .sp
 Targeting in \fIsalt\-sproxy\fP, from an user perspective, is very similar to the
 native Salt targeting \- however, the implementation is fundamentally different
-(again, please see using\-roster for more details on this); that\(aqs why
+(again, please see using\-roster for more details on this); that’s why
 the targeting in \fIsalt\-sproxy\fP comes with some caveats you should be aware of.
 .sp
 \fBTIP:\fP
@@ -4616,8 +4665,8 @@ When targeting making use of Grains or Pillar data that depend on the device
 characteristics (such as interfaces, IP addresses, OS version, platform
 details, and so on), or other properties retrieved from other systems, such
 as APIs, databases, etc., you may want to look at
-\fI\%\-\-invasive\-targeting\fP
-or \fI\%\-\-preload\-targeting\fP
+\fI\%–invasive\-targeting\fP
+or \fI\%–preload\-targeting\fP
 options.
 .UNINDENT
 .UNINDENT
@@ -4694,10 +4743,10 @@ salt\-sproxy \-L \(aqedge1,edge2,edge3\(aq net.arp
 .sp
 Targeting using Grain data.
 .sp
-This is a tricky subject. Unlike the native Salt, \fIsalt\-sproxy\fP doesn\(aqt have
-access to device data before connecting to it (i.e., it can\(aqt possibly know
+This is a tricky subject. Unlike the native Salt, \fIsalt\-sproxy\fP doesn’t have
+access to device data before connecting to it (i.e., it can’t possibly know
 device details before even connecting to it). You can however target using
-Grain data, but there are some caveats, and it\(aqs up to you to decide whether
+Grain data, but there are some caveats, and it’s up to you to decide whether
 you want performance or limit the resource consumption.
 .sp
 \fBSEE ALSO:\fP
@@ -4779,7 +4828,7 @@ Print the version of Salt and Salt SProxy that is running.
 .INDENT 0.0
 .TP
 .B \-\-versions\-report
-Show program\(aqs dependencies and version number, and then exit.
+Show program’s dependencies and version number, and then exit.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -4796,7 +4845,7 @@ on most systems is \fB/etc/salt\fP\&.
 .INDENT 0.0
 .TP
 .B \-\-config\-dump
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Print the complete salt\-sproxy configuration values (with the defaults), as
@@ -4816,7 +4865,7 @@ a file). Default: \fB/etc/salt/roster\fP\&.
 .INDENT 0.0
 .TP
 .B \-\-invasive\-targeting
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 The native \fIsalt\-sproxy\fP targeting highly depends on the data your provide
@@ -4824,7 +4873,7 @@ mainly through the Roster system (see also using\-roster). Through
 the Roster interface and other mechanisms, you are able to provide static
 Grains (see also static\-grains), which you can use in your targeting
 expressions. There are situations when you may want to target using more
-dynamic Grains that you probably don\(aqt want to manage statically.
+dynamic Grains that you probably don’t want to manage statically.
 .sp
 In such case, the \fB\-\-invasive\-targeting\fP targeting can be helpful as it
 connects to the device, retrieves the Grains, then executes the requested
@@ -4834,7 +4883,7 @@ command, \fIonly\fP on the devices matched by your target.
 .INDENT 7.0
 .INDENT 3.5
 The maximum set of devices you can query is the devices you have
-defined in your Roster \-\- targeting in this case helps you select
+defined in your Roster – targeting in this case helps you select
 a subset of the devices \fIsalt\-sproxy\fP is aware of, based on their
 properties.
 .UNINDENT
@@ -4859,7 +4908,7 @@ are going to use that data, device target matching included.
 .INDENT 0.0
 .TP
 .B \-\-preload\-targeting
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 This is a lighter derivative of the \fB\-\-invasive\-targeting\fP option (see
@@ -4870,14 +4919,14 @@ look at it like a combination of both \fB\-\-invasive\-targeting\fP and
 \fB\-no\-connect\fP used together.
 .sp
 This option is useful when the Grains and Pillars you want to use in your
-targeting expression don\(aqt depend on the connection with the device itself,
+targeting expression don’t depend on the connection with the device itself,
 but they are dynamically pulled from various systems, e.g., from an HTTP
 API, database, etc.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-sync
-Deprecated since version 2020.1.0: This option has been replaced by \fB\-\-static\fP (see below).
+Deprecated since version 2020.2.0: This option has been replaced by \fB\-\-static\fP (see below).
 
 .sp
 Whether should return the entire output at once, or for every device
@@ -4886,7 +4935,7 @@ separately as they return.
 .INDENT 0.0
 .TP
 .B \-s, \-\-static
-New in version 2020.1.0: Starting with this release, \fB\-\-static\fP, replaces the previous CLI
+New in version 2020.2.0: Starting with this release, \fB\-\-static\fP, replaces the previous CLI
 option \fB\-\-sync\fP, with the same functionality.
 
 .sp
@@ -4939,7 +4988,7 @@ The number of devices to connect to in parallel.
 .INDENT 0.0
 .TP
 .B \-\-batch\-wait
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Wait a specific number of seconds after each batch is done before executing
@@ -4948,7 +4997,7 @@ the next one.
 .INDENT 0.0
 .TP
 .B \-p, \-\-progress
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Display a progress graph to visually show the execution of the command
@@ -4957,16 +5006,16 @@ across the list of devices.
 \fBNOTE:\fP
 .INDENT 7.0
 .INDENT 3.5
-As of release 2020.1.0, the best experience of using the progress graph
+As of release 2020.2.0, the best experience of using the progress graph
 is in conjunction with the \fB\-s\fP / \fB\-\-static\fP option, otherwise
-there\(aqs a small display issue.
+there’s a small display issue.
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-hide\-timeout
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Hide devices that timeout.
@@ -4974,7 +5023,7 @@ Hide devices that timeout.
 .INDENT 0.0
 .TP
 .B \-\-failhard
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Stop the execution at the first error.
@@ -4982,7 +5031,7 @@ Stop the execution at the first error.
 .INDENT 0.0
 .TP
 .B \-\-summary
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Display a summary of the command execution:
@@ -4998,7 +5047,7 @@ or \fB\-\-timeout\fP argument to adjust the timeout value.
 Number of devices with errors (i.e., there was an error while executing
 the command).
 .IP \(bu 2
-Number of unreachable devices (i.e., couldn\(aqt establish the connection
+Number of unreachable devices (i.e., couldn’t establish the connection
 with the remote device).
 .UNINDENT
 .sp
@@ -5028,15 +5077,15 @@ Summary
 .INDENT 0.0
 .TP
 .B \-\-show\-jid
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
-Display jid without the additional output of \-\-verbose.
+Display jid without the additional output of –verbose.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-v, \-\-verbose
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Turn on command verbosity, display jid, devices per batch, and detailed
@@ -5079,11 +5128,19 @@ Synchronise the Grains modules you may have in your own environment.
 .INDENT 0.0
 .TP
 .B \-\-sync\-all
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Load the all extension modules provided with salt\-sproxy, as well as your
 own extension modules from your environment.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-saltenv
+New in version 2020.2.0.
+
+.sp
+The Salt environment name where to load extension modules and files from.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -5102,7 +5159,7 @@ See events for further details.
 .TP
 .B \-\-use\-existing\-proxy
 Execute the commands on an existing Proxy Minion whenever available. If one
-or more Minions matched by the target don\(aqt exist (or the key is not
+or more Minions matched by the target don’t exist (or the key is not
 accepted by the Master), salt\-sproxy will fallback and execute the command
 locally, and, implicitly, initiate the connection to the device locally.
 .sp
@@ -5121,14 +5178,14 @@ When using this option in combination with a Roster, \fBsalt\-sproxy\fP
 will firstly try to match your target based on the provided Roster, and
 then only after that will execute the Salt function on the targets, and
 on the existing Proxy Minions, best efforts. For example, if your target
-matches two devices, say \fBrouter1\fP and \fBswitch1\fP, and there\(aqs an
+matches two devices, say \fBrouter1\fP and \fBswitch1\fP, and there’s an
 available Proxy Minion running for \fBrouter1\fP, then the Salt function
 would be executed on the \fBrouter1\fP existing Minion, over the already
 established connection, while for \fBswitch1\fP the connection is going to
 be initialised during run time.
 .sp
 If you want to bypass the Roster matching, and target \fIonly\fP existing
-(Proxy) Minions, make sure you don\(aqt have the \fBroster\fP or
+(Proxy) Minions, make sure you don’t have the \fBroster\fP or
 \fBproxy_roster\fP options configured, or execute with \fB\-r None\fP, e.g.,
 .INDENT 0.0
 .INDENT 3.5
@@ -5154,12 +5211,12 @@ New in version 2019.10.0.
 .sp
 Do not initiate the connection with the remote device. Please use this
 option with care, as it may lead to unexptected results. The main use case
-(although not limited to) is executing Salt functions that don\(aqt
+(although not limited to) is executing Salt functions that don’t
 necessarily require the connection, however they may need Pillar or Grains
 that are associated with each individual device. Such examples include HTTP
 requests, working with files, and so on. Keep in mind that, as the
-connection is not established, it won\(aqt re\-compile fresh Grains, therefore
-it\(aqll be working with cached data. Make sure that the data you have
+connection is not established, it won’t re\-compile fresh Grains, therefore
+it’ll be working with cached data. Make sure that the data you have
 available is already cached before executing with \fB\-\-no\-connect\fP, by
 executing \fBgrains.items\fP and / or \fBpillar.items\fP\&. The point of this
 functionality is to speed up the execution when dealing with a large volume
@@ -5196,7 +5253,7 @@ Avoid loading the list of targets from the cache.
 .INDENT 0.0
 .TP
 .B \-\-pillar\-root
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Set a specific directory as the base pillar root.
@@ -5204,7 +5261,7 @@ Set a specific directory as the base pillar root.
 .INDENT 0.0
 .TP
 .B \-\-file\-root
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Set a specific directory as the base file root.
@@ -5212,7 +5269,7 @@ Set a specific directory as the base file root.
 .INDENT 0.0
 .TP
 .B \-\-states\-dir
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Set a specific directory to search for additional States.
@@ -5220,7 +5277,7 @@ Set a specific directory to search for additional States.
 .INDENT 0.0
 .TP
 .B \-m, \-\-module\-dirs
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 Specify one or more directories where to load the extension modules from.
@@ -5291,19 +5348,19 @@ example: server1.foo.bar,server2.foo.bar,example7.quo.qux
 .TP
 .B \-G, \-\-grain
 The target expression matches values returned by the Salt grains system on
-the minions. The target expression is in the format of \(aq<grain value>:<glob
-expression>\(aq; example: \(aqos:Arch*\(aq
+the minions. The target expression is in the format of ‘<grain value>:<glob
+expression>’; example: ‘os:Arch*’
 .sp
 This was changed in version 0.9.8 to accept glob expressions instead of
 regular expression. To use regular expression matching with grains, use
-the \-\-grain\-pcre option.
+the –grain\-pcre option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-P, \-\-grain\-pcre
 The target expression matches values returned by the Salt grains system on
-the minions. The target expression is in the format of \(aq<grain value>:<
-regular expression>\(aq; example: \(aqos:Arch.*\(aq
+the minions. The target expression is in the format of ‘<grain value>:<
+regular expression>’; example: ‘os:Arch.*’
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -5390,8 +5447,8 @@ changes and success and \fByellow\fP denotes a expected future change in configu
 .TP
 .B \-\-state\-output=STATE_OUTPUT, \-\-state_output=STATE_OUTPUT
 Override the configured state_output value for minion
-output. One of \(aqfull\(aq, \(aqterse\(aq, \(aqmixed\(aq, \(aqchanges\(aq or
-\(aqfilter\(aq. Default: \(aqnone\(aq.
+output. One of ‘full’, ‘terse’, ‘mixed’, ‘changes’ or
+‘filter’. Default: ‘none’.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -5434,13 +5491,18 @@ runner_dirs:
 .fi
 .UNINDENT
 .UNINDENT
+.SS 1.a. Update the \fBfile_roots\fP and / or \fBrunner_dirs\fP manually
 .sp
 As suggested in the output, you can directly reference the salt\-sproxy
 installation path to start using the \fBproxy\fP Runner (and other extension
 modules included in the package).
 .sp
+After updating the master configuration file, make sure to execute \fBsalt\-run
+saltutil.sync_all\fP or \fBsalt\-run saltutil.sync_runners\fP\&.
+.SS 1.b. Use the \fB\-\-save\-file\-roots\fP CLI argument to update the master config
+.sp
 A simpler alternative is executing with \fB\-\-save\-file\-roots\fP which adds the
-path for you, e.g.,
+path for you, and synchronizes the extension modules provided together with e.g.,
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -5458,6 +5520,15 @@ See https://salt\-sproxy.readthedocs.io/en/latest/salt_api.html
 and https://salt\-sproxy.readthedocs.io/en/latest/events.html for more details.
 .ft P
 .fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+While this option will preserve the configuration you have (but appending
+another path to \fBfile_roots\fP and / or \fBrunner_dirs\fP), it may re\-arrange
+(visually) the contents \- however without any side effects.
 .UNINDENT
 .UNINDENT
 .SS 2. Copy the source file
@@ -5496,7 +5567,7 @@ $ curl \-o /srv/salt/_runners/proxy.py \-L \e
 \fBNOTE:\fP
 .INDENT 0.0
 .INDENT 3.5
-In the above I\(aqve used the \fIraw\fP like from GitHub to ensure the source code
+In the above I’ve used the \fIraw\fP like from GitHub to ensure the source code
 is preserved.
 .UNINDENT
 .UNINDENT
@@ -5807,14 +5878,15 @@ rest_cherrypy:
 \fBHINT:\fP
 .INDENT 0.0
 .INDENT 3.5
-Consider looking at the example\-salt\-api example for a more complete
-example on configuring the Salt API, however the official Salt
-documentation should always be used as the reference.
+Consider looking at the example\-salt\-api and example\-salt\-sapi
+examples for end\-to\-end examples on configuring the Salt API or
+\fBsalt\-sapi\fP, however the official Salt documentation should always be
+used as the reference.
 .UNINDENT
 .UNINDENT
-.SS Starting with salt\-sproxy 2020.1.0
+.SS Starting with salt\-sproxy 2020.2.0
 .sp
-Beginning with the \fIsalt\-sproxy\fP release 2020.1.0, the usage has been
+Beginning with the \fIsalt\-sproxy\fP release 2020.2.0, the usage has been
 simplified compared to previous versions, and a new API client has been added,
 named \fBsproxy\fP, together with its counter\-part \fBsproxy_async\fP for
 asynchronous requests.
@@ -5831,6 +5903,15 @@ need to start a separate application named \fBsalt\-sapi\fP which is shipped
 together with \fIsalt\-sproxy\fP\&. Everything stay the exact same as usually, the
 only difference being the special \fBsproxy\fP and \fBsproxy_async\fP clients for
 simplified usage.
+.sp
+A major advantage of using the \fBsproxy\fP / \fBsproxy_async\fP clients is that
+the usage is very similar to the \fBlocal\fP / \fBlocal_async\fP clients (see
+\fI\%https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#usage\fP),
+the arguments you’d need to being in\-line with the ones from \fI\%LocalClient\fP:
+\fBtgt\fP (target expression) and \fBfun\fP (the name of the Salt function to
+execute) as mandatory arguments, plus a number of optional arguments documented
+at \fI\%https://salt\-sproxy.readthedocs.io/en/latest/runners/proxy.html#_runners.proxy.execute\fP\&.
+See an usage example below.
 .sp
 \fBHINT:\fP
 .INDENT 0.0
@@ -5938,7 +6019,7 @@ $ curl \-sS localhost:8080/run \-H \(aqAccept: application/json\(aq \e
 .fi
 .UNINDENT
 .UNINDENT
-.SS Before salt\-sproxy 2020.1.0
+.SS Before salt\-sproxy 2020.2.0
 .sp
 After starting the \fBsalt\-api\fP process, we should get the following:
 .INDENT 0.0
@@ -6123,7 +6204,7 @@ States) that you might want to execute against a device, without having a
 .SS See Also
 .SS salt\-sapi
 .sp
-New in version 2020.1.0.
+New in version 2020.2.0.
 
 .sp
 \fBsalt\-sapi\fP is a program distributed together with \fIsalt\-sproxy\fP, to
@@ -6521,9 +6602,323 @@ mark and backlog \- see
 for more details and options.
 .SS Release Notes
 .SS Latest Release
+.SS Release 2020.2.0
+.sp
+This is considered the first mature release, with significant improvements
+around the targeting, new CLI options as well as other improvements and
+features.
+.SS Static Grains
+.sp
+With this release, static Grains can be configured easier for large (or all)
+groups of devices by having a \fBgrains\fP section in the Master configuration
+file, e.g.,
+.sp
+\fB/etc/salt/master\fP
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+grains:
+  salt:
+    role: proxy
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+For more details check out the new section static\-grains\&.
+.SS Improved targeting
+.sp
+Targeting mechanisms have been revisited and rewrote almost from scratch, for
+a better user experience similar to when managing Proxy Minions and executing
+via the usual \fIsalt\fP command.
+.sp
+On this occasion, there are two new CLI options added in this release:
+\fB\-\-invasive\-targeting\fP and \fB\-\-preload\-targeting\fP\&. The reasoning for adding
+these is that the native \fIsalt\-sproxy\fP targeting highly depends on the data
+you provide mainly through the \fIRoster\fP system (see also roster).
+Through the Roster interface and other mechanisms, you are able to provide
+static Grains, which you can use in your targeting expressions. There are
+situations when you may want to target using more dynamic Grains that you
+probably don’t want to manage statically, which may depend on various
+attributes retrieved \fIafter\fP connecting to the device (e.g., hardware model, OS
+version, etc.). In such case, the \fB\-\-invasive\-targeting\fP targeting can be
+helpful as it connects to the device, retrieves these attributes / Grains, then
+executes the requested command, only on the devices matched by your target.
+.sp
+\fB\-\-preload\-targeting\fP works in a similar way, with the distinction that it
+doesn\(aqt establish the connection with the remote device, however your target
+expression depends on number of attributes retrieved from various systems
+depending on each individual device (or group of devices).
+.sp
+Using \fB\-\-invasive\-targeting\fP together with \fB\-\-cache\-grains\fP and / or
+\fB\-\-cache\-pillar\fP can speed up the run time when you execute next time (next
+run would be without \fB\-\-invasive\-targeting\fP), as the Grains / Pillar data is
+already available and will be used in determining the targets from your
+expression.
+.SS salt\-sapi
+.sp
+In order to simplify the usage of the REST API calls to devices managed
+through \fIsalt\-sproxy\fP, beginning with this release, there\(aqs an additional
+program distributed with \fIsalt\-sproxy\fP, \fBsalt\-sapi\fP that leverages the usual
+Salt API features, and on top, it provides an additional client for \fIsproxy\fP\&.
+.sp
+\fBSEE ALSO:\fP
+.INDENT 0.0
+.INDENT 3.5
+That means, instead of starting the usual \fBsalt\-api\fP, in order to execute
+REST calls through \fIsproxy\fP, you can start \fBsalt\-sapi\fP instead, using the
+exact same CLI arguments and configuration options. See salt\-sapi
+for further information.
+.UNINDENT
+.UNINDENT
+.sp
+Example call before this release (without \fIsalt\-sapi\fP):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+  \-d eauth=\(aqpam\(aq \e
+  \-d username=\(aqmircea\(aq \e
+  \-d password=\(aqpass\(aq \e
+  \-d client=\(aqrunner\(aq \e
+  \-d fun=\(aqproxy.execute\(aq \e
+  \-d tgt=\(aqminion1\(aq \e
+  \-d function=\(aqtest.ping\(aq \e
+  \-d sync=True
+return:
+\- minion1: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Example call starting with this release (through \fIsalt\-sapi\fP):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-sS localhost:8080/run \-H \(aqAccept: application/x\-yaml\(aq \e
+     \-d eauth=\(aqpam\(aq \e
+     \-d username=\(aqmircea\(aq \e
+     \-d password=\(aqpass\(aq \e
+     \-d client=\(aqsproxy\(aq \e
+     \-d tgt=\(aqminion1\(aq \e
+     \-d fun=\(aqtest.ping\(aq
+return:
+\- minion1: true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Notice in the later call the client invoked is \fBsproxy\fP, while the \fBfun\fP
+field points straight to the Execution Function you want to execute (as in
+opposite to a more convoluted usage of both \fBfun\fP and \fBfunction\fP as
+previously).
+.SS New CLI options
+.sp
+New CLI options added in this release, to provide similar functionality to the
+usual \fBsalt\fP command:
+.sp
+\fB\-\-batch\-wait\fP: Wait a specific number of seconds after each batch is done
+before executing the next one.
+.sp
+\fB\-\-hide\-timeout\fP: Hide devices that timeout.
+.sp
+\fB\-\-failhard\fP: Stop the execution at the first error.
+.sp
+\fB\-\-progress\fP / \fB\-p\fP: Display a progress graph to visually show the
+execution of the command across the list of devices.
+.sp
+\fB\-\-summary\fP: Display a summary of the command execution:
+.INDENT 0.0
+.INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
-release\-2019.10.0
+Total number of devices targeted.
+.IP \(bu 2
+Number of devices that returned without issues.
+.IP \(bu 2
+Number of devices that timed out executing the command. See also \fB\-t\fP
+or \fB\-\-timeout\fP argument to adjust the timeout value.
+.IP \(bu 2
+Number of devices with errors (i.e., there was an error while executing
+the command).
+.IP \(bu 2
+Number of unreachable devices (i.e., couldn\(aqt establish the connection
+with the remote device).
+.UNINDENT
+.sp
+In \fB\-v\fP / \fB\-\-verbose\fP mode, this output is enahnced by displaying the
+list of devices that did not return / with errors / unreachable.
+.sp
+Example:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+Summary
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+# of devices targeted: 10
+# of devices returned: 3
+# of devices that did not return: 5
+# of devices with errors: 0
+# of devices unreachable: 2
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-show\-jid\fP: Display the JID (Job ID).
+.sp
+\fB\-\-verbose\fP / \fB\-v\fP: Turn on command verbosity, display jid, devices per
+batch, and detailed summary.
+.sp
+\fB\-\-pillar\-root\fP: Set a specific directory as the base pillar root.
+.sp
+\fB\-\-states\-dir\fP: Set a specific directory to search for additional States.
+.sp
+\fB\-\-module\-dirs\fP / \fB\-m\fP: Specify one or more directories where to load the
+extension modules from. Multiple directories can be provided by passing \fB\-m\fP
+or \fB\-\-module\-dirs\fP multiple times.
+.sp
+\fB\-\-saltenv\fP:  The Salt environment name where to load extension modules and
+files from.
+.sp
+\fB\-\-config\-dump\fP: Print the complete salt\-sproxy configuration values (with
+the defaults), in YAML format.
+.SS Returners
+.sp
+Using the \fB\-\-return\fP, \fB\-\-return\-config\fP, and \fB\-\-return\-kwargs\fP new CLI
+options, you can forward the execution results to various systems such as SQL
+databases, Slack, Syslog, or NoSQL systems, etc. \- see \fI\%here\fP
+the list of natively available Returner modules you can use.
+.SS Previous Releases
+.SS 2019.10.0
+.sp
+This release includes several new features:
+.INDENT 0.0
+.IP \(bu 2
+Improved the granularity of the options that are loaded from the Roster. As
+such, this can be used to provide more specific connection parameters per
+device (or groups of devices). In other words, if you have one of more
+devices that need a more specific, username / password / port / etc. to
+establish the connection, you can put those into the Roster.
+.sp
+The available fields that you can use depend on what the Proxy module of
+choice requires, see
+\fI\%https://docs.saltstack.com/en/latest/ref/proxy/all/index.html\fP and check out
+the documentation of the Proxy module you\(aqre using.
+.sp
+You can also override the \fBproxytype\fP value, to use a different Proxy module
+per device.
+.sp
+For example, if you\(aqre using the pillar\-roster, you would typically
+have a structure as following:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+devices:
+  \- name: device1
+  \- name: device2
+  \- name: device3
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Where all three devices would be managed, say using the \fI\%napalm\fP
+Proxy module.
+.sp
+Say, if you\(aqd like to change \fBdevice2\fP to be managed using the \fI\%junos\fP
+Proxy module instead, you can update the above as:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+devices:
+  \- name: device1
+  \- name: device2
+    proxytype: junos
+  \- name: device3
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In a similar way, if you require to authenticate to \fBdevice3\fP using
+a different username, you can override that as:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+devices:
+  \- name: device1
+  \- name: device2
+    proxytype: junos
+  \- name: device3
+    username: test\-username
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+While the examples above are using the pillar\-roster, they would work
+in the same way with other Rosters, such as ansible\-roster, etc.
+.sp
+For a more complete example, make sure to take a look at quick\-start\&.
+.IP \(bu 2
+Added \fB\-\-no\-connect\fP command line option, to be able to invoke Salt
+functions without necessarily establishing the connection with the remote
+device. See \fI\%\-\-no\-connect\fP
+for more details.
+.IP \(bu 2
+New option \fI\%\-\-test\-ping\fP
+which can be used in combination with
+\fI\%\-\-use\-existing\-proxy\fP
+to ensure that the existing (Proxy) Minion is alive / usable, before
+attempting to execute the command; when non\-responsive, \fBsalt\-sproxy\fP will
+try to execute the code locally.
+.IP \(bu 2
+Starting with this release, when targeting through a Roster, by default, the
+list of targets determined using your Roster of choice, is going to be cached
+locally. To deactivate this behaviour and re\-compute the target at every
+execution, you can use the \fI\%\-\-no\-target\-cache\fP
+option. This option can also be set in the configuration file as
+\fBno_target_cache: false\fP\&.
+.IP \(bu 2
+Two new options \fI\%\-\-sync\-grains\fP
+and \fI\%\-\-sync\-modules\fP
+to re\-sync the Execution or Grain modules that are delivered with the
+\fBsalt\-sproxy\fP package or from your own environment.
+.UNINDENT
+.sp
+\fBIMPORTANT:\fP
+.INDENT 0.0
+.INDENT 3.5
+If you are using the netbox\-roster, you might want to keep in mind
+that in Netbox v2.6 the default view permissions changed, so \fBsalt\-sproxy\fP
+may not able to get the device list from Netbox by default.
+.sp
+Add \fBEXEMPT_VIEW_PERMISSIONS = [\(aq*\(aq]\fP to the NetBox \fBconfiguration.py\fP
+file to change this behavior.
+See \fI\%https://github.com/netbox\-community/netbox/releases/tag/v2.6.0\fP for more
+information.
+.UNINDENT
 .UNINDENT
 .SH AUTHOR
 Mircea Ulinic

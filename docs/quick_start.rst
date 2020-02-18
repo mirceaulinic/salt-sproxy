@@ -26,46 +26,28 @@ see :ref:`install`.
 Say you have a list of devices you want to manage. For ease, you can put them
 into a file:
 
-``/srv/pillar/devices.sls``
+``/etc/salt/roster``
 
-.. code-block:: sls
+.. code-block:: yaml
 
-  devices:
-    - name: router1
-      driver: junos
-    - name: router2
-      driver: iosxr
-    - name: switch1
-      driver: eos
-    - name: fw1
-      driver: panos
-      host: fw1.firewall.as1234.net
-
-And let's make sure we include that into the Pillar top file:
-
-``/srv/pillar/top.sls``
-
-.. code-block:: sls
-
-    base:
-      '*':
-        - devices
+  router1:
+    driver: junos
+  router2:
+    driver: iosxr
+  switch1:
+    driver: eos
+  fw1:
+    driver: panos
+    host: fw1.firewall.as1234.net
 
 .. note::
 
-    The Pillar data can either be provided as file(s), or using one or more
-    External Pillars. Check out
-    https://docs.saltstack.com/en/latest/ref/pillar/all/index.html for the
-    complete list of available Pillar modules you can use.
-
-To check that you're able to get the list of devices properly, run:
-
-.. code-block:: bash
-
-    $ salt-run pillar.show_pillar --out=yaml
-
-Running this command, you can confirm that Salt has access to the data you 
-provide, through the Pillar source of your choice.
+    The ``/etc/salt/roster`` file can use any of the available SLS formats 
+    (combinations of the Salt `Renderer modules 
+    <https://docs.saltstack.com/en/latest/ref/renderers/>`__) - Jinja + YAML, 
+    YAML, JSON, pure Python, JSON5, HJSON, etc.
+    
+    For more examples, see also :ref:`example-file-roster`.
 
 3. Configure
 ------------
@@ -76,7 +58,7 @@ Apply the following configuration:
 
 .. code-block:: yaml
 
-    roster: pillar
+    roster: file
 
 This is all you need at minimum, however, you may have more specific 
 requirements which you can customise using the configuration options documented
@@ -163,8 +145,7 @@ business logic requires, making use of the flexibility of the SLS file format
           key_file: /path/to/priv/key
 
 Granted you have the structure above in the ``/srv/pillar/proxy.sls`` file, as 
-a last step, you only need to include it into the Pillar top file, which 
-becomes:
+a last step, you only need to include it into the Pillar top file:
 
 ``/srv/pillar/top.sls``
 
@@ -173,12 +154,11 @@ becomes:
     base:
       '*':
         - proxy
-        - devices
 
 5. Happy automating!
 --------------------
 
-With these three files (``/srv/pillar/devices.sls``, ``/etc/salt/master``, and
+With these three files (``/etc/salt/roster``, ``/etc/salt/master``, and
 ``/srv/pillar/proxy.sls``) configured as described, you can now start 
 automating your network, e.g.,
 

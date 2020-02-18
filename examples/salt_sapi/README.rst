@@ -6,7 +6,7 @@ salt-sapi
 .. note::
 
     This functionality makes use of the ``sproxy`` and ``sproxy_async`` clients
-    added in release 2020.1.0 through the ``salt-sapi`` entry point. See 
+    added in release 2020.2.0 through the ``salt-sapi`` entry point. See 
     https://salt-sproxy.readthedocs.io/en/latest/salt_api.html and 
     https://salt-sproxy.readthedocs.io/en/latest/salt_sapi.html for more 
     details.

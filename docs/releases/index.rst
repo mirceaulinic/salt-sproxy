@@ -7,4 +7,15 @@ Release Notes
 Latest Release
 ^^^^^^^^^^^^^^
 
-- :ref:`release-2019.10.0`
+.. toctree::
+   :maxdepth: 1
+
+   2020.2.0
+
+Previous Releases
+^^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :maxdepth: 1
+
+   2019.10.0

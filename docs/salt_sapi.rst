@@ -3,7 +3,7 @@
 salt-sapi
 =========
 
-.. versionadded:: 2020.1.0
+.. versionadded:: 2020.2.0
 
 ``salt-sapi`` is a program distributed together with *salt-sproxy*, to 
 ease the usage of the Salt API by providing two additional clients: ``sproxy`` 

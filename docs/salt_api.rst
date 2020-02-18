@@ -34,10 +34,10 @@ Suppose we have the following configuration:
     ``salt-sapi``, however the official Salt documentation should always be
     used as the reference.
 
-Starting with salt-sproxy 2020.1.0
+Starting with salt-sproxy 2020.2.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Beginning with the *salt-sproxy* release 2020.1.0, the usage has been 
+Beginning with the *salt-sproxy* release 2020.2.0, the usage has been 
 simplified compared to previous versions, and a new API client has been added, 
 named ``sproxy``, together with its counter-part ``sproxy_async`` for 
 asynchronous requests.
@@ -135,7 +135,7 @@ Usage examples:
         -d fun='test.ping' \
     {"return": [{"tag": "salt/run/20200103001109995573", "jid": "20200103001109995573"}]}
 
-Before salt-sproxy 2020.1.0
+Before salt-sproxy 2020.2.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After starting the ``salt-api`` process, we should get the following:

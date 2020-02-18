@@ -265,17 +265,11 @@ class SProxyMinion(SMinion):
         self.functions = salt.loader.minion_mods(
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
-        self.functions.pack['__grains__'] = self.opts['grains']
-        self.returners = None
-        if self.opts['returner']:
-            self.returners = salt.loader.returners(
-                self.opts, self.functions, proxy=self.proxy
-            )
+        self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
 
         fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
         self.proxy.pack['__salt__'] = self.functions
-        self.proxy.pack['__ret__'] = self.returners
         self.proxy.pack['__pillar__'] = self.opts['pillar']
 
         # No need to inject the proxy into utils, as we don't need scheduler for
@@ -325,11 +319,16 @@ class SProxyMinion(SMinion):
             if not cached_grains and self.opts.get('proxy_load_grains', True):
                 # When the Grains are loaded from the cache, no need to re-load them
                 # again.
+
+                grains = copy.deepcopy(self.opts['grains'])
+                # Copy the existing Grains loaded so far, otherwise
+                # salt.loader.grains is going to wipe what's under the grains
+                # key in the opts.
+                # After loading, merge with the previous loaded grains, which
+                # may contain other grains from different sources, e.g., roster.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
-                self.opts['grains'] = salt.utils.dictupdate.merge(
-                    self.opts['grains'], loaded_grains
-                )
-            self.functions.pack['__grains__'] = self.opts['grains']
+                self.opts['grains'] = salt.utils.dictupdate.merge(grains, loaded_grains)
+            self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
         if self.opts.get('invasive_targeting', False):
@@ -348,6 +347,15 @@ class SProxyMinion(SMinion):
                 proxy_shut_fn = self.proxy[fq_proxyname + '.shutdown']
                 proxy_shut_fn(self.opts)
                 return
+
+        # Late load the Returners, as they might need Grains, which may not be
+        # properly or completely loaded before this.
+        self.returners = None
+        if self.opts['returner']:
+            self.returners = salt.loader.returners(
+                self.opts, self.functions, proxy=self.proxy
+            )
+        self.proxy.pack['__ret__'] = self.returners
 
         self.ready = True
 
@@ -585,7 +593,11 @@ def salt_call(
         if returner:
             returner_fun = '{}.returner'.format(returner)
             if returner_fun in sa_proxy.returners:
-                log.error('Sending the response from %s to the %s Returner', opts['id'], returner)
+                log.error(
+                    'Sending the response from %s to the %s Returner',
+                    opts['id'],
+                    returner,
+                )
                 ret_data = {
                     'id': opts['id'],
                     'jid': jid,
@@ -598,10 +610,16 @@ def salt_call(
                 try:
                     sa_proxy.returners[returner_fun](ret_data)
                 except Exception as err:
-                    log.error('Exception while sending the response from %s to the %s returner', opts['id'], returner)
+                    log.error(
+                        'Exception while sending the response from %s to the %s returner',
+                        opts['id'],
+                        returner,
+                    )
                     log.error(err, exc_info=True)
             else:
-                log.warning('Returner %s is not available. Check that the dependencies are properly installed')
+                log.warning(
+                    'Returner %s is not available. Check that the dependencies are properly installed'
+                )
     finally:
         if sa_proxy.connected:
             shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
@@ -1191,13 +1209,20 @@ def execute(
                 log.debug('Loading the targets from the cache')
                 targets = cache_bank.fetch('_salt_sproxy_target', cache_key)
         if not targets:
+            rtargets = {}
+            if use_existing_proxy:
+                log.debug('Gathering the cached Grains from the existing Minions')
+                cache_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
+                for target, target_grains in cache_grains.items():
+                    rtargets[target] = {'minion_opts': {'grains': target_grains}}
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
             roster_modules = salt.loader.roster(__opts__, runner=__salt__)
             if '.targets' not in roster:
                 roster = '{mod}.targets'.format(mod=roster)
-            rtargets = roster_modules[roster](_tgt, tgt_type=_tgt_type)
+            rtargets_roster = roster_modules[roster](_tgt, tgt_type=_tgt_type)
+            rtargets = salt.utils.dictupdate.merge(rtargets, rtargets_roster)
             targets = list(rtargets.keys())
             if target_cache and not (invasive_targeting or preload_targeting):
                 cache_bank.store('_salt_sproxy_target', cache_key, targets)

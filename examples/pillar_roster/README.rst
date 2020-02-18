@@ -3,7 +3,7 @@
 Using the Pillar Roster
 =======================
 
-You can thing of the
+You can think of the
 `Pillar Roster <https://salt-sproxy.readthedocs.io/en/latest/roster/pillar.html>`__
 as a Roster that loads the list of devices / inventory dynamically using the 
 Pillar subsystem. Or, in simpler words, you can use any of these features from 
