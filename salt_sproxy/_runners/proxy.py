@@ -22,6 +22,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # Import Python std lib
 import copy
+import math
 import time
 import hashlib
 import logging
@@ -38,6 +39,7 @@ import salt.utils.jid
 import salt.utils.master
 from salt.ext import six
 from salt.minion import SMinion
+from salt.cli.batch import Batch
 from salt.ext.six.moves import range
 import salt.utils.stringutils
 import salt.defaults.exitcodes
@@ -127,6 +129,14 @@ def _salt_call_and_return(
             },
         )
     queue.put({minion_id: ret})
+
+
+def _existing_proxy_cli_batch(cli_batch, queue):
+    '''
+    '''
+    run = cli_batch.run()
+    for ret in run:
+        queue.put(ret)
 
 
 def _receive_replies_async(queue):
@@ -660,6 +670,7 @@ def execute_devices(
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
+    existing_minions=None,
     no_connect=False,
     roster_targets=None,
     test_ping=False,
@@ -824,6 +835,8 @@ def execute_devices(
                 'user': __pub_user,
             },
         )
+    if not existing_minions:
+        existing_minions = []
     queue = multiprocessing.Queue()
     if not static:
         thread = threading.Thread(target=_receive_replies_async, args=(queue,))
@@ -833,6 +846,31 @@ def execute_devices(
     batch_count = int(len(minions) / batch_size) + (
         1 if len(minions) % batch_size else 0
     )
+    existing_batch_size = int(math.ceil(len(existing_minions) / float(batch_size)))
+    sproxy_batch_size = batch_size - existing_batch_size
+    sproxy_minions = list(set(minions) - set(existing_minions))
+    cli_batch = None
+    if existing_batch_size > 0:
+        # When there are existing Minions matching the target, use the native
+        # batching function to execute against these Minions.
+        log.debug('Executing against the existing Minions')
+        log.debug(existing_minions)
+        batch_opts = copy.deepcopy(__opts__)
+        batch_opts['batch'] = str(existing_batch_size)
+        batch_opts['tgt'] = existing_minions
+        batch_opts['tgt_type'] = 'list'
+        batch_opts['fun'] = function
+        batch_opts['arg'] = event_args
+        cli_batch = Batch(batch_opts, quiet=True)
+        log.debug('Batching detected the following Minions responsive')
+        log.debug(cli_batch.minions)
+        non_responsive_minions = set(existing_minions) - set(cli_batch.minions)
+        if non_responsive_minions:
+            log.warning(
+                'The following existing Minions connected to the Master '
+                'seem to be unresponsive: %s',
+                ', '.join(non_responsive_minions)
+            )
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
@@ -844,6 +882,17 @@ def execute_devices(
         progress_bar = progressbar.ProgressBar(
             max_value=len(minions), enable_colors=True, redirect_stdout=True
         )
+    if cli_batch:
+        existing_proxy_thread = threading.Thread(
+            target=_existing_proxy_cli_batch,
+            args=(cli_batch, queue)
+        )
+        existing_proxy_thread.start()
+    log.debug(
+        'Executing sproxy normal run on the following devices (%d batch size):',
+        sproxy_batch_size
+    )
+    log.error(sproxy_minions)
     with multiprocessing.Manager() as manager:
         timeout_devices = manager.list()
         failed_devices = manager.list()
@@ -851,8 +900,8 @@ def execute_devices(
         for batch_index in range(batch_count):
             log.info('Batch #%d', batch_index)
             processes = []
-            devices_batch = minions[
-                batch_index * batch_size : (batch_index + 1) * batch_size
+            devices_batch = sproxy_minions[
+                batch_index * sproxy_batch_size : (batch_index + 1) * sproxy_batch_size
             ]
             log.info('Devices in batch #%d:', batch_index)
             log.info(devices_batch)
@@ -861,7 +910,7 @@ def execute_devices(
                     'Executing run on {0}'.format(devices_batch)
                 )
             for minion_index, minion_id in enumerate(devices_batch):
-                device_count = batch_index * batch_size + minion_index + 1
+                device_count = batch_index * sproxy_batch_size + minion_index + 1
                 log.info('Executing on %s', minion_id)
                 device_opts = copy.deepcopy(opts)
                 if roster_targets and isinstance(roster_targets, dict):
@@ -1167,6 +1216,7 @@ def execute(
         _tgt = tgt
         _tgt_type = tgt_type
 
+    existing_minions = []
     if not roster or roster == 'None':
         log.info(
             'No Roster specified. Please use the ``roster`` argument, or set the ``proxy_roster`` option in the '
@@ -1215,6 +1265,7 @@ def execute(
                 cache_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
                 for target, target_grains in cache_grains.items():
                     rtargets[target] = {'minion_opts': {'grains': target_grains}}
+                    existing_minions.append(target)
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
@@ -1276,6 +1327,7 @@ def execute(
         use_cached_grains=use_cached_grains,
         use_cached_pillar=use_cached_pillar,
         use_existing_proxy=use_existing_proxy,
+        existing_minions=existing_minions,
         no_connect=no_connect,
         roster_targets=rtargets,
         test_ping=test_ping,
