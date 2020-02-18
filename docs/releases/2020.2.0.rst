@@ -1,0 +1,185 @@
+.. _release-2020.2.0:
+
+================
+Release 2020.2.0
+================
+
+This is considered the first mature release, with significant improvements 
+around the targeting, new CLI options as well as other improvements and 
+features.
+
+Static Grains
+~~~~~~~~~~~~~
+
+With this release, static Grains can be configured easier for large (or all) 
+groups of devices by having a ``grains`` section in the Master configuration 
+file, e.g.,
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+  grains:
+    salt:
+      role: proxy
+
+For more details check out the new section :ref:`static-grains`.
+
+Improved targeting
+~~~~~~~~~~~~~~~~~~
+
+Targeting mechanisms have been revisited and rewrote almost from scratch, for 
+a better user experience similar to when managing Proxy Minions and executing 
+via the usual *salt* command.
+
+On this occasion, there are two new CLI options added in this release: 
+``--invasive-targeting`` and ``--preload-targeting``. The reasoning for adding
+these is that the native *salt-sproxy* targeting highly depends on the data
+you provide mainly through the *Roster* system (see also :ref:`roster`).
+Through the Roster interface and other mechanisms, you are able to provide
+static Grains, which you can use in your targeting expressions. There are
+situations when you may want to target using more dynamic Grains that you
+probably don’t want to manage statically, which may depend on various 
+attributes retrieved *after* connecting to the device (e.g., hardware model, OS 
+version, etc.). In such case, the ``--invasive-targeting`` targeting can be
+helpful as it connects to the device, retrieves these attributes / Grains, then
+executes the requested command, only on the devices matched by your target.
+
+``--preload-targeting`` works in a similar way, with the distinction that it 
+doesn't establish the connection with the remote device, however your target 
+expression depends on number of attributes retrieved from various systems 
+depending on each individual device (or group of devices).
+
+Using ``--invasive-targeting`` together with ``--cache-grains`` and / or 
+``--cache-pillar`` can speed up the run time when you execute next time (next
+run would be without ``--invasive-targeting``), as the Grains / Pillar data is 
+already available and will be used in determining the targets from your 
+expression.
+
+salt-sapi
+~~~~~~~~~
+
+In order to simplify the usage of the REST API calls to devices managed 
+through *salt-sproxy*, beginning with this release, there's an additional 
+program distributed with *salt-sproxy*, ``salt-sapi`` that leverages the usual
+Salt API features, and on top, it provides an additional client for *sproxy*.
+
+
+.. note::
+
+    That means, instead of starting the usual ``salt-api``, in order to execute 
+    REST calls through *sproxy*, you can start ``salt-sapi`` instead, using the 
+    exact same CLI arguments and configuration options. See :ref:`salt-sapi` 
+    for further information.
+
+Example call before this release (without *salt-sapi*):
+
+.. code-block:: bash
+
+  $ curl -sS localhost:8080/run -H 'Accept: application/x-yaml' \
+    -d eauth='pam' \
+    -d username='mircea' \
+    -d password='pass' \
+    -d client='runner' \
+    -d fun='proxy.execute' \
+    -d tgt='minion1' \
+    -d function='test.ping' \
+    -d sync=True
+  return:
+  - minion1: true
+
+Example call starting with this release (through *salt-sapi*):
+
+.. code-block:: bash
+
+  $ curl -sS localhost:8080/run -H 'Accept: application/x-yaml' \
+       -d eauth='pam' \
+       -d username='mircea' \
+       -d password='pass' \
+       -d client='sproxy' \
+       -d tgt='minion1' \
+       -d fun='test.ping'
+  return:
+  - minion1: true
+
+Notice in the later call the client invoked is ``sproxy``, while the ``fun`` 
+field points straight to the Execution Function you want to execute (as in 
+opposite to a more convoluted usage of both ``fun`` and ``function`` as 
+previously).
+
+.. seealso::
+
+    Check out the :ref:`example-salt-sapi` example for configuring and using 
+    the *salt-sapi* interface.
+
+New CLI options
+~~~~~~~~~~~~~~~
+
+New CLI options added in this release, to provide similar functionality to the 
+usual ``salt`` command:
+
+``--batch-wait``: Wait a specific number of seconds after each batch is done
+before executing the next one.
+
+``--hide-timeout``: Hide devices that timeout.
+
+``--failhard``: Stop the execution at the first error.
+
+``--progress`` / ``-p``: Display a progress graph to visually show the
+execution of the command across the list of devices.
+
+``--summary``: Display a summary of the command execution:
+
+    - Total number of devices targeted.
+    - Number of devices that returned without issues.
+    - Number of devices that timed out executing the command. See also ``-t``
+      or ``--timeout`` argument to adjust the timeout value.
+    - Number of devices with errors (i.e., there was an error while executing
+      the command).
+    - Number of unreachable devices (i.e., couldn't establish the connection
+      with the remote device).
+
+    In ``-v`` / ``--verbose`` mode, this output is enahnced by displaying the
+    list of devices that did not return / with errors / unreachable.
+
+    Example:
+
+    .. code-block:: text
+
+        -------------------------------------------
+        Summary
+        -------------------------------------------
+        # of devices targeted: 10
+        # of devices returned: 3
+        # of devices that did not return: 5
+        # of devices with errors: 0
+        # of devices unreachable: 2
+        -------------------------------------------
+
+``--show-jid``: Display the JID (Job ID).
+
+``--verbose`` / ``-v``: Turn on command verbosity, display jid, devices per
+batch, and detailed summary.
+
+``--pillar-root``: Set a specific directory as the base pillar root.
+
+``--states-dir``: Set a specific directory to search for additional States.
+
+``--module-dirs`` / ``-m``: Specify one or more directories where to load the
+extension modules from. Multiple directories can be provided by passing ``-m``
+or ``--module-dirs`` multiple times.
+
+``--saltenv``:  The Salt environment name where to load extension modules and
+files from.
+
+``--config-dump``: Print the complete salt-sproxy configuration values (with
+the defaults), in YAML format.
+
+Returners
+`````````
+
+Using the ``--return``, ``--return-config``, and ``--return-kwargs`` new CLI 
+options, you can forward the execution results to various systems such as SQL 
+databases, Slack, Syslog, or NoSQL systems, etc. - see `here 
+<https://docs.saltstack.com/en/latest/ref/returners/all/index.html#all-salt-returners>`__ 
+the list of natively available Returner modules you can use.
