@@ -505,44 +505,6 @@ def salt_call(
         salt-run proxy.salt_call bgp.neighbors junos 1.2.3.4 test test123
         salt-run proxy.salt_call net.load_config junos 1.2.3.4 test test123 text='set system ntp peer 1.2.3.4'
     '''
-    if use_existing_proxy:
-        # When using the existing Proxies, simply send the command to the
-        # Minion through the ``salt.execute`` Runner.
-        # But first, check if the Minion ID is accepted, otherwise, continue
-        # and execute the function withing this Runner.
-        wheel = salt.wheel.WheelClient(__opts__)
-        accepted_minions = wheel.cmd('key.list', ['accepted'], print_event=False).get(
-            'minions', []
-        )
-        if minion_id in accepted_minions:
-            log.debug(
-                '%s seems to be a valid Minion, trying to spread out the command',
-                minion_id,
-            )
-            log.info(
-                'If %s is not responding, you might want to run without --use-existing-proxy, or with --test-ping',
-                minion_id,
-            )
-            test_ping_succeeded = True
-            if test_ping:
-                log.debug('Checking if the Minion %s is responsive', minion_id)
-                ret = __salt__['salt.execute'](minion_id, 'test.ping', jid=jid)
-                test_ping_succeeded = ret.get(minion_id, False)
-            if test_ping_succeeded:
-                ret = __salt__['salt.execute'](
-                    minion_id, function, arg=args, kwarg=kwargs, jid=jid
-                )
-                return ret.get(minion_id)
-            else:
-                log.info(
-                    'Looks like the Minion %s is not responsive, executing locally',
-                    minion_id,
-                )
-        else:
-            log.debug(
-                '%s doesn\'t seem to be a valid existing Minion, executing locally',
-                minion_id,
-            )
     opts = copy.deepcopy(__opts__)
     opts['id'] = minion_id
     opts['pillarenv'] = __opts__.get('pillarenv', 'base')
@@ -861,6 +823,7 @@ def execute_devices(
         batch_opts['tgt_type'] = 'list'
         batch_opts['fun'] = function
         batch_opts['arg'] = event_args
+        batch_opts['batch_wait'] = batch_wait
         cli_batch = Batch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
         log.debug(cli_batch.minions)
@@ -892,7 +855,7 @@ def execute_devices(
         'Executing sproxy normal run on the following devices (%d batch size):',
         sproxy_batch_size
     )
-    log.error(sproxy_minions)
+    log.debug(sproxy_minions)
     with multiprocessing.Manager() as manager:
         timeout_devices = manager.list()
         failed_devices = manager.list()
