@@ -158,7 +158,7 @@ a last step, you only need to include it into the Pillar top file:
 5. Happy automating!
 --------------------
 
-With these three files (``/srv/pillar/devices.sls``, ``/etc/salt/master``, and
+With these three files (``/etc/salt/roster``, ``/etc/salt/master``, and
 ``/srv/pillar/proxy.sls``) configured as described, you can now start 
 automating your network, e.g.,
 
