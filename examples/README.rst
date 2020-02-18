@@ -14,3 +14,6 @@ Usage Examples
 - `salt-sapi <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/salt_sapi>`__
 - `Using the Pillar Roster module
   <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/pillar_roster>`__
+- `Using the File Roster module
+  <https://github.com/mirceaulinic/salt-sproxy/tree/master/examples/file_roster>`__
+
