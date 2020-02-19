@@ -857,49 +857,49 @@ def execute_devices(
     )
     log.debug(sproxy_minions)
     with multiprocessing.Manager() as manager:
+        sproxy_queue = manager.Queue()
+        for minion_id in sproxy_minions:
+            device_opts = copy.deepcopy(opts)
+            if roster_targets and isinstance(roster_targets, dict):
+                device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
+                    'minion_opts'
+                )
+            sproxy_queue.put((minion_id, device_opts))
+
         timeout_devices = manager.list()
         failed_devices = manager.list()
         unreachable_devices = manager.list()
-        for batch_index in range(batch_count):
-            log.info('Batch #%d', batch_index)
-            processes = []
-            devices_batch = sproxy_minions[
-                batch_index * sproxy_batch_size : (batch_index + 1) * sproxy_batch_size
-            ]
-            log.info('Devices in batch #%d:', batch_index)
-            log.info(devices_batch)
-            if verbose:
-                salt.utils.stringutils.print_cli(
-                    'Executing run on {0}'.format(devices_batch)
-                )
-            for minion_index, minion_id in enumerate(devices_batch):
-                device_count = batch_index * sproxy_batch_size + minion_index + 1
-                log.info('Executing on %s', minion_id)
-                device_opts = copy.deepcopy(opts)
-                if roster_targets and isinstance(roster_targets, dict):
-                    device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
-                        'minion_opts'
-                    )
-                device_proc = multiprocessing.Process(
-                    target=_salt_call_and_return,
-                    name=minion_id,
-                    args=(
-                        minion_id,
-                        function,
-                        queue,
-                        unreachable_devices,
-                        failed_devices,
-                        event_args,
-                        jid,
-                        events,
-                    ),
-                    kwargs=device_opts,
-                )
-                device_proc.start()
-                processes.append(device_proc)
+        sproxy_processes = []
+        stop_iteration = False
+
+        while not sproxy_queue.empty() and not stop_iteration:
+            if len(sproxy_processes) >= sproxy_batch_size:
+                time.sleep(0.02)
+                continue
+            minion_id, device_opts = sproxy_queue.get()
+            device_proc = multiprocessing.Process(
+                target=_salt_call_and_return,
+                name=minion_id,
+                args=(
+                    minion_id,
+                    function,
+                    queue,
+                    unreachable_devices,
+                    failed_devices,
+                    event_args,
+                    jid,
+                    events,
+                ),
+                kwargs=device_opts,
+            )
+            device_proc.start()
+            sproxy_processes.append(device_proc)
+
+            processes = sproxy_processes[:]
             for proc in processes:
                 if stop_iteration:
                     proc.terminate()
+                    sproxy_processes.remove(proc)
                     if progress_bar:
                         progress_bar.update(device_count)
                     continue
@@ -912,10 +912,12 @@ def execute_devices(
                         proc._name,
                         timeout,
                     )
+                    sproxy_processes.remove(proc)
                     if not hide_timeout:
                         queue.put({proc._name: 'Minion did not return. [No response]'})
                     timeout_devices.append(proc._name)
                 proc.terminate()
+                sproxy_processes.remove(proc)
                 if progress_bar:
                     progress_bar.update(device_count)
                 continue
