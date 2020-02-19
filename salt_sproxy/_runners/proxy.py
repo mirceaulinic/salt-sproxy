@@ -67,6 +67,8 @@ except ImportError:
 # module properties
 # ------------------------------------------------------------------------------
 
+_SENTINEL = 'FIN.'
+
 log = logging.getLogger(__name__)
 
 # ------------------------------------------------------------------------------
@@ -131,12 +133,16 @@ def _salt_call_and_return(
     queue.put({minion_id: ret})
 
 
-def _existing_proxy_cli_batch(cli_batch, queue):
+def _existing_proxy_cli_batch(cli_batch,
+                              ret_queue, batch_stop_queue, sproxy_stop_queue):
     '''
     '''
     run = cli_batch.run()
     for ret in run:
+        if not sproxy_stop_queue.empty():
+            break
         queue.put(ret)
+    batch_stop_queue.put(_SENTINEL)
 
 
 def _receive_replies_async(queue):
@@ -144,7 +150,7 @@ def _receive_replies_async(queue):
     '''
     while True:
         ret = queue.get()
-        if ret == 'FIN.':
+        if ret == _SENTINEL:
             break
         # When async, print out the replies as soon as they arrive
         # after passing them through the outputter of choice
@@ -824,15 +830,15 @@ def execute_devices(
         batch_opts['fun'] = function
         batch_opts['arg'] = event_args
         batch_opts['batch_wait'] = batch_wait
+        batch_opts['selected_target_option'] = 'list'
         cli_batch = Batch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
         log.debug(cli_batch.minions)
-        non_responsive_minions = set(existing_minions) - set(cli_batch.minions)
-        if non_responsive_minions:
+        if cli_batch.down_minions:
             log.warning(
                 'The following existing Minions connected to the Master '
                 'seem to be unresponsive: %s',
-                ', '.join(non_responsive_minions)
+                ', '.join(cli_batch.down_minions)
             )
     log.info(
         '%d devices matched the target, executing in %d batches',
@@ -845,10 +851,23 @@ def execute_devices(
         progress_bar = progressbar.ProgressBar(
             max_value=len(minions), enable_colors=True, redirect_stdout=True
         )
+    batch_stop_queue = multiprocessing.Queue()
+    sproxy_stop_queue = multiprocessing.Queue()
+    # This dance with the batch_stop_queue and sproxy_stop_queue is necessary
+    # in order to make sure the execution stops at the same time (either at the
+    # very end, or when the iteration must be interrupted - e.g., due to
+    # failhard condition).
+    # sproxy_stop_queue signalises to the batch execution that the sproxy
+    # sequence is over (not under normal circumstances, but interrupted forcibly
+    # therefore it tells to the batch to stop immediately). In a similar way,
+    # batch_stop_queue is required at the very end to make sure we're sending
+    # the sentinel signaling at the very end for the display thread -- for
+    # example there can be situations when the sproxy execution may be empty as
+    # all the targets are existing proxies, so the display must wait.
     if cli_batch:
         existing_proxy_thread = threading.Thread(
             target=_existing_proxy_cli_batch,
-            args=(cli_batch, queue)
+            args=(cli_batch, queue, batch_stop_queue, sproxy_stop_queue)
         )
         existing_proxy_thread.start()
     log.debug(
@@ -925,7 +944,8 @@ def execute_devices(
                 stop_iteration = True
             if stop_iteration:
                 log.error('Exiting as an error has occurred')
-                queue.put('FIN.')
+                queue.put(_SENTINEL)
+                sproxy_stop_queue.put(_SENTINEL)
                 if progress_bar:
                     progress_bar.finish()
                 raise StopIteration
@@ -934,14 +954,16 @@ def execute_devices(
                     'Waiting %f seconds before executing the next batch', batch_wait
                 )
                 time.sleep(batch_wait)
-        queue.put('FIN.')
+        while batch_stop_queue.empty():
+            time.sleep(0.02)
+        queue.put(_SENTINEL)
         if progress_bar:
             progress_bar.finish()
         if static:
             resp = {}
             while True:
                 ret = queue.get()
-                if ret == 'FIN.':
+                if ret == _SENTINEL:
                     break
                 resp.update(ret)
         if summary:
