@@ -111,7 +111,7 @@ def grain_pcre(pool, tgt, opts=None):
     '''
     '''
     delimiter = opts.get('delimiter', DEFAULT_TARGET_DELIM)
-    log.debug('Grain PCRE matching on %s, over %s', tgt, tgtpool)
+    log.debug('Grain PCRE matching on %s, over %s', tgt, pool)
     ret = {
         minion: pool[minion]
         for minion in pool.keys()
