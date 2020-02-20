@@ -100,7 +100,7 @@ is_proxy = _is_proxy
 def _salt_call_and_return(
     minion_id,
     function,
-    queue,
+    ret_queue,
     unreachable_devices,
     failed_devices,
     arg=None,
@@ -130,7 +130,7 @@ def _salt_call_and_return(
                 'success': True,
             },
         )
-    queue.put({minion_id: ret})
+    ret_queue.put({minion_id: ret})
 
 
 def _existing_proxy_cli_batch(cli_batch,
@@ -141,15 +141,15 @@ def _existing_proxy_cli_batch(cli_batch,
     for ret in run:
         if not sproxy_stop_queue.empty():
             break
-        queue.put(ret)
+        ret_queue.put(ret)
     batch_stop_queue.put(_SENTINEL)
 
 
-def _receive_replies_async(queue):
+def _receive_replies_async(ret_queue):
     '''
     '''
     while True:
-        ret = queue.get()
+        ret = ret_queue.get()
         if ret == _SENTINEL:
             break
         # When async, print out the replies as soon as they arrive
@@ -805,9 +805,9 @@ def execute_devices(
         )
     if not existing_minions:
         existing_minions = []
-    queue = multiprocessing.Queue()
+    ret_queue = multiprocessing.Queue()
     if not static:
-        thread = threading.Thread(target=_receive_replies_async, args=(queue,))
+        thread = threading.Thread(target=_receive_replies_async, args=(ret_queue,))
         thread.start()
     ret = {}
     batch_size = int(batch_size)
@@ -845,12 +845,13 @@ def execute_devices(
         len(minions),
         batch_count,
     )
-    stop_iteration = False
+
     progress_bar = None
     if progress and HAS_PROGRESSBAR:
         progress_bar = progressbar.ProgressBar(
             max_value=len(minions), enable_colors=True, redirect_stdout=True
         )
+
     batch_stop_queue = multiprocessing.Queue()
     sproxy_stop_queue = multiprocessing.Queue()
     # This dance with the batch_stop_queue and sproxy_stop_queue is necessary
@@ -867,42 +868,59 @@ def execute_devices(
     if cli_batch:
         existing_proxy_thread = threading.Thread(
             target=_existing_proxy_cli_batch,
-            args=(cli_batch, queue, batch_stop_queue, sproxy_stop_queue)
+            args=(cli_batch, ret_queue, batch_stop_queue, sproxy_stop_queue)
         )
         existing_proxy_thread.start()
+    else:
+        # If there's no batch to execute (i.e., no existing devices to run
+        # against), just need to signalise that there's no need to wait for this
+        # one to complete.
+        batch_stop_queue.put(_SENTINEL)
+
     log.debug(
         'Executing sproxy normal run on the following devices (%d batch size):',
         sproxy_batch_size
     )
     log.debug(sproxy_minions)
+
     with multiprocessing.Manager() as manager:
-        sproxy_queue = manager.Queue()
+        # Put the sproxy execution details into a Queue, from where the
+        # processes from the bucket (see below) will pick them up whenever
+        # there's room for another process to start up.
+        sproxy_execute_queue = manager.Queue()
         for minion_id in sproxy_minions:
             device_opts = copy.deepcopy(opts)
             if roster_targets and isinstance(roster_targets, dict):
                 device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
                     'minion_opts'
                 )
-            sproxy_queue.put((minion_id, device_opts))
+            sproxy_execute_queue.put((minion_id, device_opts))
 
         timeout_devices = manager.list()
         failed_devices = manager.list()
         unreachable_devices = manager.list()
+
+        device_count = 0
         sproxy_processes = []
         stop_iteration = False
 
-        while not sproxy_queue.empty() and not stop_iteration:
+        # In the sequence below, we'll have a process bucket with a maximum size
+        # which is the batch size, which will make room best efforts for
+        # processes to be started up whenever there's a new process finishing
+        # the task (or forcibly stopped due to timeout).
+        while not sproxy_execute_queue.empty() and not stop_iteration:
             if len(sproxy_processes) >= sproxy_batch_size:
+                # Wait for the bucket to make room for another process.
                 time.sleep(0.02)
                 continue
-            minion_id, device_opts = sproxy_queue.get()
+            minion_id, device_opts = sproxy_execute_queue.get()
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
                 args=(
                     minion_id,
                     function,
-                    queue,
+                    ret_queue,
                     unreachable_devices,
                     failed_devices,
                     event_args,
@@ -913,19 +931,25 @@ def execute_devices(
             )
             device_proc.start()
             sproxy_processes.append(device_proc)
+            device_count += 0
 
             processes = sproxy_processes[:]
             for proc in processes:
-                if stop_iteration:
-                    proc.terminate()
-                    sproxy_processes.remove(proc)
-                    if progress_bar:
-                        progress_bar.update(device_count)
-                    continue
                 if failhard and proc.exitcode:
                     stop_iteration = True
+
+                if len(processes) < min(len(sproxy_minions), sproxy_batch_size):
+                    # Wait to fill up the sproxy processes bucket, and only then
+                    # start evaluating.
+                    # Why `min()`? It is possible that we can run on a smaller
+                    # set of devices than the batch size.
+                    continue
+
+                # Wait `timeout` seconds for the processes to execute.
                 proc.join(timeout=timeout)
                 if proc.is_alive():
+                    # If the process didn't finish the task, it means it's past
+                    # the timeout value, time to kiss it goodbye.
                     log.info(
                         'Terminating the process for %s, as it didn\'t reply within %d seconds',
                         proc._name,
@@ -933,19 +957,25 @@ def execute_devices(
                     )
                     sproxy_processes.remove(proc)
                     if not hide_timeout:
-                        queue.put({proc._name: 'Minion did not return. [No response]'})
+                        ret_queue.put({proc._name: 'Minion did not return. [No response]'})
                     timeout_devices.append(proc._name)
+
+                # Terminate the process, making room for a new one.
                 proc.terminate()
-                sproxy_processes.remove(proc)
+                if proc in sproxy_processes:
+                    # proc may no longer be in sproxy_processes, if it has been
+                    # already removed in the section above when exiting the loop
+                    # forcibly.
+                    sproxy_processes.remove(proc)
                 if progress_bar:
                     progress_bar.update(device_count)
-                continue
-            if failhard and proc.exitcode:
-                stop_iteration = True
+
             if stop_iteration:
                 log.error('Exiting as an error has occurred')
-                queue.put(_SENTINEL)
+                ret_queue.put(_SENTINEL)
                 sproxy_stop_queue.put(_SENTINEL)
+                for proc in sproxy_processes:
+                    proc.terminate()
                 if progress_bar:
                     progress_bar.finish()
                 raise StopIteration
@@ -954,18 +984,24 @@ def execute_devices(
                     'Waiting %f seconds before executing the next batch', batch_wait
                 )
                 time.sleep(batch_wait)
+
+        # Waiting for the existing proxy batch to finish.
         while batch_stop_queue.empty():
             time.sleep(0.02)
-        queue.put(_SENTINEL)
+
+        # Prepare to quit.
+        ret_queue.put(_SENTINEL)
         if progress_bar:
             progress_bar.finish()
+
         if static:
             resp = {}
             while True:
-                ret = queue.get()
+                ret = ret_queue.get()
                 if ret == _SENTINEL:
                     break
                 resp.update(ret)
+
         if summary:
             salt.utils.stringutils.print_cli('\n')
             salt.utils.stringutils.print_cli(
