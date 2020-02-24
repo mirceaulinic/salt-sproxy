@@ -31,7 +31,6 @@ import multiprocessing
 
 # Import Salt modules
 import salt.cache
-import salt.wheel
 import salt.loader
 import salt.output
 import salt.version
@@ -346,6 +345,7 @@ class SProxyMinion(SMinion):
                 log.error(
                     'Encountered error when starting up the connection with %s:',
                     self.opts['id'],
+                    exc_info=True
                 )
                 if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
