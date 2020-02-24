@@ -831,6 +831,9 @@ def execute_devices(
         batch_opts['arg'] = event_args
         batch_opts['batch_wait'] = batch_wait
         batch_opts['selected_target_option'] = 'list'
+        batch_opts['return'] = returner
+        batch_opts['ret_config'] = returner_config
+        ret_config['ret_kwargs'] = returner_kwargs
         cli_batch = Batch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
         log.debug(cli_batch.minions)
@@ -991,6 +994,9 @@ def execute_devices(
 
         # Prepare to quit.
         ret_queue.put(_SENTINEL)
+        # Wait a little to dequeue and print before throwing the progressbar,
+        # the summary, etc.
+        time.sleep(0.02)
         if progress_bar:
             progress_bar.finish()
 
