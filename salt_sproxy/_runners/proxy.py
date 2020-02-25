@@ -589,7 +589,7 @@ def salt_call(
         if returner:
             returner_fun = '{}.returner'.format(returner)
             if returner_fun in sa_proxy.returners:
-                log.error(
+                log.debug(
                     'Sending the response from %s to the %s Returner',
                     opts['id'],
                     returner,
