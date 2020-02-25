@@ -1006,6 +1006,10 @@ def execute_devices(
                 for proc in sproxy_processes:
                     proc.terminate()
                 raise StopIteration
+
+            if len(processes) < min(len(sproxy_minions), sproxy_batch_size):
+                continue
+
             if batch_wait:
                 log.debug(
                     'Waiting %f seconds before executing the next batch', batch_wait
