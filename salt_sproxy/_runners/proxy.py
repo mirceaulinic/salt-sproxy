@@ -849,7 +849,7 @@ def execute_devices(
     batch_count = int(len(minions) / batch_size) + (
         1 if len(minions) % batch_size else 0
     )
-    existing_batch_size = int(math.ceil(len(existing_minions) / float(batch_size)))
+    existing_batch_size = int(math.ceil(len(existing_minions) * batch_size / float(len(minions))))
     sproxy_batch_size = batch_size - existing_batch_size
     sproxy_minions = list(set(minions) - set(existing_minions))
     cli_batch = None
