@@ -834,12 +834,14 @@ def execute_devices(
         thread = threading.Thread(
             target=_receive_replies_async, args=(ret_queue, progress_bar)
         )
+        thread.daemon = True
         thread.start()
     else:
         static_queue = multiprocessing.Queue()
         thread = threading.Thread(
             target=_receive_replies_sync, args=(ret_queue, static_queue, progress_bar)
         )
+        thread.daemon = True
         thread.start()
 
     ret = {}
@@ -899,6 +901,7 @@ def execute_devices(
             target=_existing_proxy_cli_batch,
             args=(cli_batch, ret_queue, batch_stop_queue, sproxy_stop_queue),
         )
+        existing_proxy_thread.daemon = True
         existing_proxy_thread.start()
     else:
         # If there's no batch to execute (i.e., no existing devices to run
