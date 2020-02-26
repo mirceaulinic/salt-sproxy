@@ -26,6 +26,17 @@ def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
     Load the Pillar and Grain cache, as required, and merge the Roster Grains
     and Pillar into.
     '''
+    if opts('grains'):
+        for device, device_opts in six.iteritems(pool):
+            if 'minion_opts' not in device_opts:
+                device_opts['minion_opts'] = {}
+            if 'grains' not in device_opts['minion_opts']:
+                device_opts['minion_opts']['grains'] = {}
+            device_opts['minion_opts']['grains'] = salt.utils.dictupdate.merge(
+                opts['grains'],
+                device_opts['minion_opts']['grains'],
+                merge_lists=True,
+            )
     if tgt_type in ('glob', 'pcre', 'list'):
         # When the target type is glob, pcre, or list, we don't require grains
         # or pillar loaded from the cache, because the targeting won't depend on
