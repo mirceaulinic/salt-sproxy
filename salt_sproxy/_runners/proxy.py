@@ -22,6 +22,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # Import Python std lib
 import copy
+import math
 import time
 import hashlib
 import logging
@@ -30,7 +31,6 @@ import multiprocessing
 
 # Import Salt modules
 import salt.cache
-import salt.wheel
 import salt.loader
 import salt.output
 import salt.version
@@ -38,6 +38,7 @@ import salt.utils.jid
 import salt.utils.master
 from salt.ext import six
 from salt.minion import SMinion
+from salt.cli.batch import Batch
 from salt.ext.six.moves import range
 import salt.utils.stringutils
 import salt.defaults.exitcodes
@@ -64,6 +65,8 @@ except ImportError:
 # ------------------------------------------------------------------------------
 # module properties
 # ------------------------------------------------------------------------------
+
+_SENTINEL = 'FIN.'
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +99,7 @@ is_proxy = _is_proxy
 def _salt_call_and_return(
     minion_id,
     function,
-    queue,
+    ret_queue,
     unreachable_devices,
     failed_devices,
     arg=None,
@@ -126,23 +129,53 @@ def _salt_call_and_return(
                 'success': True,
             },
         )
-    queue.put({minion_id: ret})
+    ret_queue.put({minion_id: ret})
 
 
-def _receive_replies_async(queue):
+def _existing_proxy_cli_batch(
+    cli_batch, ret_queue, batch_stop_queue, sproxy_stop_queue
+):
     '''
     '''
+    run = cli_batch.run()
+    for ret in run:
+        if not sproxy_stop_queue.empty():
+            break
+        ret_queue.put(ret)
+    batch_stop_queue.put(_SENTINEL)
+
+
+def _receive_replies_async(ret_queue, progress_bar):
+    '''
+    '''
+    count = 0
     while True:
-        ret = queue.get()
-        if ret == 'FIN.':
+        ret = ret_queue.get()
+        count += 1
+        if ret == _SENTINEL:
             break
         # When async, print out the replies as soon as they arrive
         # after passing them through the outputter of choice
         out_fmt = salt.output.out_format(
             ret, __opts__.get('output', 'nested'), opts=__opts__
         )
-
         salt.utils.stringutils.print_cli(out_fmt)
+        if progress_bar:
+            progress_bar.update(count)
+
+
+def _receive_replies_sync(ret_queue, static_queue, progress_bar):
+    '''
+    '''
+    count = 0
+    while True:
+        ret = ret_queue.get()
+        static_queue.put(ret)
+        count += 1
+        if ret == _SENTINEL:
+            break
+        if progress_bar:
+            progress_bar.update(count)
 
 
 # The SProxyMinion class is back-ported from Salt 2019.2.0 (to be released soon)
@@ -312,6 +345,7 @@ class SProxyMinion(SMinion):
                 log.error(
                     'Encountered error when starting up the connection with %s:',
                     self.opts['id'],
+                    exc_info=True
                 )
                 if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
@@ -495,44 +529,6 @@ def salt_call(
         salt-run proxy.salt_call bgp.neighbors junos 1.2.3.4 test test123
         salt-run proxy.salt_call net.load_config junos 1.2.3.4 test test123 text='set system ntp peer 1.2.3.4'
     '''
-    if use_existing_proxy:
-        # When using the existing Proxies, simply send the command to the
-        # Minion through the ``salt.execute`` Runner.
-        # But first, check if the Minion ID is accepted, otherwise, continue
-        # and execute the function withing this Runner.
-        wheel = salt.wheel.WheelClient(__opts__)
-        accepted_minions = wheel.cmd('key.list', ['accepted'], print_event=False).get(
-            'minions', []
-        )
-        if minion_id in accepted_minions:
-            log.debug(
-                '%s seems to be a valid Minion, trying to spread out the command',
-                minion_id,
-            )
-            log.info(
-                'If %s is not responding, you might want to run without --use-existing-proxy, or with --test-ping',
-                minion_id,
-            )
-            test_ping_succeeded = True
-            if test_ping:
-                log.debug('Checking if the Minion %s is responsive', minion_id)
-                ret = __salt__['salt.execute'](minion_id, 'test.ping', jid=jid)
-                test_ping_succeeded = ret.get(minion_id, False)
-            if test_ping_succeeded:
-                ret = __salt__['salt.execute'](
-                    minion_id, function, arg=args, kwarg=kwargs, jid=jid
-                )
-                return ret.get(minion_id)
-            else:
-                log.info(
-                    'Looks like the Minion %s is not responsive, executing locally',
-                    minion_id,
-                )
-        else:
-            log.debug(
-                '%s doesn\'t seem to be a valid existing Minion, executing locally',
-                minion_id,
-            )
     opts = copy.deepcopy(__opts__)
     opts['id'] = minion_id
     opts['pillarenv'] = __opts__.get('pillarenv', 'base')
@@ -593,7 +589,7 @@ def salt_call(
         if returner:
             returner_fun = '{}.returner'.format(returner)
             if returner_fun in sa_proxy.returners:
-                log.error(
+                log.debug(
                     'Sending the response from %s to the %s Returner',
                     opts['id'],
                     returner,
@@ -660,6 +656,7 @@ def execute_devices(
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
+    existing_minions=None,
     no_connect=False,
     roster_targets=None,
     test_ping=False,
@@ -824,112 +821,224 @@ def execute_devices(
                 'user': __pub_user,
             },
         )
-    queue = multiprocessing.Queue()
-    if not static:
-        thread = threading.Thread(target=_receive_replies_async, args=(queue,))
-        thread.start()
-    ret = {}
-    batch_size = int(batch_size)
-    batch_count = int(len(minions) / batch_size) + (
-        1 if len(minions) % batch_size else 0
-    )
-    log.info(
-        '%d devices matched the target, executing in %d batches',
-        len(minions),
-        batch_count,
-    )
-    stop_iteration = False
+    if not existing_minions:
+        existing_minions = []
+
     progress_bar = None
     if progress and HAS_PROGRESSBAR:
         progress_bar = progressbar.ProgressBar(
             max_value=len(minions), enable_colors=True, redirect_stdout=True
         )
+    ret_queue = multiprocessing.Queue()
+    if not static:
+        thread = threading.Thread(
+            target=_receive_replies_async, args=(ret_queue, progress_bar)
+        )
+        thread.daemon = True
+        thread.start()
+    else:
+        static_queue = multiprocessing.Queue()
+        thread = threading.Thread(
+            target=_receive_replies_sync, args=(ret_queue, static_queue, progress_bar)
+        )
+        thread.daemon = True
+        thread.start()
+
+    ret = {}
+    batch_size = int(batch_size)
+    batch_count = int(len(minions) / batch_size) + (
+        1 if len(minions) % batch_size else 0
+    )
+    existing_batch_size = int(math.ceil(len(existing_minions) * batch_size / float(len(minions))))
+    sproxy_batch_size = batch_size - existing_batch_size
+    sproxy_minions = list(set(minions) - set(existing_minions))
+    cli_batch = None
+    if existing_batch_size > 0:
+        # When there are existing Minions matching the target, use the native
+        # batching function to execute against these Minions.
+        log.debug('Executing against the existing Minions')
+        log.debug(existing_minions)
+        batch_opts = copy.deepcopy(__opts__)
+        batch_opts['batch'] = str(existing_batch_size)
+        batch_opts['tgt'] = existing_minions
+        batch_opts['tgt_type'] = 'list'
+        batch_opts['fun'] = function
+        batch_opts['arg'] = event_args
+        batch_opts['batch_wait'] = batch_wait
+        batch_opts['selected_target_option'] = 'list'
+        batch_opts['return'] = returner
+        batch_opts['ret_config'] = returner_config
+        ret_config['ret_kwargs'] = returner_kwargs
+        cli_batch = Batch(batch_opts, quiet=True)
+        log.debug('Batching detected the following Minions responsive')
+        log.debug(cli_batch.minions)
+        if cli_batch.down_minions:
+            log.warning(
+                'The following existing Minions connected to the Master '
+                'seem to be unresponsive: %s',
+                ', '.join(cli_batch.down_minions),
+            )
+    log.info(
+        '%d devices matched the target, executing in %d batches',
+        len(minions),
+        batch_count,
+    )
+    batch_stop_queue = multiprocessing.Queue()
+    sproxy_stop_queue = multiprocessing.Queue()
+    # This dance with the batch_stop_queue and sproxy_stop_queue is necessary
+    # in order to make sure the execution stops at the same time (either at the
+    # very end, or when the iteration must be interrupted - e.g., due to
+    # failhard condition).
+    # sproxy_stop_queue signalises to the batch execution that the sproxy
+    # sequence is over (not under normal circumstances, but interrupted forcibly
+    # therefore it tells to the batch to stop immediately). In a similar way,
+    # batch_stop_queue is required at the very end to make sure we're sending
+    # the sentinel signaling at the very end for the display thread -- for
+    # example there can be situations when the sproxy execution may be empty as
+    # all the targets are existing proxies, so the display must wait.
+    if cli_batch:
+        existing_proxy_thread = threading.Thread(
+            target=_existing_proxy_cli_batch,
+            args=(cli_batch, ret_queue, batch_stop_queue, sproxy_stop_queue),
+        )
+        existing_proxy_thread.daemon = True
+        existing_proxy_thread.start()
+    else:
+        # If there's no batch to execute (i.e., no existing devices to run
+        # against), just need to signalise that there's no need to wait for this
+        # one to complete.
+        batch_stop_queue.put(_SENTINEL)
+
+    log.debug(
+        'Executing sproxy normal run on the following devices (%d batch size):',
+        sproxy_batch_size,
+    )
+    log.debug(sproxy_minions)
+
     with multiprocessing.Manager() as manager:
+        # Put the sproxy execution details into a Queue, from where the
+        # processes from the bucket (see below) will pick them up whenever
+        # there's room for another process to start up.
+        sproxy_execute_queue = manager.Queue()
+        for minion_id in sproxy_minions:
+            device_opts = copy.deepcopy(opts)
+            if roster_targets and isinstance(roster_targets, dict):
+                device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
+                    'minion_opts'
+                )
+            sproxy_execute_queue.put((minion_id, device_opts))
+
         timeout_devices = manager.list()
         failed_devices = manager.list()
         unreachable_devices = manager.list()
-        for batch_index in range(batch_count):
-            log.info('Batch #%d', batch_index)
-            processes = []
-            devices_batch = minions[
-                batch_index * batch_size : (batch_index + 1) * batch_size
-            ]
-            log.info('Devices in batch #%d:', batch_index)
-            log.info(devices_batch)
-            if verbose:
-                salt.utils.stringutils.print_cli(
-                    'Executing run on {0}'.format(devices_batch)
-                )
-            for minion_index, minion_id in enumerate(devices_batch):
-                device_count = batch_index * batch_size + minion_index + 1
-                log.info('Executing on %s', minion_id)
-                device_opts = copy.deepcopy(opts)
-                if roster_targets and isinstance(roster_targets, dict):
-                    device_opts['roster_opts'] = roster_targets.get(minion_id, {}).get(
-                        'minion_opts'
-                    )
-                device_proc = multiprocessing.Process(
-                    target=_salt_call_and_return,
-                    name=minion_id,
-                    args=(
-                        minion_id,
-                        function,
-                        queue,
-                        unreachable_devices,
-                        failed_devices,
-                        event_args,
-                        jid,
-                        events,
-                    ),
-                    kwargs=device_opts,
-                )
-                device_proc.start()
-                processes.append(device_proc)
+
+        device_count = 0
+        sproxy_processes = []
+        stop_iteration = False
+
+        # In the sequence below, we'll have a process bucket with a maximum size
+        # which is the batch size, which will make room best efforts for
+        # processes to be started up whenever there's a new process finishing
+        # the task (or forcibly stopped due to timeout).
+        while not sproxy_execute_queue.empty() and not stop_iteration:
+            if len(sproxy_processes) >= sproxy_batch_size:
+                # Wait for the bucket to make room for another process.
+                time.sleep(0.02)
+                continue
+            minion_id, device_opts = sproxy_execute_queue.get()
+            device_proc = multiprocessing.Process(
+                target=_salt_call_and_return,
+                name=minion_id,
+                args=(
+                    minion_id,
+                    function,
+                    ret_queue,
+                    unreachable_devices,
+                    failed_devices,
+                    event_args,
+                    jid,
+                    events,
+                ),
+                kwargs=device_opts,
+            )
+            device_proc.start()
+            sproxy_processes.append(device_proc)
+            device_count += 0
+
+            processes = sproxy_processes[:]
             for proc in processes:
-                if stop_iteration:
-                    proc.terminate()
-                    if progress_bar:
-                        progress_bar.update(device_count)
-                    continue
                 if failhard and proc.exitcode:
                     stop_iteration = True
+
+                if len(processes) < min(len(sproxy_minions), sproxy_batch_size):
+                    # Wait to fill up the sproxy processes bucket, and only then
+                    # start evaluating.
+                    # Why `min()`? It is possible that we can run on a smaller
+                    # set of devices than the batch size.
+                    continue
+
+                # Wait `timeout` seconds for the processes to execute.
                 proc.join(timeout=timeout)
                 if proc.is_alive():
+                    # If the process didn't finish the task, it means it's past
+                    # the timeout value, time to kiss it goodbye.
                     log.info(
                         'Terminating the process for %s, as it didn\'t reply within %d seconds',
                         proc._name,
                         timeout,
                     )
+                    sproxy_processes.remove(proc)
                     if not hide_timeout:
-                        queue.put({proc._name: 'Minion did not return. [No response]'})
+                        ret_queue.put(
+                            {proc._name: 'Minion did not return. [No response]'}
+                        )
                     timeout_devices.append(proc._name)
+
+                # Terminate the process, making room for a new one.
                 proc.terminate()
-                if progress_bar:
-                    progress_bar.update(device_count)
-                continue
-            if failhard and proc.exitcode:
-                stop_iteration = True
+                if proc in sproxy_processes:
+                    # proc may no longer be in sproxy_processes, if it has been
+                    # already removed in the section above when exiting the loop
+                    # forcibly.
+                    sproxy_processes.remove(proc)
+
             if stop_iteration:
                 log.error('Exiting as an error has occurred')
-                queue.put('FIN.')
-                if progress_bar:
-                    progress_bar.finish()
+                ret_queue.put(_SENTINEL)
+                sproxy_stop_queue.put(_SENTINEL)
+                for proc in sproxy_processes:
+                    proc.terminate()
                 raise StopIteration
+
+            if len(processes) < min(len(sproxy_minions), sproxy_batch_size):
+                continue
+
             if batch_wait:
                 log.debug(
                     'Waiting %f seconds before executing the next batch', batch_wait
                 )
                 time.sleep(batch_wait)
-        queue.put('FIN.')
+
+        # Waiting for the existing proxy batch to finish.
+        while batch_stop_queue.empty():
+            time.sleep(0.02)
+
+        # Prepare to quit.
+        ret_queue.put(_SENTINEL)
+        # Wait a little to dequeue and print before throwing the progressbar,
+        # the summary, etc.
+        time.sleep(0.02)
         if progress_bar:
             progress_bar.finish()
+
         if static:
             resp = {}
             while True:
-                ret = queue.get()
-                if ret == 'FIN.':
+                ret = static_queue.get()
+                if ret == _SENTINEL:
                     break
                 resp.update(ret)
+
         if summary:
             salt.utils.stringutils.print_cli('\n')
             salt.utils.stringutils.print_cli(
@@ -1167,6 +1276,7 @@ def execute(
         _tgt = tgt
         _tgt_type = tgt_type
 
+    existing_minions = []
     if not roster or roster == 'None':
         log.info(
             'No Roster specified. Please use the ``roster`` argument, or set the ``proxy_roster`` option in the '
@@ -1215,6 +1325,7 @@ def execute(
                 cache_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
                 for target, target_grains in cache_grains.items():
                     rtargets[target] = {'minion_opts': {'grains': target_grains}}
+                    existing_minions.append(target)
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
@@ -1276,6 +1387,7 @@ def execute(
         use_cached_grains=use_cached_grains,
         use_cached_pillar=use_cached_pillar,
         use_existing_proxy=use_existing_proxy,
+        existing_minions=existing_minions,
         no_connect=no_connect,
         roster_targets=rtargets,
         test_ping=test_ping,
