@@ -27,6 +27,7 @@ import time
 import hashlib
 import logging
 import threading
+import traceback
 import multiprocessing
 
 # Import Salt modules
@@ -110,7 +111,7 @@ def _salt_call_and_return(
     '''
     '''
     opts['jid'] = jid
-    ret = salt_call(
+    ret, retcode = salt_call(
         minion_id,
         function,
         unreachable_devices=unreachable_devices,
@@ -126,7 +127,8 @@ def _salt_call_and_return(
                 'id': minion_id,
                 'jid': jid,
                 'return': ret,
-                'success': True,
+                'retcode': retcode,
+                'success': retcode == 0,
             },
         )
     ret_queue.put({minion_id: ret})
@@ -576,50 +578,55 @@ def salt_call(
         return
     kwargs = clean_kwargs(**kwargs)
     ret = None
+    retcode = 0
     try:
         ret = sa_proxy.functions[function](*args, **kwargs)
+        retcode = sa_proxy.functions.pack['__context__'].get('retcode', 0)
     except Exception as err:
-        log.error('Exception while running %s on %s', function, opts['id'])
-        log.error(err, exc_info=True)
+        log.info('Exception while running %s on %s', function, opts['id'])
         if failed_devices is not None:
             failed_devices.append(opts['id'])
+        ret = 'The minion function caused an exception: {err}'.format(
+            err=traceback.format_exc()
+        )
+        if not retcode:
+            retcode = 1
         if failhard:
             raise
-    else:
-        if returner:
-            returner_fun = '{}.returner'.format(returner)
-            if returner_fun in sa_proxy.returners:
-                log.debug(
-                    'Sending the response from %s to the %s Returner',
-                    opts['id'],
-                    returner,
-                )
-                ret_data = {
-                    'id': opts['id'],
-                    'jid': jid,
-                    'fun': function,
-                    'fun_args': args,
-                    'return': ret,
-                    'ret_config': returner_config,
-                    'ret_kwargs': returner_kwargs,
-                }
-                try:
-                    sa_proxy.returners[returner_fun](ret_data)
-                except Exception as err:
-                    log.error(
-                        'Exception while sending the response from %s to the %s returner',
-                        opts['id'],
-                        returner,
-                    )
-                    log.error(err, exc_info=True)
-            else:
-                log.warning(
-                    'Returner %s is not available. Check that the dependencies are properly installed'
-                )
     finally:
         if sa_proxy.connected:
             shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
             sa_proxy.proxy[shut_fun](opts)
+    if returner:
+        returner_fun = '{}.returner'.format(returner)
+        if returner_fun in sa_proxy.returners:
+            log.debug(
+                'Sending the response from %s to the %s Returner',
+                opts['id'],
+                returner,
+            )
+            ret_data = {
+                'id': opts['id'],
+                'jid': jid,
+                'fun': function,
+                'fun_args': args,
+                'return': ret,
+                'ret_config': returner_config,
+                'ret_kwargs': returner_kwargs,
+            }
+            try:
+                sa_proxy.returners[returner_fun](ret_data)
+            except Exception as err:
+                log.error(
+                    'Exception while sending the response from %s to the %s returner',
+                    opts['id'],
+                    returner,
+                )
+                log.error(err, exc_info=True)
+        else:
+            log.warning(
+                'Returner %s is not available. Check that the dependencies are properly installed'
+            )
     if cache_grains:
         log.debug('Caching Grains for %s', minion_id)
         log.debug(sa_proxy.opts['grains'])
@@ -631,7 +638,7 @@ def salt_call(
         cached_store = __salt__['cache.store'](
             'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
         )
-    return ret
+    return ret, retcode
 
 
 def execute_devices(
