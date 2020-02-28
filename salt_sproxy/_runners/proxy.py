@@ -828,6 +828,7 @@ def execute_devices(
         )
     if not existing_minions:
         existing_minions = []
+    down_minions = []
 
     progress_bar = None
     if progress and HAS_PROGRESSBAR:
@@ -885,6 +886,7 @@ def execute_devices(
                 'seem to be unresponsive: %s',
                 ', '.join(cli_batch.down_minions),
             )
+            down_minions = cli_batch.down_minions[:]
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
@@ -1113,6 +1115,7 @@ def execute_devices(
                         'existing_minions': existing_minions,
                         'sproxy_minions': sproxy_minions,
                         'timeout_minions': list(timeout_devices),
+                        'down_minions': down_minions,
                         'unreachable_devices': list(unreachable_devices),
                         'failed_minions': list(failed_devices),
                     },
