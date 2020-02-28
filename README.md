@@ -214,8 +214,8 @@ Salt has natively available an HTTP API. You can read more at
 [https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#a-rest-api-for-salt](
 https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#a-rest-api-for-salt)
 if you haven't used it before. The usage is very simple; for salt-sproxy 
-specifically you can follow the notes from [https://salt-sproxy.readthedocs.io/en/latest/salt_api.html](
-https://salt-sproxy.readthedocs.io/en/latest/salt_api.html) how to set it up and 
+specifically you can follow the notes from [https://salt-sproxy.readthedocs.io/en/latest/salt_sapi.html](
+https://salt-sproxy.readthedocs.io/en/latest/salt_sapi.html) how to set it up and 
 use. Usage example - apply a small configuration change on a Juniper device, by 
 executing an HTTP request via the Salt API:
 
@@ -224,12 +224,10 @@ $ curl -sS localhost:8080/run -H 'Accept: application/x-yaml' \
   -d eauth='pam' \
   -d username='mircea' \
   -d password='pass' \
-  -d client='runner' \
-  -d fun='proxy.execute' \
+  -d client='sproxy' \
   -d tgt='juniper-router' \
-  -d function='net.load_config' \
-  -d text='set system ntp server 10.10.10.1' \
-  -d sync=True
+  -d fun='net.load_config' \
+  -d text='set system ntp server 10.10.10.1'
 return:
 - juniper-router:
     already_configured: false
@@ -242,8 +240,8 @@ return:
     result: true
 ```
 
-See the [documentation](https://salt-sproxy.readthedocs.io/en/latest/salt_api.html)
-for explanation, and [this example](https://salt-sproxy.readthedocs.io/en/latest/examples/salt_api.html)
+See the [documentation](https://salt-sproxy.readthedocs.io/en/latest/salt_sapi.html)
+for explanation, and [this example](https://salt-sproxy.readthedocs.io/en/latest/examples/salt_sapi.html)
 for a quick start.
 
 What's included
@@ -256,13 +254,13 @@ backwards compatibility with older Salt versions:
 
 ```
   |-- cli.py
-  |-- __init__.py
   |-- parsers.py
   |-- _roster/
   |   |-- ansible.py
-  |   `-- netbox.py
+  |   |-- file.py
+  |   |-- netbox.py
+  |   `-- pillar.py
   |-- _runners/
-  |   |-- __init__.py
   |   `-- proxy.py
   |-- scripts.py
   `-- version.py
