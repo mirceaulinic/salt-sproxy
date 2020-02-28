@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2019 Mircea Ulinic. All rights reserved.
+# Copyright 2019-2020 Mircea Ulinic. All rights reserved.
 #
 # The contents of this file are licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with the
@@ -27,6 +27,7 @@ import time
 import hashlib
 import logging
 import threading
+import traceback
 import multiprocessing
 
 # Import Salt modules
@@ -110,7 +111,7 @@ def _salt_call_and_return(
     '''
     '''
     opts['jid'] = jid
-    ret = salt_call(
+    ret, retcode = salt_call(
         minion_id,
         function,
         unreachable_devices=unreachable_devices,
@@ -126,7 +127,8 @@ def _salt_call_and_return(
                 'id': minion_id,
                 'jid': jid,
                 'return': ret,
-                'success': True,
+                'retcode': retcode,
+                'success': retcode == 0,
             },
         )
     ret_queue.put({minion_id: ret})
@@ -345,7 +347,7 @@ class SProxyMinion(SMinion):
                 log.error(
                     'Encountered error when starting up the connection with %s:',
                     self.opts['id'],
-                    exc_info=True
+                    exc_info=True,
                 )
                 if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
@@ -576,50 +578,53 @@ def salt_call(
         return
     kwargs = clean_kwargs(**kwargs)
     ret = None
+    retcode = 0
     try:
         ret = sa_proxy.functions[function](*args, **kwargs)
+        retcode = sa_proxy.functions.pack['__context__'].get('retcode', 0)
     except Exception as err:
-        log.error('Exception while running %s on %s', function, opts['id'])
-        log.error(err, exc_info=True)
+        log.info('Exception while running %s on %s', function, opts['id'])
         if failed_devices is not None:
             failed_devices.append(opts['id'])
+        ret = 'The minion function caused an exception: {err}'.format(
+            err=traceback.format_exc()
+        )
+        if not retcode:
+            retcode = 11
         if failhard:
             raise
-    else:
-        if returner:
-            returner_fun = '{}.returner'.format(returner)
-            if returner_fun in sa_proxy.returners:
-                log.debug(
-                    'Sending the response from %s to the %s Returner',
-                    opts['id'],
-                    returner,
-                )
-                ret_data = {
-                    'id': opts['id'],
-                    'jid': jid,
-                    'fun': function,
-                    'fun_args': args,
-                    'return': ret,
-                    'ret_config': returner_config,
-                    'ret_kwargs': returner_kwargs,
-                }
-                try:
-                    sa_proxy.returners[returner_fun](ret_data)
-                except Exception as err:
-                    log.error(
-                        'Exception while sending the response from %s to the %s returner',
-                        opts['id'],
-                        returner,
-                    )
-                    log.error(err, exc_info=True)
-            else:
-                log.warning(
-                    'Returner %s is not available. Check that the dependencies are properly installed'
-                )
     finally:
         if sa_proxy.connected:
             shut_fun = '{}.shutdown'.format(sa_proxy.opts['proxy']['proxytype'])
             sa_proxy.proxy[shut_fun](opts)
+    if returner:
+        returner_fun = '{}.returner'.format(returner)
+        if returner_fun in sa_proxy.returners:
+            log.debug(
+                'Sending the response from %s to the %s Returner', opts['id'], returner,
+            )
+            ret_data = {
+                'id': opts['id'],
+                'jid': jid,
+                'fun': function,
+                'fun_args': args,
+                'return': ret,
+                'ret_config': returner_config,
+                'ret_kwargs': returner_kwargs,
+            }
+            try:
+                sa_proxy.returners[returner_fun](ret_data)
+            except Exception as err:
+                log.error(
+                    'Exception while sending the response from %s to the %s returner',
+                    opts['id'],
+                    returner,
+                )
+                log.error(err, exc_info=True)
+        else:
+            log.warning(
+                'Returner %s is not available. Check that the dependencies are properly installed'
+            )
     if cache_grains:
         log.debug('Caching Grains for %s', minion_id)
         log.debug(sa_proxy.opts['grains'])
@@ -631,7 +636,7 @@ def salt_call(
         cached_store = __salt__['cache.store'](
             'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
         )
-    return ret
+    return ret, retcode
 
 
 def execute_devices(
@@ -849,7 +854,9 @@ def execute_devices(
     batch_count = int(len(minions) / batch_size) + (
         1 if len(minions) % batch_size else 0
     )
-    existing_batch_size = int(math.ceil(len(existing_minions) * batch_size / float(len(minions))))
+    existing_batch_size = int(
+        math.ceil(len(existing_minions) * batch_size / float(len(minions)))
+    )
     sproxy_batch_size = batch_size - existing_batch_size
     sproxy_minions = list(set(minions) - set(existing_minions))
     cli_batch = None
@@ -1119,12 +1126,12 @@ def execute(
     use_existing_proxy=False,
     no_connect=False,
     test_ping=False,
-    target_cache=True,
+    target_cache=False,
     target_cache_timeout=60,
     preload_targeting=False,
     invasive_targeting=False,
     failhard=False,
-    summary=True,
+    summary=False,
     verbose=False,
     show_jid=False,
     progress=False,
@@ -1295,6 +1302,7 @@ def execute(
                 opts=__opts__,
             )
             targets = target_util._tgt_to_list()
+            existing_minions = targets[:]
         else:
             # Try a fuzzy match based on the exact target the user requested
             # only when not attempting to match an existing Proxy. If you do

@@ -407,14 +407,14 @@ class SaltStandaloneProxyOptionParser(
             dest='failhard',
             action='store_true',
             default=False,
-            help='Stop execution at the first execution error',
+            help='Stop execution at the first execution error.',
         )
         self.add_option(
-            '--no-target-cache',
-            dest='no_target_cache',
+            '--target-cache',
+            dest='target_cache',
             action='store_true',
             default=False,
-            help=('Do no load the list of targets from the cache.'),
+            help=('Cache the list of devices matched by your target expression.'),
         )
         group = self.output_options_group = optparse.OptionGroup(
             self, 'Output Options', 'Configure your preferred output format.'

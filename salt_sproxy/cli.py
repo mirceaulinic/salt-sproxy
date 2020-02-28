@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2019 Mircea Ulinic. All rights reserved.
+# Copyright 2019-2020 Mircea Ulinic. All rights reserved.
 #
 # The contents of this file are licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with the
@@ -279,6 +279,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'hide_timeout',
             'progress',
             'returner',
+            'target_cache',
             'returner_config',
             'returner_kwargs',
         )
@@ -291,7 +292,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_cached_pillar': 'use_cached_pillar',
             'no_grains': 'with_grains',
             'no_pillar': 'with_pillar',
-            'no_target_cache': 'target_cache',
         }
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):
