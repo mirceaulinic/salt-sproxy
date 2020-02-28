@@ -347,7 +347,7 @@ class SProxyMinion(SMinion):
                 log.error(
                     'Encountered error when starting up the connection with %s:',
                     self.opts['id'],
-                    exc_info=True
+                    exc_info=True,
                 )
                 if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
@@ -590,7 +590,7 @@ def salt_call(
             err=traceback.format_exc()
         )
         if not retcode:
-            retcode = 1
+            retcode = 11
         if failhard:
             raise
     finally:
@@ -601,9 +601,7 @@ def salt_call(
         returner_fun = '{}.returner'.format(returner)
         if returner_fun in sa_proxy.returners:
             log.debug(
-                'Sending the response from %s to the %s Returner',
-                opts['id'],
-                returner,
+                'Sending the response from %s to the %s Returner', opts['id'], returner,
             )
             ret_data = {
                 'id': opts['id'],
@@ -856,7 +854,9 @@ def execute_devices(
     batch_count = int(len(minions) / batch_size) + (
         1 if len(minions) % batch_size else 0
     )
-    existing_batch_size = int(math.ceil(len(existing_minions) * batch_size / float(len(minions))))
+    existing_batch_size = int(
+        math.ceil(len(existing_minions) * batch_size / float(len(minions)))
+    )
     sproxy_batch_size = batch_size - existing_batch_size
     sproxy_minions = list(set(minions) - set(existing_minions))
     cli_batch = None
@@ -1126,12 +1126,12 @@ def execute(
     use_existing_proxy=False,
     no_connect=False,
     test_ping=False,
-    target_cache=True,
+    target_cache=False,
     target_cache_timeout=60,
     preload_targeting=False,
     invasive_targeting=False,
     failhard=False,
-    summary=True,
+    summary=False,
     verbose=False,
     show_jid=False,
     progress=False,
@@ -1302,6 +1302,7 @@ def execute(
                 opts=__opts__,
             )
             targets = target_util._tgt_to_list()
+            existing_minions = targets[:]
         else:
             # Try a fuzzy match based on the exact target the user requested
             # only when not attempting to match an existing Proxy. If you do
