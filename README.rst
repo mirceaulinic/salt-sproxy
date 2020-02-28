@@ -42,6 +42,22 @@ and your (Proxy) Minions at the same time.
 
     This is NOT a SaltStack product.
 
+Why ``salt-sproxy``
+-------------------
+
+``salt-sproxy`` can be used as a standalone tool to manage your devices without
+having any further requirements, as well as an extension to your existing Salt
+environment (if you already have). In other words, if you have a Salt
+installation where you manage some network devices and servers, installing
+``salt-sproxy`` on your Master will allow you to run any Salt command as always,
+e.g., executing ``salt \* test.ping`` and ``salt-sproxy \* test.ping`` will have
+the exact same effect, and result. On top of that, using ``salt-sproxy`` allows
+you to manage other devices for which you don't run (Proxy) Minions for.
+
+Of course, if you don't already have Salt, no problem, you can start managing
+your devices straight away, check out the `quick 
+start steps <https://github.com/mirceaulinic/salt-sproxy/blob/develop/docs/quick_start.rst>`__.
+
 Prerequisites
 -------------
 
@@ -50,8 +66,8 @@ would like to install it on your computer, you might want to run it under a
 `virtual environment <https://docs.python-guide.org/dev/virtualenvs/>`__.
 
 Besides the CLI, the usage remains the same as when you're running a Salt 
-environment with Proxy or regular Minions. See the following documents on how
-to get started and fully unleash the power of Salt:
+environment with Proxy or regular Minions. For example, see the following
+documents on how to get started and fully unleash the power of Salt:
 
 - `Salt in 10 minutes 
   <https://docs.saltstack.com/en/latest/topics/tutorials/walkthrough.html>`__.
@@ -230,7 +246,7 @@ Salt has natively available an HTTP API. You can read more at
 https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#a-rest-api-for-salt 
 if you haven't used it before. The usage is very simple; for salt-sproxy 
 specifically you can follow the notes from 
-https://salt-sproxy.readthedocs.io/en/latest/salt_api.html how to set it up and 
+https://salt-sproxy.readthedocs.io/en/latest/salt_sapi.html how to set it up and 
 use. Usage example - apply a small configuration change on a Juniper device, by 
 executing an HTTP request via the Salt API:
 
@@ -240,12 +256,10 @@ executing an HTTP request via the Salt API:
     -d eauth='pam' \
     -d username='mircea' \
     -d password='pass' \
-    -d client='runner' \
-    -d fun='proxy.execute' \
+    -d client='sproxy' \
     -d tgt='juniper-router' \
-    -d function='net.load_config' \
-    -d text='set system ntp server 10.10.10.1' \
-    -d sync=True
+    -d fun='net.load_config' \
+    -d text='set system ntp server 10.10.10.1'
   return:
   - juniper-router:
       already_configured: false
@@ -258,8 +272,8 @@ executing an HTTP request via the Salt API:
       result: true
 
 See the `documentation 
-<https://salt-sproxy.readthedocs.io/en/latest/salt_api.html>`__ for explanation,
-and `this example <https://salt-sproxy.readthedocs.io/en/latest/examples/salt_api.html>`__
+<https://salt-sproxy.readthedocs.io/en/latest/salt_sapi.html>`__ for explanation,
+and `this example <https://salt-sproxy.readthedocs.io/en/latest/examples/salt_sapi.html>`__
 for a quick start.
 
 What's included
@@ -273,13 +287,13 @@ backwards compatibility with older Salt versions:
 .. code-block:: text
 
   |-- cli.py
-  |-- __init__.py
   |-- parsers.py
   |-- _roster/
+  |   |-- file.py
   |   |-- ansible.py
-  |   `-- netbox.py
+  |   |-- netbox.py
+  |   `-- pillar.py
   |-- _runners/
-  |   |-- __init__.py
   |   `-- proxy.py
   |-- scripts.py
   `-- version.py

@@ -21,6 +21,22 @@ and your (Proxy) Minions at the same time.
 
 > This is NOT a SaltStack product.
 
+Why ``salt-sproxy``
+-------------------
+
+``salt-sproxy`` can be used as a standalone tool to manage your devices without
+having any further requirements, as well as an extension to your existing Salt
+environment (if you already have). In other words, if you have a Salt
+installation where you manage some network devices and servers, installing
+``salt-sproxy`` on your Master will allow you to run any Salt command as always,
+e.g., executing ``salt \* test.ping`` and ``salt-sproxy \* test.ping`` will have
+the exact same effect, and result. On top of that, using ``salt-sproxy`` allows
+you to manage other devices for which you don't run (Proxy) Minions for.
+
+Of course, if you don't already have Salt, no problem, you can start managing
+your devices straight away, check out the [quick 
+start steps](https://github.com/mirceaulinic/salt-sproxy/blob/develop/docs/quick_start.rst).
+
 Prerequisites
 -------------
 
