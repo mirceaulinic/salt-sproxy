@@ -1097,6 +1097,26 @@ def execute_devices(
             salt.utils.stringutils.print_cli(
                 '-------------------------------------------'
             )
+            if events:
+                __salt__['event.send'](
+                    'proxy/runner/{jid}/report'.format(jid=jid),
+                    {
+                        'tgt': tgt,
+                        'tgt_type': tgt_type,
+                        'fun': function,
+                        'fun_args': event_args,
+                        'jid': jid,
+                        'user': __pub_user,
+                        # TODO: compute retcode across all the returns.
+                        #'retcode': retcode,
+                        'matched_minions': minions,
+                        'existing_minions': existing_minions,
+                        'sproxy_minions': sproxy_minions,
+                        'timeout_minions': list(timeout_devices),
+                        'unreachable_devices': list(unreachable_devices),
+                        'failed_minions': list(failed_devices),
+                    },
+                )
     return resp
 
 
