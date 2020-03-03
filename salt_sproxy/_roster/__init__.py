@@ -7,6 +7,7 @@ import re
 import fnmatch
 import logging
 
+import salt.cache
 from salt.ext import six
 import salt.utils.minions
 
@@ -48,38 +49,40 @@ def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
     # Runners as they rely on fetching data from the Master, for Minions that
     # are accepted. What we're doing here is reading straight from the cache.
     log.debug('Loading cached and merging into the Roster data')
-    cache_pool = __runner__['cache.list']('minions')
+    cache = salt.cache.factory(opts)
+    cache_pool = cache.list('minions')
     for device in cache_pool:
         if device not in pool:
+            log.trace('%s has cache, but is not in the Roster pool', device)
             continue
         if 'minion_opts' not in pool[device]:
             pool[device]['minion_opts'] = {'grains': {}, 'pillar': {}}
         cache_key = 'minions/{}/data'.format(device)
-        if opts.get('use_cached_grains', True) and tgt_type in (
+        if opts.get('target_use_cached_grains', True) and tgt_type in (
             'compound',
             'grain',
             'grain_pcre',
             'nodegroup',
         ):
             log.debug('Fetching cached Grains for %s', device)
-            cache_grains = __runner__['cache.fetch'](cache_key, 'grains')
-            if cache_grains:
+            cached_grains = cache.fetch(cache_key, 'grains')
+            if cached_grains:
                 pool[device]['minion_opts']['grains'] = salt.utils.dictupdate.merge(
-                    cache_grains,
+                    cached_grains,
                     pool[device]['minion_opts'].get('grains', {}),
                     merge_lists=True,
                 )
-        if opts.get('use_cached_pillar', True) and tgt_type in (
+        if opts.get('target_use_cached_pillar', True) and tgt_type in (
             'compound',
             'pillar',
             'pillar_pcre',
             'nodegroup',
         ):
             log.debug('Fetching cached Pillar for %s', device)
-            cache_pillar = __runner__['cache.fetch'](cache_key, 'pillar')
-            if cache_pillar:
+            cached_pillar = cache.fetch(cache_key, 'pillar')
+            if cached_pillar:
                 pool[device]['minion_opts']['pillar'] = salt.utils.dictupdate.merge(
-                    cache_pillar,
+                    cached_pillar,
                     pool[device]['minion_opts'].get('pillar', {}),
                     merge_lists=True,
                 )
