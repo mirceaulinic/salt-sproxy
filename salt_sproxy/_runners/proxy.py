@@ -1109,7 +1109,7 @@ def execute_devices(
             )
             if events:
                 __salt__['event.send'](
-                    'proxy/runner/{jid}/report'.format(jid=jid),
+                    'proxy/runner/{jid}/summary'.format(jid=jid),
                     {
                         'tgt': tgt,
                         'tgt_type': tgt_type,
