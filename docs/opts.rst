@@ -124,13 +124,23 @@ already familiar with a vast majority of them from the `salt
 
     Cache the collected Grains. Beware that this option overwrites the existing
     Grains. This may be helpful when using the ``salt-sproxy`` only, but may 
-    lead to unexpected results when running in :ref:`mixed-environments`.
+    lead to unexpected results when running in :ref:`mixed-environments`. That 
+    said, when running together with ``--use-existing-proxy``, there shouldn't
+    be any issues, as *salt-sproxy* will attemtp to use the existing (Proxy) 
+    Minion if any, otherwise it will write the collected Grains to the cache, 
+    which is a safe operation in this case (i.e., it won't overwrite the Grains 
+    of an existing Minion).
 
 .. option:: --cache-pillar
 
     Cache the collected Pillar. Beware that this option overwrites the existing
     Pillar. This may be helpful when using the ``salt-sproxy`` only, but may 
-    lead to unexpected results when running in :ref:`mixed-environments`.
+    lead to unexpected results when running in :ref:`mixed-environments`. That 
+    said, when running together with ``--use-existing-proxy``, there shouldn't
+    be any issues, as *salt-sproxy* will attemtp to use the existing (Proxy) 
+    Minion if any, otherwise it will write the compiled Pillar to the cache, 
+    which is a safe operation in this case (i.e., it won't overwrite the cached
+    Pillar of an existing Minion).
 
 .. option:: --no-cached-grains
 
@@ -356,6 +366,10 @@ already familiar with a vast majority of them from the `salt
 
     Avoid loading the list of targets from the cache.
 
+    .. versionchanged:: 2020.3.0
+
+        This option now defaults to ``True``.
+
 .. option:: --pillar-root
 
     .. versionadded:: 2020.2.0
@@ -532,3 +546,29 @@ Output Options
 
     Override the configured state_verbose value for minion
     output. Set to True or False. Default: none.
+
+Configuration file options
+--------------------------
+
+All the previous options can be provided via the CLI, as in-line arguments, as 
+well as configured in the configuration file. There are however options that 
+are available only through the configuration file:
+
+.. option:: ``target_use_cache_grains``
+
+    .. versionadded: 2020.3.0
+
+    Whether targeting should look up into the existing cache to compute the 
+    list of matching devices. This option may be particularly useful when using 
+    one of the following targeting mechanisms: ``-G`` (grain), ``-P`` (grain 
+    PCRE), or ``-C`` (compound). Default: ``True`` (it will check the cache).
+
+
+.. option:: ``target_use_cache_pillar``
+
+    .. versionadded: 2020.3.0
+
+    Whether targeting should look up into the existing cache to compute the 
+    list of matching devices. This option may be particularly useful when using 
+    one of the following targeting mechanisms: ``-I`` (pillar), ``-J`` (pillar 
+    PCRE), or ``-C`` (compound). Default:: ``True`` (it will check the cache).

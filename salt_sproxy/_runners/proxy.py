@@ -1330,8 +1330,8 @@ def execute(
             rtargets = {}
             if use_existing_proxy:
                 log.debug('Gathering the cached Grains from the existing Minions')
-                cache_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
-                for target, target_grains in cache_grains.items():
+                cached_grains = __salt__['cache.grains'](tgt=tgt, tgt_type=tgt_type)
+                for target, target_grains in cached_grains.items():
                     rtargets[target] = {'minion_opts': {'grains': target_grains}}
                     existing_minions.append(target)
             log.debug('Computing the target using the %s Roster', roster)
