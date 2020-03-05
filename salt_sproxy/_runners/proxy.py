@@ -21,6 +21,7 @@ collect the Grains, compile the Pillar, then execute the commands.
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Import Python std lib
+import sys
 import copy
 import math
 import time
@@ -132,6 +133,7 @@ def _salt_call_and_return(
             },
         )
     ret_queue.put({minion_id: ret})
+    sys.exit(retcode)
 
 
 def _existing_proxy_cli_batch(
@@ -773,6 +775,7 @@ def execute_devices(
         salt-run proxy.execute "['172.17.17.1', '172.17.17.2']" test.ping driver=eos username=test password=test123
     '''
     resp = ''
+    retcode = 0
     __pub_user = kwargs.get('__pub_user')
     if not __pub_user:
         __pub_user = __utils__['user.get_specific_user']()
@@ -828,6 +831,7 @@ def execute_devices(
         )
     if not existing_minions:
         existing_minions = []
+    down_minions = []
 
     progress_bar = None
     if progress and HAS_PROGRESSBAR:
@@ -885,6 +889,7 @@ def execute_devices(
                 'seem to be unresponsive: %s',
                 ', '.join(cli_batch.down_minions),
             )
+            down_minions = cli_batch.down_minions
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
@@ -999,7 +1004,12 @@ def execute_devices(
                         ret_queue.put(
                             {proc._name: 'Minion did not return. [No response]'}
                         )
+                    # return code 1 on process timeout?
+                    retcode = max(retcode, 1)
                     timeout_devices.append(proc._name)
+
+                if proc.exitcode and isinstance(proc.exitcode, int):
+                    retcode = max(retcode, proc.exitcode)
 
                 # Terminate the process, making room for a new one.
                 proc.terminate()
@@ -1097,6 +1107,27 @@ def execute_devices(
             salt.utils.stringutils.print_cli(
                 '-------------------------------------------'
             )
+            if events:
+                __salt__['event.send'](
+                    'proxy/runner/{jid}/summary'.format(jid=jid),
+                    {
+                        'tgt': tgt,
+                        'tgt_type': tgt_type,
+                        'fun': function,
+                        'fun_args': event_args,
+                        'jid': jid,
+                        'user': __pub_user,
+                        'retcode': retcode,
+                        'matched_minions': minions,
+                        'existing_minions': existing_minions,
+                        'sproxy_minions': sproxy_minions,
+                        'timeout_minions': list(timeout_devices),
+                        'down_minions': list(down_minions),
+                        'unreachable_devices': list(unreachable_devices),
+                        'failed_minions': list(failed_devices),
+                    },
+                )
+    __context__['retcode'] = retcode
     return resp
 
 

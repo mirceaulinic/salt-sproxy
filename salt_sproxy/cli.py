@@ -330,6 +330,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                     # runners might still use it. For this reason, we
                     # also check ret['data']['retcode'] if
                     # ret['retcode'] is not available.
+                    if 'retcode' in runner.context:
+                        self.exit(runner.context['retcode'])
                     if isinstance(ret, dict) and 'retcode' in ret:
                         self.exit(ret['retcode'])
                     elif isinstance(ret, dict) and 'retcode' in ret.get('data', {}):
