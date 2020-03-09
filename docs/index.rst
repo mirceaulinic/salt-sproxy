@@ -14,6 +14,39 @@ and your (Proxy) Minions at the same time.
 
     This is NOT a SaltStack product.
 
+Why ``salt-sproxy``
+-------------------
+
+``salt-sproxy`` can be used as a standalone tool to manage your devices without
+having any further requirements, as well as an extension to your existing Salt
+environment (if you already have). In other words, if you have a Salt
+installation where you manage some network devices and servers, installing
+``salt-sproxy`` on your Master will allow you to run any Salt command as always,
+e.g., executing ``salt \* test.ping`` and ``salt-sproxy \* test.ping`` will have
+the exact same effect, and result. On top of that, using ``salt-sproxy`` allows
+you to manage other devices for which you don't run (Proxy) Minions for.
+
+Of course, if you don't already have Salt, no problem, you can start managing
+your devices straight away, check out the :ref:`quick-start` steps.
+
+In brief, here are some benefits you can get by using *salt-sproxy*:
+
+- Say goodbye to the burden of managing hundreds of system services for the
+  Proxy Minion processes.
+- You can run it locally, on your own computer.
+- Python programming made a breeze - might go well with the
+  `ISalt <https://github.com/mirceaulinic/isalt>`__ package.
+- Integrates easily with your existing Salt environment (if you have), by
+  installing the package on your Salt Master.
+- Can continue to leverage the event-driven automation and orchestration
+  methodologies.
+- REST API, see also :ref:`salt-api` documentation.
+- By sending events to a Salt Master, you are able to implement whatever
+  auditing you need (e.g., what command was executed by who and when, etc.).
+- Benefit from inheriting _all_ the native Salt features and integrations
+  contributed by thousands of users, and tested in hundreds of different
+  environments, over almost a decade of development.
+
 Install
 -------
 
