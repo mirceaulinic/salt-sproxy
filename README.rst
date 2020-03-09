@@ -58,6 +58,27 @@ Of course, if you don't already have Salt, no problem, you can start managing
 your devices straight away, check out the `quick 
 start steps <https://github.com/mirceaulinic/salt-sproxy/blob/develop/docs/quick_start.rst>`__.
 
+In brief, here are some benefits you can get by using *salt-sproxy*:
+
+- Say goodbye to the burden of managing hundreds of system services for the
+  Proxy Minion processes.
+- You can run it locally, on your own computer.
+- Python programming made a breeze - might go well with the
+  `ISalt <https://github.com/mirceaulinic/isalt>`__ package.
+- Integrates easily with your existing Salt environment (if you have), by
+  installing the package on your Salt Master.
+- Can continue to leverage the event-driven automation and orchestration
+  methodologies.
+- REST API, see also
+  `the Salt REST API <https://salt-sproxy.readthedocs.io/en/latest/salt_api.html>`__
+  documentation.
+- By sending events to a Salt Master, you are able to implement whatever
+  auditing you need (e.g., what command was executed by who and when, etc.).
+- Benefit from inheriting _all_ the native Salt features and integrations
+  contributed by thousands of users, and tested in hundreds of different
+  environments, over almost a decade of development.
+
+
 Prerequisites
 -------------
 
