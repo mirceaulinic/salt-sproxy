@@ -1,0 +1,27 @@
+router1:
+  driver: dummy
+  grains:
+    role: router
+router2:
+  driver: junos
+  grains:
+    role: router
+core1:
+  driver: iosxr
+  grains:
+    role: core-switch
+core2:
+  driver: iosxr
+  grains:
+    role: core-switch
+{%- for i in range(1, 101) %}
+tor{{ i }}:
+  driver: eos
+  grains:
+    role: tor-switch
+{%- endfor %}
+firewall:
+  driver: junos
+  host: firewall.s.as1234.net
+  grains:
+    role: firewall

@@ -1,0 +1,47 @@
+events: true
+timeout: 10
+
+cachedir: /tmp/sproxy-run/cache
+extension_modules: /tmp/sproxy-run/extmods
+api_logfile: /tmp/sproxy-run/log/api
+log_file: /tmp/sproxy-run/log/master
+pki_dir: /tmp/sproxy-run/pki
+sock_dir: /tmp/sproxy-run/master
+
+sdb_env:
+  driver: env
+
+file_roots:
+  base:
+    - sdb://sdb_env/SALT_SPROXY_PATH
+
+external_auth:
+  auto:
+    test-usr:
+    - '@jobs'
+    - '@runner'
+    - .*
+
+rest_cherrypy:
+  disable_ssl: true
+  port: 8080
+
+roster: file
+roster_file: sdb://sdb_env/SALT_ROSTER_FILE
+no_target_cache: true
+
+proxy:
+  proxytype: dummy
+
+redis.db: '0'
+redis.host: 'localhost'
+redis.port: 6379
+
+netbox:
+  token: 73a5003df5249d57e37efdeaa63b46db577f1f64
+  url: https://netbox.live/
+
+grains:
+  salt:
+    role: proxy
+    platform: sproxy
