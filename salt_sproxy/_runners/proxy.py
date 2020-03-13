@@ -961,6 +961,7 @@ def execute_devices(
                 time.sleep(0.02)
                 continue
             minion_id, device_opts = sproxy_execute_queue.get()
+            log.debug('Starting execution for %s', minion_id)
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
@@ -985,7 +986,9 @@ def execute_devices(
                 if failhard and proc.exitcode:
                     stop_iteration = True
 
-                if len(processes) < min(len(sproxy_minions), sproxy_batch_size):
+                if not sproxy_execute_queue.empty() and len(processes) < min(
+                    len(sproxy_minions), sproxy_batch_size
+                ):
                     # Wait to fill up the sproxy processes bucket, and only then
                     # start evaluating.
                     # Why `min()`? It is possible that we can run on a smaller
