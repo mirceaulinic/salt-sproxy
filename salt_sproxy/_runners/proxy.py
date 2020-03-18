@@ -1170,7 +1170,6 @@ def execute(
     show_jid=False,
     progress=False,
     hide_timeout=False,
-    saltenv='base',
     sync_roster=False,
     sync_modules=False,
     sync_grains=False,
@@ -1296,6 +1295,7 @@ def execute(
     rtargets = None
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
 
+    saltenv = __opts__.get('saltenv', 'base')
     if sync_roster:
         __salt__['saltutil.sync_roster'](saltenv=saltenv)
     if sync_modules:

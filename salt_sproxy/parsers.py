@@ -303,7 +303,7 @@ class SaltStandaloneProxyOptionParser(
         )
         self.add_option(
             '--saltenv',
-            dest='saltenv',
+            dest='saltenv_cli',
             action='store_true',
             help='The Salt environment name to load module and files from',
         )

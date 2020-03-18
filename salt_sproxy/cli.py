@@ -67,9 +67,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         verify_log(self.config)
         profiling_enabled = self.options.profiling_enabled
         curpath = os.path.dirname(os.path.realpath(__file__))
-        saltenv = self.config.get('saltenv')
+        saltenv = self.config.get('saltenv_cli', self.config.get('saltenv'))
         if not saltenv:
             saltenv = 'base'
+        self.config['saltenv'] = saltenv
         if self.config.get('pillar_root'):
             log.info(
                 'Setting and using %s as the Pillar root', self.config['pillar_root']
