@@ -80,6 +80,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 'Setting and using %s as the Salt file root', self.config['file_root']
             )
             self.config['file_root'] = {saltenv: self.config['file_root']}
+        if self.config.get('installation_path'):
+            salt.utils.stringutils.print_cli(curpath)
+            return
         if self.config.get('display_file_roots'):
             salt.utils.stringutils.print_cli(
                 'salt-sproxy is installed at: {}'.format(curpath)

@@ -1,5 +1,6 @@
 -r requirements.txt
 tox==3.14.5
-black
-pylint
-SaltPylint
+black==19.10b0
+pylint==2.4.4
+SaltPylint==2019.11.14
+CherryPy==18.3.0
