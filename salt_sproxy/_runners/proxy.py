@@ -41,7 +41,6 @@ import salt.utils.master
 from salt.ext import six
 from salt.minion import SMinion
 from salt.cli.batch import Batch
-from salt.ext.six.moves import range
 import salt.utils.stringutils
 import salt.defaults.exitcodes
 from salt.exceptions import SaltSystemExit
@@ -51,7 +50,7 @@ import salt.utils.napalm
 import salt.utils.dictupdate
 
 try:
-    from salt.utils.platform import is_proxy
+    from salt.utils.platform import is_proxy  # pylint: disable=unused-import
     from salt.utils.args import clean_kwargs
 except ImportError:
     from salt.utils import is_proxy  # pylint: disable=unused-import
@@ -210,7 +209,7 @@ class SProxyMinion(SMinion):
                 return False
         return True
 
-    def gen_modules(self, initial_load=False):
+    def gen_modules(self, initial_load=False):  # pylint: disable=arguments-differ
         '''
         Tell the minion to reload the execution modules.
 
@@ -442,7 +441,7 @@ def salt_call(
     timeout=60,
     returner='',
     returner_config='',
-    returner_kwargs={},
+    returner_kwargs=None,
     args=(),
     **kwargs
 ):
@@ -567,6 +566,8 @@ def salt_call(
         opts['proxy_cached_pillar'] = minion_cache.get('pillar')
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
+    if not returner_kwargs:
+        returner_kwargs = {}
     minion_defaults = salt.config.DEFAULT_MINION_OPTS.copy()
     minion_defaults.update(salt.config.DEFAULT_PROXY_MINION_OPTS)
     for opt, val in six.iteritems(minion_defaults):
@@ -677,7 +678,7 @@ def execute_devices(
     hide_timeout=False,
     returner='',
     returner_config='',
-    returner_kwargs={},
+    returner_kwargs=None,
     **kwargs
 ):
     '''
@@ -790,6 +791,8 @@ def execute_devices(
         event_kwargs = {'__kwarg__': True}
         event_kwargs.update(kwargs)
         event_args.append(event_kwargs)
+    if not returner_kwargs:
+        returner_kwargs = {}
     opts = {
         'with_grains': with_grains,
         'with_pillar': with_pillar,
@@ -879,7 +882,7 @@ def execute_devices(
         batch_opts['selected_target_option'] = 'list'
         batch_opts['return'] = returner
         batch_opts['ret_config'] = returner_config
-        ret_config['ret_kwargs'] = returner_kwargs
+        batch_opts['ret_kwargs'] = returner_kwargs
         cli_batch = Batch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
         log.debug(cli_batch.minions)
@@ -1174,7 +1177,7 @@ def execute(
     sync_all=False,
     returner='',
     returner_config='',
-    returner_kwargs={},
+    returner_kwargs=None,
     **kwargs
 ):
     '''
@@ -1443,4 +1446,3 @@ def execute(
         returner_kwargs=returner_kwargs,
         **kwargs
     )
-    return ret

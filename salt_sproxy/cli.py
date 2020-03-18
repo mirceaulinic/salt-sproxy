@@ -20,7 +20,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 from salt_sproxy.parsers import SaltStandaloneProxyOptionParser
 
 import os
-import ast
 import sys
 import logging
 

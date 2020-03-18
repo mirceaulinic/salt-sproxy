@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 import sys
-import logging
 import optparse
 import multiprocessing
 
@@ -12,7 +12,8 @@ import salt.version
 import salt.utils.args
 import salt.utils.parsers
 import salt.config as config
-
+from salt.ext.six.moves import map
+from salt.ext.six.moves import range
 
 try:
     from jnpr.junos import __version__ as jnpr_version
@@ -124,13 +125,13 @@ class SaltStandaloneProxyOptionParser(
     default_timeout = 60
 
     description = (
-        '''
+        r'''
   ___          _   _       ___   ___
  / __|  __ _  | | | |_    / __| | _ \  _ _   ___  __ __  _  _
  \__ \ / _` | | | |  _|   \__ \ |  _/ | '_| / _ \ \ \ / | || |
  |___/ \__,_| |_|  \__|   |___/ |_|   |_|   \___/ /_\_\  \_, |
                                                          |__/
-\n
+
 '''
         'salt-sproxy is a tool to invoke arbitrary Salt functions on a group\n'
         'of (network) devices connecting through a Salt Proxy Minion, without\n'

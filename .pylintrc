@@ -154,6 +154,8 @@ disable=R,
   E8266,
   E8402,
   E8731,
+  W0232,
+  C0415,
   3rd-party-local-module-not-gated,
   pep8-reserved-keywords
 
