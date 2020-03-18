@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 # Import Python std lib
 import sys
 import copy
+import json
 import math
 import time
 import hashlib
@@ -131,6 +132,11 @@ def _salt_call_and_return(
                 'success': retcode == 0,
             },
         )
+    try:
+        ret = json.loads(json.dumps(ret))
+    except (ValueError, TypeError):
+        log.error('Function return is not JSON-serializable data', exc_info=True)
+        log.error(ret)
     ret_queue.put({minion_id: ret})
     sys.exit(retcode)
 
