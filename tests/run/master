@@ -7,6 +7,7 @@ api_logfile: /tmp/sproxy-run/log/api
 log_file: /tmp/sproxy-run/log/master
 pki_dir: /tmp/sproxy-run/pki
 sock_dir: /tmp/sproxy-run/master
+sqlite_queue_dir: /tmp/sproxy-run/queue
 
 sdb_env:
   driver: env

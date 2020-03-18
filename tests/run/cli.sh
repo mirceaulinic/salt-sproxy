@@ -12,6 +12,7 @@ export SALT_SPROXY_PATH=$(salt-sproxy --installation-path)
 mkdir -p /tmp/sproxy-run/cache \
          /tmp/sproxy-run/log \
          /tmp/sproxy-run/pki \
+         /tmp/sproxy-run/queue \
          /tmp/sproxy-run/master \
          /tmp/sproxy-run/extmods
 
