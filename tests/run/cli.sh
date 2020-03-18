@@ -7,7 +7,7 @@ set -eu
 LOG_LEVEL=${SALT_LOG_LEVEL:-error}
 export SALT_CONFIG_DIR=$PWD
 export SALT_ROSTER_FILE=$PWD/roster
-export SALT_SPROXY_PATH=$(python -c 'import salt_sproxy; print(salt_sproxy.__path__[0])')
+export SALT_SPROXY_PATH=$(salt-sproxy --installation-path)
 
 mkdir -p /tmp/sproxy-run/cache \
          /tmp/sproxy-run/log \
