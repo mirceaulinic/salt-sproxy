@@ -1154,6 +1154,8 @@ def execute_devices(
                     },
                 )
     __context__['retcode'] = retcode
+    if retcode != salt.defaults.exitcodes.EX_OK:
+        salt.utils.stringutils.print_cli('ERROR: Minions returned with non-zero exit code')
     return resp
 
 
