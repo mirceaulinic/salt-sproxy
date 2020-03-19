@@ -155,7 +155,7 @@ def _existing_proxy_cli_batch(
         if ret and isinstance(ret, dict):
             minion_id = list(ret.keys())[0]
             if isinstance(ret[minion_id], dict) and 'retcode' in ret[minion_id]:
-                retcode = ret[minion_id]['retcode']
+                retcode = ret[minion_id].pop('retcode')
         ret_queue.put((ret, retcode))
         cumulative_retcode = max(cumulative_retcode, retcode)
     batch_stop_queue.put(cumulative_retcode)
