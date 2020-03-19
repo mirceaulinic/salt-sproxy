@@ -3,4 +3,4 @@ tox==3.14.5
 black==19.10b0
 pylint==2.4.4
 SaltPylint==2019.11.14
-CherryPy==18.3.0
+CherryPy==18.5.0
