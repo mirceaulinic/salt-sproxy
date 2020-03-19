@@ -137,7 +137,7 @@ def _salt_call_and_return(
     except (ValueError, TypeError):
         log.error('Function return is not JSON-serializable data', exc_info=True)
         log.error(ret)
-    ret_queue.put({minion_id: ret})
+    ret_queue.put(({minion_id: ret}, retcode))
     sys.exit(retcode)
 
 
@@ -147,11 +147,18 @@ def _existing_proxy_cli_batch(
     '''
     '''
     run = cli_batch.run()
+    cumulative_retcode = 0
     for ret in run:
         if not sproxy_stop_queue.empty():
             break
-        ret_queue.put(ret)
-    batch_stop_queue.put(_SENTINEL)
+        retcode = 0
+        if ret and isinstance(ret, dict):
+            minion_id = list(ret.keys())[0]
+            if isinstance(ret[minion_id], dict) and 'retcode' in ret[minion_id]:
+                retcode = ret[minion_id].pop('retcode')
+        ret_queue.put((ret, retcode))
+        cumulative_retcode = max(cumulative_retcode, retcode)
+    batch_stop_queue.put(cumulative_retcode)
 
 
 def _receive_replies_async(ret_queue, progress_bar):
@@ -159,16 +166,19 @@ def _receive_replies_async(ret_queue, progress_bar):
     '''
     count = 0
     while True:
-        ret = ret_queue.get()
+        ret, retcode = ret_queue.get()
         count += 1
         if ret == _SENTINEL:
             break
         # When async, print out the replies as soon as they arrive
         # after passing them through the outputter of choice
         out_fmt = salt.output.out_format(
-            ret, __opts__.get('output', 'nested'), opts=__opts__
+            ret, __opts__.get('output', 'nested'), opts=__opts__, _retcode=retcode,
         )
-        salt.utils.stringutils.print_cli(out_fmt)
+        if out_fmt:
+            # out_fmt can be empty string, for example, when using the ``quiet``
+            # outputter, or potentially other use cases.
+            salt.utils.stringutils.print_cli(out_fmt)
         if progress_bar:
             progress_bar.update(count)
 
@@ -177,9 +187,10 @@ def _receive_replies_sync(ret_queue, static_queue, progress_bar):
     '''
     '''
     count = 0
+    cumulative_retcode = 0
     while True:
-        ret = ret_queue.get()
-        static_queue.put(ret)
+        ret, retcode = ret_queue.get()
+        static_queue.put((ret, retcode))
         count += 1
         if ret == _SENTINEL:
             break
@@ -928,7 +939,7 @@ def execute_devices(
         # If there's no batch to execute (i.e., no existing devices to run
         # against), just need to signalise that there's no need to wait for this
         # one to complete.
-        batch_stop_queue.put(_SENTINEL)
+        batch_stop_queue.put(0)
 
     log.debug(
         'Executing sproxy normal run on the following devices (%d batch size):',
@@ -1014,10 +1025,13 @@ def execute_devices(
                     sproxy_processes.remove(proc)
                     if not hide_timeout:
                         ret_queue.put(
-                            {proc._name: 'Minion did not return. [No response]'}
+                            (
+                                {proc._name: 'Minion did not return. [No response]'},
+                                salt.defaults.exitcodes.EX_UNAVAILABLE,
+                            )
                         )
-                    # return code 1 on process timeout?
-                    retcode = max(retcode, 1)
+                    # return code EX_UNAVAILABLE on process timeout?
+                    retcode = max(retcode, salt.defaults.exitcodes.EX_UNAVAILABLE)
                     timeout_devices.append(proc._name)
 
                 if proc.exitcode and isinstance(proc.exitcode, int):
@@ -1033,7 +1047,7 @@ def execute_devices(
 
             if stop_iteration:
                 log.error('Exiting as an error has occurred')
-                ret_queue.put(_SENTINEL)
+                ret_queue.put((_SENTINEL, salt.defaults.exitcodes.EX_GENERIC))
                 sproxy_stop_queue.put(_SENTINEL)
                 for proc in sproxy_processes:
                     proc.terminate()
@@ -1051,9 +1065,11 @@ def execute_devices(
         # Waiting for the existing proxy batch to finish.
         while batch_stop_queue.empty():
             time.sleep(0.02)
+        batch_retcode = batch_stop_queue.get()
+        retcode = max(retcode, batch_retcode)
 
         # Prepare to quit.
-        ret_queue.put(_SENTINEL)
+        ret_queue.put((_SENTINEL, 0))
         # Wait a little to dequeue and print before throwing the progressbar,
         # the summary, etc.
         time.sleep(0.02)
@@ -1063,7 +1079,8 @@ def execute_devices(
         if static:
             resp = {}
             while True:
-                ret = static_queue.get()
+                ret, _retcode = static_queue.get()
+                retcode = max(retcode, _retcode)
                 if ret == _SENTINEL:
                     break
                 resp.update(ret)
@@ -1140,6 +1157,10 @@ def execute_devices(
                     },
                 )
     __context__['retcode'] = retcode
+    if retcode != salt.defaults.exitcodes.EX_OK:
+        salt.utils.stringutils.print_cli(
+            'ERROR: Minions returned with non-zero exit code'
+        )
     return resp
 
 
