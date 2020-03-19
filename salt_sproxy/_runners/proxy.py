@@ -939,7 +939,7 @@ def execute_devices(
         # If there's no batch to execute (i.e., no existing devices to run
         # against), just need to signalise that there's no need to wait for this
         # one to complete.
-        batch_stop_queue.put(_SENTINEL)
+        batch_stop_queue.put(0)
 
     log.debug(
         'Executing sproxy normal run on the following devices (%d batch size):',
