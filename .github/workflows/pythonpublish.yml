@@ -21,6 +21,7 @@ jobs:
     - name: Generate manuals
       run: |
         cd docs/
+        pip install -r requirements.txt
         make man
         mv _build/man/* man/
         cd ..
