@@ -14,18 +14,23 @@ with codecs.open('pypi.rst', 'r', encoding='utf8') as file:
 with open("requirements.txt", "r") as fs:
     reqs = [r for r in fs.read().splitlines() if (len(r) > 0 and not r.startswith("#"))]
 
+name = 'salt-sproxy'
+repo_slug = 'mirceaulinic/{}'.format(name)
+repo_url = 'https://github.com/{}'.format(repo_slug)
+
 setup(
-    name='salt-sproxy',
+    name=name,
     version='2020.3.0',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
     author_email='ping@mirceaulinic.net',
-    description='Salt plugin for interacting with network devices, without running Minions',
+    description='Salt plugin for managing devices and applications, without running (Proxy) Minions',
     long_description=long_description,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
+        'Environment :: Plugins',
         'License :: OSI Approved :: Apache Software License',
         'Topic :: Utilities',
         'Topic :: System :: Networking',
@@ -38,9 +43,10 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Operating System :: POSIX',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: MacOS',
@@ -53,6 +59,12 @@ setup(
     url='https://github.com/mirceaulinic/salt-sproxy',
     license="Apache License 2.0",
     keywords=('salt', 'network', 'automation', 'cli', 'proxy', 'minion'),
+    project_urls={
+        'CI: GitHub Actions': '{}/actions'.format(repo_url),
+        'Docs: RTD': 'https://salt-sproxy.readthedocs.io/',
+        'GitHub: issues': '{}/issues'.format(repo_url),
+        'GitHub: repo': repo_url,
+    },
     include_package_data=True,
     install_requires=reqs,
     entry_points={

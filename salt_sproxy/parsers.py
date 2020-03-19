@@ -303,7 +303,7 @@ class SaltStandaloneProxyOptionParser(
         )
         self.add_option(
             '--saltenv',
-            dest='saltenv',
+            dest='saltenv_cli',
             action='store_true',
             help='The Salt environment name to load module and files from',
         )
@@ -353,6 +353,12 @@ class SaltStandaloneProxyOptionParser(
                 'Multiple directories can be provided by passing '
                 '`-m/--module-dirs` multiple times.'
             ),
+        )
+        self.add_option(
+            '--installation-path',
+            dest='installation_path',
+            action='store_true',
+            help=('Display the absolute path to where salt-sproxy is installed.'),
         )
         self.add_option(
             '--display-file-roots',
@@ -500,6 +506,7 @@ class SaltStandaloneProxyOptionParser(
     def _mixin_after_parsed(self):
         if (
             self.options.display_file_roots
+            or self.options.installation_path
             or self.options.save_file_roots
             or self.options.config_dump
         ):

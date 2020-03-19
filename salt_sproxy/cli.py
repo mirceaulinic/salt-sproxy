@@ -67,9 +67,10 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         verify_log(self.config)
         profiling_enabled = self.options.profiling_enabled
         curpath = os.path.dirname(os.path.realpath(__file__))
-        saltenv = self.config.get('saltenv')
+        saltenv = self.config.get('saltenv_cli', self.config.get('saltenv'))
         if not saltenv:
             saltenv = 'base'
+        self.config['saltenv'] = saltenv
         if self.config.get('pillar_root'):
             log.info(
                 'Setting and using %s as the Pillar root', self.config['pillar_root']
@@ -80,6 +81,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 'Setting and using %s as the Salt file root', self.config['file_root']
             )
             self.config['file_root'] = {saltenv: self.config['file_root']}
+        if self.config.get('installation_path'):
+            salt.utils.stringutils.print_cli(curpath)
+            return
         if self.config.get('display_file_roots'):
             salt.utils.stringutils.print_cli(
                 'salt-sproxy is installed at: {}'.format(curpath)

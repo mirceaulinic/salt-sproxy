@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 # Import Python std lib
 import sys
 import copy
+import json
 import math
 import time
 import hashlib
@@ -131,6 +132,11 @@ def _salt_call_and_return(
                 'success': retcode == 0,
             },
         )
+    try:
+        ret = json.loads(json.dumps(ret))
+    except (ValueError, TypeError):
+        log.error('Function return is not JSON-serializable data', exc_info=True)
+        log.error(ret)
     ret_queue.put({minion_id: ret})
     sys.exit(retcode)
 
@@ -961,6 +967,7 @@ def execute_devices(
                 time.sleep(0.02)
                 continue
             minion_id, device_opts = sproxy_execute_queue.get()
+            log.debug('Starting execution for %s', minion_id)
             device_proc = multiprocessing.Process(
                 target=_salt_call_and_return,
                 name=minion_id,
@@ -985,7 +992,9 @@ def execute_devices(
                 if failhard and proc.exitcode:
                     stop_iteration = True
 
-                if len(processes) < min(len(sproxy_minions), sproxy_batch_size):
+                if not sproxy_execute_queue.empty() and len(processes) < min(
+                    len(sproxy_minions), sproxy_batch_size
+                ):
                     # Wait to fill up the sproxy processes bucket, and only then
                     # start evaluating.
                     # Why `min()`? It is possible that we can run on a smaller
@@ -1170,7 +1179,6 @@ def execute(
     show_jid=False,
     progress=False,
     hide_timeout=False,
-    saltenv='base',
     sync_roster=False,
     sync_modules=False,
     sync_grains=False,
@@ -1296,6 +1304,7 @@ def execute(
     rtargets = None
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
 
+    saltenv = __opts__.get('saltenv', 'base')
     if sync_roster:
         __salt__['saltutil.sync_roster'](saltenv=saltenv)
     if sync_modules:
