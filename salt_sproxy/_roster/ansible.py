@@ -89,14 +89,11 @@ Any of the [groups] or direct hostnames will return.  The 'all' is special, and 
 '''
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals
-import re
 import copy
 import json
-import fnmatch
 import logging
 
 # Import Salt libs
-import salt.utils
 from salt.roster import get_roster_file
 
 try:

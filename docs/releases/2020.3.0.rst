@@ -1,0 +1,232 @@
+.. _release-2020.3.0:
+
+================
+Release 2020.3.0
+================
+
+This release brings a better integration with the existing Salt environment, 
+as well as improved the performance for the devices managed through 
+*salt-sproxy* exclusively.
+
+Existing Salt environment
+-------------------------
+
+When install *salt-sproxy* in an environment where you're usually executing Salt
+commands from (i.e., typically on the Salt Master), *salt-sproxy* allows you to
+access and run commands against the existing Proxy Minions, or regular Minions.
+For example, let's say you execute the following from your existing Salt setup:
+
+.. code-block:: bash
+
+    $ salt 'device*' test.ping
+    device7:
+        True
+    device3:
+        True
+    device1:
+        True
+    device4:
+        True
+    device5:
+        True
+    device2:
+        True
+    device6:
+        True
+
+After installing *salt-sproxy* on the Salt Master (e.g., ``pip install 
+salt-sproxy``), you'll be able to execute the following command with the same
+effect:
+
+.. code-block:: bash
+
+    $ salt-sproxy 'device*' test.ping --use-existing-proxy
+    device7:
+        True
+    device3:
+        True
+    device1:
+        True
+    device4:
+        True
+    device5:
+        True
+    device2:
+        True
+    device6:
+        True
+
+To simplify the usage, you can put the following configuration option into the
+Salt Master configuration:
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+    use_existing_proxy: true
+
+With this configuration, you can execute the above as: ``salt-sproxy 'device*' 
+test.ping``.
+
+The execution time of the above command is now much faster compared to previous
+*salt-sproxy* releases, as it now invokes internal Salt code sequences, that
+makes the execution through ``salt-sproxy`` the equivalent of using ``salt``
+with the ``-b`` (batch size) CLI argument.
+
+That said, if you want to continue managing your existing minions (or some of
+them), as of today, and would like to manage some additional devices but 
+without spinning up (Proxy) Minions for those, *salt-sproxy* will allow you do
+that. For example, in the networking context, you may want to manage some 
+devices, such as routers, core switches, etc., using Proxy Minions - but 
+others, more statical, such as console servers, OOB switches, and so on, you may
+not want to leverage Proxy Minions for them, and manage them through
+*salt-sproxy*. That said, *salt-sproxy* can help you benefit from both worlds at
+the same time: all you have to do is provide a Roster for those you don't want
+to spin up (Proxy) Minions for (see also :ref:`using-roster`).
+
+As a quick example, suppose you want to manage ``device8`` and ``device9``, 
+besides ``device1`` ... ``device7`` from the example above (which have Minions
+running). In that case, ``device8`` and ``device9`` would need to be provided
+in a Roster - for simplicity, let's consider the :ref:`file-roster`:
+
+``/etc/salt/roster``
+
+.. code-block:: yaml
+
+    device8:
+      proxytype: junos
+      host: <ip or dns name of host>
+      username: <username>
+      password: <secret>
+    device9:
+      proxytype: napalm
+      driver: <napalm driver>
+      host: <ip or dns name of host>
+      username: <username>
+      password: <secret>
+    device10:
+      proxytype: netmiko
+      device_type: mellanox
+      host: <ip or dns name of host>
+      username: <username>
+      password: <secret>
+
+In the previous example, ``device8`` would be managed through the `junos 
+<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.junos.html>`__ 
+Proxy module, while ``device9`` using the `NAPALM 
+<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.napalm.html>`__ 
+Proxy module, and ``device10`` using the `Netmiko 
+<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.netmiko_px.html>`__ 
+Proxy module - see the documentation of each to understand what options are
+required.
+
+In order to load the Roster file above, you will also need to update the Master
+configuration file:
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+    roster: file
+    use_existing_proxy: true
+
+With these two files updated, you can now execute:
+
+.. code-block:: bash
+
+    $ salt-sproxy 'device*' test.ping
+    device7:
+        True
+    device3:
+        True
+    device1:
+        True
+    device4:
+        True
+    device5:
+        True
+    device2:
+        True
+    device6:
+        True
+    device8:
+        True
+    device9:
+        True
+    device10:
+        True
+
+Notice that the above uniformly returns the output from the existing Minions as
+well as those managed through *salt-sproxy* exclusively.
+
+.. tip::
+
+    If you'd like to preserve the syntax your users are accustomed to, you may
+    consider replacing ``/usr/bin/salt`` with ``$(which salt-sproxy)``, then
+    then syntax remains ``salt 'device*' test.ping``.
+
+Devices managed through *salt-sproxy* exclusively
+-------------------------------------------------
+
+There's no significant change from a functional perspective, however, the 
+experience from the command line, for devices managed through *salt-sproxy* 
+exclusively is now improved and the execution is faster, particularly when one
+or more devices are unreachable, or that's an error of another nature. Compared
+to the previous releases, an execution against a device starts immediately after
+the previous one completes - versus before when an entire batch was waiting
+for the previous entire batch to complete. As a result, the execution feels 
+more similar to the usual *salt* command, even though you don't manage (Proxy)
+Minions services per se.
+
+Summary events fired on the event bus
+-------------------------------------
+
+When executing a command with ``--summary``, *salt-sproxy* not injects an event 
+on the Salt bus (you'll need to have a Salt Master running for this). For
+example, at the end of the execution of the command from the example above, the
+following event would be seen on the bus:
+
+.. code-block:: json
+
+  proxy/runner/20200318131327481717/summary	{
+      "_stamp": "2020-03-18T13:13:39.321346",
+      "down_minions": [],
+      "existing_minions": [
+          "device1",
+          "device2",
+          "device3",
+          "device4",
+          "device5",
+          "device6",
+          "device7"
+      ],
+      "failed_minions": [],
+      "fun": "test.ping",
+      "fun_args": [],
+      "jid": "20200318131327481717",
+      "matched_minions": [
+          "device1",
+          "device2",
+          "device3",
+          "device4",
+          "device5",
+          "device6",
+          "device7",
+          "device8",
+          "device9",
+          "device10",
+      ],
+      "sproxy_minions": [
+          "device8",
+          "device9",
+          "device10",
+      ],
+      "tgt": "device*",
+      "tgt_type": "glob",
+      "timeout_minions": [],
+      "unreachable_devices": [],
+      "user": "sudo_mulinic"
+  }
+
+This event provides an event with report for what devices replied, and which
+are managed through *salt-sproxy*, etc., similar to the CLI summary.

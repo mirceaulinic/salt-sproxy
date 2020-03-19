@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 import sys
-import logging
 import optparse
 import multiprocessing
 
@@ -12,7 +12,8 @@ import salt.version
 import salt.utils.args
 import salt.utils.parsers
 import salt.config as config
-
+from salt.ext.six.moves import map
+from salt.ext.six.moves import range
 
 try:
     from jnpr.junos import __version__ as jnpr_version
@@ -124,13 +125,13 @@ class SaltStandaloneProxyOptionParser(
     default_timeout = 60
 
     description = (
-        '''
+        r'''
   ___          _   _       ___   ___
  / __|  __ _  | | | |_    / __| | _ \  _ _   ___  __ __  _  _
  \__ \ / _` | | | |  _|   \__ \ |  _/ | '_| / _ \ \ \ / | || |
  |___/ \__,_| |_|  \__|   |___/ |_|   |_|   \___/ /_\_\  \_, |
                                                          |__/
-\n
+
 '''
         'salt-sproxy is a tool to invoke arbitrary Salt functions on a group\n'
         'of (network) devices connecting through a Salt Proxy Minion, without\n'
@@ -302,7 +303,7 @@ class SaltStandaloneProxyOptionParser(
         )
         self.add_option(
             '--saltenv',
-            dest='saltenv',
+            dest='saltenv_cli',
             action='store_true',
             help='The Salt environment name to load module and files from',
         )
@@ -352,6 +353,12 @@ class SaltStandaloneProxyOptionParser(
                 'Multiple directories can be provided by passing '
                 '`-m/--module-dirs` multiple times.'
             ),
+        )
+        self.add_option(
+            '--installation-path',
+            dest='installation_path',
+            action='store_true',
+            help=('Display the absolute path to where salt-sproxy is installed.'),
         )
         self.add_option(
             '--display-file-roots',
@@ -499,6 +506,7 @@ class SaltStandaloneProxyOptionParser(
     def _mixin_after_parsed(self):
         if (
             self.options.display_file_roots
+            or self.options.installation_path
             or self.options.save_file_roots
             or self.options.config_dump
         ):

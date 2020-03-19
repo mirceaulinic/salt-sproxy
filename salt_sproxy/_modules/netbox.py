@@ -108,7 +108,7 @@ def _add(app, endpoint, payload):
     nb = _nb_obj(auth_required=True)
     try:
         return getattr(getattr(nb, app), endpoint).create(**payload)
-    except RequestError as e:
+    except RequestError as e:  # pylint: disable=undefined-variable
         log.error('%s, %s, %s', e.req.request.headers, e.request_body, e.error)
         return False
 
@@ -390,7 +390,7 @@ def create_device(name, role, model, manufacturer, site):
             return False
 
         status = {'label': "Active", 'value': 1}
-    except RequestError as e:
+    except RequestError as e:  # pylint: disable=undefined-variable
         log.error('%s, %s, %s', e.req.request.headers, e.request_body, e.error)
         return False
 
@@ -433,7 +433,7 @@ def update_device(name, **kwargs):
     try:
         nb_device.save()
         return {'dcim': {'devices': kwargs}}
-    except RequestError as e:
+    except RequestError as e:  # pylint: disable=undefined-variable
         log.error('%s, %s, %s', e.req.request.headers, e.request_body, e.error)
         return False
 
@@ -816,7 +816,7 @@ def update_interface(device_name, interface_name, **kwargs):
         try:
             nb_interface.save()
             return {'dcim': {'interfaces': {nb_interface.id: dict(nb_interface)}}}
-        except RequestError as e:
+        except RequestError as e:  # pylint: disable=undefined-variable
             log.error('%s, %s, %s', e.req.request.headers, e.request_body, e.error)
             return False
 
