@@ -4,6 +4,7 @@
 [![Docker pulls](https://img.shields.io/docker/pulls/mirceaulinic/salt-sproxy.svg)](https://hub.docker.com/r/mirceaulinic/salt-sproxy)
 [![PyPI status](https://img.shields.io/pypi/status/salt-sproxy.svg)](https://pypi.python.org/pypi/salt-sproxy/)
 [![PyPI versions](https://img.shields.io/pypi/pyversions/salt-sproxy.svg)](https://pypi.python.org/pypi/salt-sproxy/)
+![Test plugin](https://github.com/mirceaulinic/salt-sproxy/workflows/Test%20plugin/badge.svg)
 [![Documentation status](https://readthedocs.org/projects/salt-sproxy/badge/?version=latest)](http://salt-sproxy.readthedocs.io/?badge=latest)
 [![Code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![License](https://img.shields.io/pypi/l/salt-sproxy.svg)](https://pypi.python.org/pypi/salt-sproxy/)
