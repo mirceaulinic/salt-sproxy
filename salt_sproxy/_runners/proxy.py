@@ -1025,10 +1025,13 @@ def execute_devices(
                     sproxy_processes.remove(proc)
                     if not hide_timeout:
                         ret_queue.put(
-                            ({proc._name: 'Minion did not return. [No response]'}, 1)
+                            (
+                                {proc._name: 'Minion did not return. [No response]'},
+                                salt.defaults.exitcodes.EX_UNAVAILABLE,
+                            )
                         )
-                    # return code 1 on process timeout?
-                    retcode = max(retcode, 1)
+                    # return code EX_UNAVAILABLE on process timeout?
+                    retcode = max(retcode, salt.defaults.exitcodes.EX_UNAVAILABLE)
                     timeout_devices.append(proc._name)
 
                 if proc.exitcode and isinstance(proc.exitcode, int):
@@ -1044,7 +1047,7 @@ def execute_devices(
 
             if stop_iteration:
                 log.error('Exiting as an error has occurred')
-                ret_queue.put((_SENTINEL, 1))
+                ret_queue.put((_SENTINEL, salt.defaults.exitcodes.EX_GENERIC))
                 sproxy_stop_queue.put(_SENTINEL)
                 for proc in sproxy_processes:
                     proc.terminate()
@@ -1155,7 +1158,9 @@ def execute_devices(
                 )
     __context__['retcode'] = retcode
     if retcode != salt.defaults.exitcodes.EX_OK:
-        salt.utils.stringutils.print_cli('ERROR: Minions returned with non-zero exit code')
+        salt.utils.stringutils.print_cli(
+            'ERROR: Minions returned with non-zero exit code'
+        )
     return resp
 
 
