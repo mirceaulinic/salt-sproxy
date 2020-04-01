@@ -67,8 +67,8 @@ a temporary light version of the Proxy Minion underneath; as soon as the
 execution is complete for a device, its associated Proxy Minion is shut down, 
 and another one takes its place into the child processes bucket.
 
-A source of confusion may also be the usage of the [Roster]( 
-(https://salt-sproxy.readthedocs.io/en/latest/roster.html) interface, which,
+A source of confusion may also be the usage of the [Roster](
+https://salt-sproxy.readthedocs.io/en/latest/roster.html) interface, which,
 historically has only been used by *salt-ssh*, although the Roster is not 
 tightly coupled with *salt-ssh*: it just happened to be the only use case so 
 far. Essentially, the Roster simply provides a list of devices together with 
