@@ -910,6 +910,14 @@ def execute_devices(
                 ', '.join(cli_batch.down_minions),
             )
             down_minions = cli_batch.down_minions
+            for minion in down_minions:
+                ret_queue.put(
+                    (
+                        {minion: 'Minion did not return. [Not connected]'},
+                        salt.defaults.exitcodes.EX_UNAVAILABLE,
+                    )
+                )
+
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
