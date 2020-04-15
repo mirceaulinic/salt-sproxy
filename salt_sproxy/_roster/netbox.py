@@ -51,11 +51,16 @@ try:
 except ImportError:
     HAS_PYNETBOX = False
 
+import salt.utils.args
+from salt.exceptions import CommandExecutionError
+
 import salt_sproxy._roster
 
 __virtualname__ = 'netbox'
 
 log = logging.getLogger(__name__)
+
+AUTH_ENDPOINTS = ('secrets',)
 
 
 def __virtual__():
@@ -86,6 +91,63 @@ def _setval(key, val, dict_=None, delim=':'):
     return dict_
 
 
+def _netbox_config():
+    config = __opts__.get('netbox')
+    if not config:
+        raise CommandExecutionError(
+            'NetBox configuration could not be found in the Master config'
+        )
+    return config
+
+
+def _nb_obj(auth_required=False):
+    pynb_kwargs = {}
+    nb_config = _netbox_config()
+    pynb_kwargs['token'] = nb_config.get('token')
+    if auth_required:
+        pynb_kwargs['private_key_file'] = nb_config.get('keyfile')
+    return pynetbox.api(nb_config.get('url'), **pynb_kwargs)
+
+
+def _strip_url_field(input_dict):
+    if 'url' in input_dict.keys():
+        del input_dict['url']
+    for k, v in input_dict.items():
+        if isinstance(v, dict):
+            _strip_url_field(v)
+    return input_dict
+
+
+def _netbox_filter(app, endpoint, **kwargs):
+    '''
+    Get a list of items from NetBox.
+
+    app
+        String of netbox app, e.g., ``dcim``, ``circuits``, ``ipam``
+
+    endpoint
+        String of app endpoint, e.g., ``sites``, ``regions``, ``devices``
+
+    kwargs
+        Optional arguments that can be used to filter.
+        All filter keywords are available in Netbox,
+        which can be found by surfing to the corresponding API endpoint,
+        and clicking Filters. e.g., ``role=router``
+
+    Returns a list of dictionaries.
+    '''
+    ret = []
+    nb = _nb_obj(auth_required=True if app in AUTH_ENDPOINTS else False)
+    clean_kwargs = salt.utils.args.clean_kwargs(**kwargs)
+    if not clean_kwargs:
+        nb_query = getattr(getattr(nb, app), endpoint).all()
+    else:
+        nb_query = getattr(getattr(nb, app), endpoint).filter(**clean_kwargs)
+    if nb_query:
+        ret = [_strip_url_field(dict(i)) for i in nb_query]
+    return ret
+
+
 def targets(tgt, tgt_type='glob', **kwargs):
     '''
     Return the targets from NetBox.
@@ -108,9 +170,7 @@ def targets(tgt, tgt_type='glob', **kwargs):
             filtered = True
     log.debug('Querying NetBox with the following filters')
     log.debug(netbox_filters)
-    netbox_devices = __runner__['salt.cmd'](
-        'netbox.filter', 'dcim', 'devices', **netbox_filters
-    )
+    netbox_devices = _netbox_filter('dcim', 'devices', **netbox_filters)
     pool = {
         device['name']: {'minion_opts': {'grains': {'netbox': device}}}
         for device in netbox_devices
