@@ -560,8 +560,6 @@ def salt_call(
         opts['saltenv'] = 'base'
     if not default_grains:
         default_grains = {}
-    if use_cached_grains or use_cached_pillar:
-        minion_cache = __salt__['cache.fetch']('minions/{}'.format(minion_id), 'data')
     opts['grains'] = default_grains
     if not default_pillar:
         default_pillar = {}
@@ -578,10 +576,14 @@ def salt_call(
     opts['proxy_no_connect'] = no_connect
     opts['proxy_test_ping'] = test_ping
     if use_cached_grains:
-        opts['proxy_cached_grains'] = minion_cache.get('grains')
+        opts['proxy_cached_grains'] = __salt__['cache.fetch'](
+            'minions/{}/data'.format(minion_id), 'grains'
+        )
     opts['proxy_use_cached_pillar'] = use_cached_pillar
     if use_cached_pillar:
-        opts['proxy_cached_pillar'] = minion_cache.get('pillar')
+        opts['proxy_cached_pillar'] = __salt__['cache.fetch'](
+            'minions/{}/data'.format(minion_id), 'pillar'
+        )
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
     if not returner_kwargs:
