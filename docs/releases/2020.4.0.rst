@@ -1,0 +1,16 @@
+.. _release-2020.4.0:
+
+================
+Release 2020.4.0
+================
+
+Explicit return when the Minion is not connected
+------------------------------------------------
+
+When using *salt-sproxy* to execute against running (Proxy) Minions, it may 
+happen sometimes that the Minion is not available for various reasons (e.g., 
+key accepted, but the service is not fully started, etc.). When this happens, 
+*salt-sprox* now returns an explicit message ``Minion did not return. [Not 
+connected]`` for better feedback on the command line.
+
+
