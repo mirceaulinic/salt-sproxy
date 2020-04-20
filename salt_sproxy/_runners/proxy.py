@@ -311,7 +311,10 @@ class SProxyMinion(SMinion):
             raise SaltSystemExit(code=salt.defaults.exitcodes.EX_GENERIC, msg=errmsg)
 
         if 'proxy' not in self.opts:
-            self.opts['proxy'] = self.opts['pillar']['proxy']
+            self.opts['proxy'] = {}
+        self.opts['proxy'] = salt.utils.dictupdate.merge(
+            self.opts['proxy'], self.opts['pillar']['proxy']
+        )
 
         # Then load the proxy module
         self.utils = salt.loader.utils(self.opts)
