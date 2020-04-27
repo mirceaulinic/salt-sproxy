@@ -35,6 +35,9 @@ salt-sproxy -G salt:role:proxy --preview --out=json | jq -e '. | length == 105'
 echo "test.ping against the entire pool"
 salt-sproxy \* test.ping -p --static --out=json | jq -e '. | length == 105'
 
+echo "Testing batch size execution as percentage"
+salt-sproxy \* test.ping -b 20% -p --static --out=json | jq -e '. | length == 105'
+
 echo "Test invasive targeting"
 # the nodename Grain is collected only on Minion startup, which helps validate
 # whether the --invasive-targeting works well
