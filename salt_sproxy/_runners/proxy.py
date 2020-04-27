@@ -880,7 +880,7 @@ def execute_devices(
         thread.start()
 
     ret = {}
-    if '%' in batch_size:
+    if '%' in str(batch_size):
         percent = int(batch_size.replace('%', ''))
         batch_size = len(minions) * percent / 100
     batch_size = int(batch_size)
