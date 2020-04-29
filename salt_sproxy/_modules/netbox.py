@@ -42,6 +42,7 @@ from salt.exceptions import CommandExecutionError
 
 try:
     import pynetbox
+    from pynetbox import RequestError
 
     HAS_PYNETBOX = True
 except ImportError:
