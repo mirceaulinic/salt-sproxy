@@ -312,6 +312,8 @@ class SProxyMinion(SMinion):
 
         if 'proxy' not in self.opts:
             self.opts['proxy'] = {}
+        if 'proxy' not in self.opts['pillar']:
+            self.opts['pillar']['proxy'] = {}
         self.opts['proxy'] = salt.utils.dictupdate.merge(
             self.opts['proxy'], self.opts['pillar']['proxy']
         )
