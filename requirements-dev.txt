@@ -1,6 +1,6 @@
 -r requirements.txt
 tox==3.15.0
 black==19.10b0
-pylint==2.5.0
+pylint==2.5.2
 SaltPylint==2019.11.14
 CherryPy==18.1.0
