@@ -197,7 +197,7 @@ def pcre(pool, tgt, opts=None):
 def nodegroup(pool, tgt, opts=None):
     '''
     '''
-    nodegroups = opts.get('nodegroup', {})
+    nodegroups = opts.get('nodegroups', {})
     # tgt is the name of the nodegroup
     if tgt not in nodegroups:
         return {}
