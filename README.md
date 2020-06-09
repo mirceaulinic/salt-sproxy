@@ -48,7 +48,7 @@ In brief, here are some benefits you can get by using *salt-sproxy*:
 - Can continue to leverage the event-driven automation and orchestration
   methodologies.
 - Can continue using any of the usual [targeting mechanisms](
-  (https://salt-sproxy.readthedocs.io/en/latest/targeting.html).
+  https://salt-sproxy.readthedocs.io/en/latest/targeting.html).
 - REST API, see also
   [the Salt REST API](https://salt-sproxy.readthedocs.io/en/latest/salt_api.html)
   documentation.
