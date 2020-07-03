@@ -41,6 +41,18 @@ already familiar with a vast majority of them from the `salt
     Print the complete salt-sproxy configuration values (with the defaults), as 
     YAML.
 
+.. option:: -t, --timeout
+
+    The time in seconds to await for a device to reply. Default: 60 (seconds).
+
+    When a device is not replying within this time, it is a good idea to 
+    increase the timeout value. The return when the device is slowly responding 
+    is ``Minion did not return. [No response]``. When used in conjunction with 
+    ``--summary``, the device will be counted under ``# of devices that did not 
+    return``, but not ``# of devices returned``. Moreover, salt-sproxy will 
+    exit with non-zero code, and the ``ERROR: Minions returned with non-zero 
+    exit code`` message will be displayed at the end.
+
 .. option:: -r, --roster
 
     The Roster module to use to compile the list of targeted devices.
