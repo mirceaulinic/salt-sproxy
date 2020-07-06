@@ -46,3 +46,7 @@ grains:
   salt:
     role: proxy
     platform: sproxy
+
+disable_grains:
+  # disabling ESXI Grain module load due to https://github.com/saltstack/salt/issues/57811
+  - esxi

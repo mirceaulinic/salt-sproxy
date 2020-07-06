@@ -319,14 +319,16 @@ class SProxyMinion(SMinion):
         )
 
         # Then load the proxy module
+        fq_proxyname = self.opts['proxy']['proxytype']
         self.utils = salt.loader.utils(self.opts)
-        self.proxy = salt.loader.proxy(self.opts, utils=self.utils)
+        self.proxy = salt.loader.proxy(
+            self.opts, utils=self.utils, whitelist=[fq_proxyname]
+        )
         self.functions = salt.loader.minion_mods(
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
         self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
 
-        fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
         self.proxy.pack['__salt__'] = self.functions
         self.proxy.pack['__pillar__'] = self.opts['pillar']
