@@ -592,4 +592,6 @@ class SaltStandaloneProxyOptionParser(
                 self.exit(42, '\nIncomplete options passed.\n\n')
 
     def setup_config(self):
-        return config.client_config(self.get_config_file_path())
+        defaults = config.DEFAULT_MASTER_OPTS.copy()
+        defaults['timeout'] = 60
+        return config.client_config(self.get_config_file_path(), defaults=defaults)
