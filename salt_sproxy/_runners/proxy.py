@@ -51,10 +51,13 @@ import salt.utils.napalm
 import salt.utils.dictupdate
 
 try:
-    from salt.utils.platform import is_proxy  # pylint: disable=unused-import
+    import salt.utils.platform
     from salt.utils.args import clean_kwargs
+
+    OLD_SALT = False
 except ImportError:
-    from salt.utils import is_proxy  # pylint: disable=unused-import
+    OLD_SALT = True
+    import salt.utils
     from salt.utils import clean_kwargs
 
 try:
@@ -95,7 +98,10 @@ def _is_proxy():
 
 
 # Same rationale as above, for any other Proxy type.
-is_proxy = _is_proxy
+if not OLD_SALT:
+    salt.utils.platform.is_proxy = _is_proxy
+else:
+    salt.utils.is_proxy = _is_proxy
 
 
 def _salt_call_and_return(
