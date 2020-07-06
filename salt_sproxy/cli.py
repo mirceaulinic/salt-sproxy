@@ -192,7 +192,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_client = None
         sync_all = self.config.get('sync_all', False)
         sync_grains = self.config.get('sync_grains', True)
-        sync_modules = self.config.get('sync_modules', False)
+        sync_modules = self.config.get('sync_modules', True)
         sync_roster = self.config.get('sync_roster', True)
         if any([sync_all, sync_grains, sync_modules, sync_roster]):
             runner_client = salt.runner.RunnerClient(self.config)

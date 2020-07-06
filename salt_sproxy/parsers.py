@@ -280,7 +280,6 @@ class SaltStandaloneProxyOptionParser(
             '--sync-grains',
             dest='sync_grains',
             action='store_true',
-            default=False,
             help=(
                 'Re-sync the Grains modules. Useful if you have custom Grains '
                 'modules in your own environment.'
