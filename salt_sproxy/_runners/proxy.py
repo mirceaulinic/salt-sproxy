@@ -1420,7 +1420,9 @@ def execute(
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
-            roster_modules = salt.loader.roster(__opts__, runner=__salt__)
+            roster_modules = salt.loader.roster(
+                __opts__, runner=__salt__, whitelist=[roster]
+            )
             if '.targets' not in roster:
                 roster = '{mod}.targets'.format(mod=roster)
             rtargets_roster = roster_modules[roster](_tgt, tgt_type=_tgt_type)
