@@ -94,6 +94,48 @@ You can further improve the performances in your own environment, by auditing
 what modules you require and / or if you make use of any custom modules at all. 
 See also the new page :ref:`best-practices` for more detail recommendations.
 
+PoC: manage Unix machines using salt-sproxy
+-------------------------------------------
+
+Although very, very far from a production-ready solution, this release 
+introduces initial support for managing Unix machines through *salt-sproxy*
+(i.e., without requiring Salt Minions). The approach is Proxy-module based, as 
+opposed to the `salt-ssh <https://docs.saltstack.com/en/latest/topics/ssh/>`__ 
+approach, with its particular advantages (e.g., doesn't upload anything on your
+remote machine) and disadvantages (the execution is slower).
+
+For the time being, only `Netmiko 
+<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.netmiko_px.html>`__ 
+based Proxies are supported.
+
+The configuration is very simple; for example, you can add the following to 
+your Master configuration file:
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+  proxy:
+    proxytype: netmiko
+    device_type: linux
+    host: <IP address or hostname>
+    username: <username>
+    password: <password>
+
+(You can also use SSH keys for authentication, see the `documentation 
+<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.netmiko_px.html>`__ 
+for more details)
+
+With the configuration above, you can execute various commands, e.g., 
+``salt-sproxy droplet pkg.install vim`` or
+``salt-sproxy droplet cmd.run 'wget -O - https://bootstrap.saltstack.com | sudo sh'``, etc.
+
+.. note::
+
+    Currently only a set of features are available to be executed like this. In 
+    time, depending on the feedback received from the community, others may be 
+    added.
+
 Other changes and enhancements
 ------------------------------
 
