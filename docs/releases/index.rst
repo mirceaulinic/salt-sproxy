@@ -10,7 +10,7 @@ Latest Release
 .. toctree::
    :maxdepth: 1
 
-   2020.4.0
+   2020.7.0
 
 Previous Releases
 ^^^^^^^^^^^^^^^^^
