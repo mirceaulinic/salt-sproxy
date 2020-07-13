@@ -94,19 +94,21 @@ You can further improve the performances in your own environment, by auditing
 what modules you require and / or if you make use of any custom modules at all. 
 See also the new page :ref:`best-practices` for more detail recommendations.
 
-PoC: manage Unix machines using salt-sproxy
--------------------------------------------
+Managing remote Unix and Windows machines via SSH
+-------------------------------------------------
 
-Although very, very far from a production-ready solution, this release 
-introduces initial support for managing Unix machines through *salt-sproxy*
-(i.e., without requiring Salt Minions). The approach is Proxy-module based, as 
-opposed to the `salt-ssh <https://docs.saltstack.com/en/latest/topics/ssh/>`__ 
-approach, with its particular advantages (e.g., doesn't upload anything on your
-remote machine) and disadvantages (the execution is slower).
-
-For the time being, only `Netmiko 
-<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.netmiko_px.html>`__ 
-based Proxies are supported.
+Using *salt-sproxy*, besides regular Minions, regular Proxy Minions, and 
+standalone Proxy Minions (managed by *salt-sproxy* itself), you can now also
+manage arbitrary machines via SSH, in the same way as you'd normally do through 
+`salt-ssh <https://docs.saltstack.com/en/latest/topics/ssh/>`__. In fact, this
+is actually done through the :ref:`ssh-proxy` shipped together with this 
+package, which in turn invokes *salt-ssh* internals. While *salt-ssh* has 
+been part of the Salt suite for years, it has always been decoupled from the 
+rest. One of the evident implications is that you manage some devices by 
+running ``salt``, and others by running ``salt-ssh``. *salt-sproxy* aims to 
+abstract that away, and provide a single, uniform methodology for managing 
+whatever flavours of Salt you want, through the same command and offering the 
+same features.
 
 The configuration is very simple; for example, you can add the following to 
 your Master configuration file:
@@ -116,31 +118,57 @@ your Master configuration file:
 .. code-block:: yaml
 
   proxy:
-    proxytype: netmiko
-    device_type: linux
+    proxytype: ssh
     host: <IP address or hostname>
-    username: <username>
-    password: <password>
+    user: <username>
+    passwd: <password>
 
-(You can also use SSH keys for authentication, see the `documentation 
-<https://docs.saltstack.com/en/master/ref/proxy/all/salt.proxy.netmiko_px.html>`__ 
-for more details)
+(You can also use SSH keys for authentication, see the :ref:`ssh` for more
+details, and other available options)
 
-With the configuration above, you can execute various commands, e.g., 
-``salt-sproxy droplet pkg.install vim`` or
-``salt-sproxy droplet cmd.run 'wget -O - https://bootstrap.saltstack.com | sudo sh'``, etc.
+The you can start executing Salt commands as usual:
 
-.. note::
+.. code-block:: bash
 
-    Currently only a set of features are available to be executed like this. In 
-    time, depending on the feedback received from the community, others may be 
-    added.
+  $ salt-sproxy 'srv' grains.get manufacturer
+  DigitalOcean
+
+  $ salt-sproxy 'srv' state.apply
+  srv:
+  ----------
+            ID: vim
+      Function: pkg.installed
+        Result: True
+       Comment: All specified packages are already installed
+       Started: 16:38:22.981459
+      Duration: 57.998 ms
+       Changes:   
+  ----------
+            ID: ack
+      Function: pkg.installed
+        Result: True
+       Comment: All specified packages are already installed
+       Started: 16:38:23.039783
+      Duration: 42.267 ms
+       Changes:   
+
+  Summary for sproxy
+  ------------
+  Succeeded: 2
+  Failed:    0
+  ------------
+  Total states run:     2
+  Total run time: 100.265 ms
+
+.. seealso::
+
+    Please refer to :ref:`ssh` for further details.
 
 Other changes and enhancements
 ------------------------------
 
 - Improve the Grains and Pillar cache loading: `PR 
-  #117<https://github.com/mirceaulinic/salt-sproxy/pull/117>`__.
+  #117 <https://github.com/mirceaulinic/salt-sproxy/pull/117>`__.
 - Remove the Grains under the proxy Pillar: `PR #114 
   <https://github.com/mirceaulinic/salt-sproxy/pull/114>`__.
 - Correct nodegroups definition bug: `PR #128 
