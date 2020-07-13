@@ -3,8 +3,78 @@
 SSH Proxy
 =========
 
-Proxy Module that invokes Salt functions via SSH, by uploading a lightweight
-Salt version on the target host.
+Manage a remote host via SSH, using a Proxy Minion. This module doesn't have any
+external dependencies, as it makes use of the native Salt internals used for
+salt-ssh, therefore managing the remote machine by uploading a lightweight Salt
+version on the target host, then invokes Salt functions over SSH (using the
+``ssh`` binary installed on your computer or wherever this Proxy Minion runs).
+
+.. note::
+
+    To manage machines running Windows, you will need to install the
+    ``saltwinshell`` library.
+
+Pillar
+------
+
+The configuration is aligned to the general Proxy Minion standards: put the
+connection details and credentials under the ``proxy`` key in the Proxy config
+or Pillar.
+
+``host``
+    The IP address or the hostname of the remove machine to manage.
+
+``port``
+    Integer, the port number (defaults to 22).
+
+``user``
+    The username required for authentication.
+
+``passwd``
+    The password used for authentication.
+
+``priv``
+    Absolute path to the private SSH key used for authentication.
+
+``priv_passwd``
+    The SSH private key password.
+
+``timeout``: 30
+    The SSH timeout. Defaults to 30 seconds.
+
+``sudo``: ``False``
+    Execute commands as sudo.
+
+``tty``: ``False``
+    Connect over tty.
+
+``sudo_user``
+    The username that should execute the commands as sudo.
+
+``remote_port_forwards``
+    Enable remote port forwarding. Example: ``8888:my.company.server:443``.
+    Multiple remote port forwardings are supported, using comma-separated
+    values, e.g., ``8888:my.company.server:443,9999:my.company.server:80``.
+
+``identities_only``: ``False``
+    Execute SSH with ``-o IdentitiesOnly=yes``. This option is intended for
+    situations where ssh-agent offers many different identities and allow ssh
+    to ignore those identities and use the only one specified in options.
+
+``winrm``: ``False``
+    Flag that tells Salt to connect to a Windows machine. This option requires
+    the ``saltwinshell`` to be installed.
+
+Example Pillar:
+
+.. code-block:: yaml
+
+  proxy:
+    proxytype: ssh
+    host: srv.example.com
+    user: test
+    passwd: test
+    port: 2022
 '''
 from __future__ import absolute_import, print_function, unicode_literals
 
