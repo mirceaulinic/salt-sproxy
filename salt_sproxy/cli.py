@@ -192,7 +192,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_client = None
         sync_all = self.config.get('sync_all', False)
         sync_grains = self.config.get('sync_grains', True)
-        sync_modules = self.config.get('sync_modules', False)
+        sync_modules = self.config.get('sync_modules', True)
         sync_roster = self.config.get('sync_roster', True)
         if any([sync_all, sync_grains, sync_modules, sync_roster]):
             runner_client = salt.runner.RunnerClient(self.config)
@@ -205,7 +205,15 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         if sync_grains and not sync_all:
             log.debug('Syncing grains')
             sync_grains_ret = runner_client.cmd(
-                'saltutil.sync_grains', kwarg={'saltenv': saltenv}, print_event=False
+                'saltutil.sync_grains',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_grains', [])
+                    ),
+                    'extmod_blacklist': ','.join(self.config.get('disable_grains', [])),
+                },
+                print_event=False,
             )
             log.debug(sync_grains_ret)
         if self.config.get('module_dirs_cli'):
@@ -225,12 +233,22 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
             sync_modules_ret = runner_client.cmd(
-                'saltutil.sync_modules', kwarg={'saltenv': saltenv}, print_event=False
+                'saltutil.sync_modules',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_modules', [])
+                    ),
+                    'extmod_blacklist': ','.join(
+                        self.config.get('disable_modules', [])
+                    ),
+                },
+                print_event=False,
             )
             log.debug(sync_modules_ret)
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
-        if sync_roster and not sync_all:
+        if sync_roster and not sync_all and self.config.get('roster'):
             # Sync Rosters by default
             log.debug('Syncing roster')
             roster_dirs = self.config.get('roster_dirs', [])
@@ -238,7 +256,9 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             roster_dirs.append(roster_path)
             self.config['roster_dirs'] = roster_dirs
             sync_roster_ret = runner_client.cmd(
-                'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
+                'saltutil.sync_roster',
+                kwarg={'saltenv': saltenv, 'extmod_whitelist': self.config['roster']},
+                print_event=False,
             )
             log.debug(sync_roster_ret)
         if self.config.get('states_dir'):

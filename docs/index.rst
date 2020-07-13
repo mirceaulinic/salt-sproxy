@@ -344,6 +344,7 @@ See Also
    grains
    targeting
    opts
+   best_practices
    runner
    events
    salt_api
