@@ -77,6 +77,7 @@ def load_cache(pool, __runner__, opts, tgt, tgt_type=None):
             'compound',
             'pillar',
             'pillar_pcre',
+            'pillar_target',
             'nodegroup',
         ):
             log.debug('Fetching cached Pillar for %s', device)
@@ -213,6 +214,7 @@ TGT_FUN = {
     'grain_pcre': grain_pcre,
     'I': pillar,
     'pillar': pillar,
+    'pillar_target': pillar,
     'J': pillar_pcre,
     'pillar_pcre': pillar_pcre,
     'L': list_,
