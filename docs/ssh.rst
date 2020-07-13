@@ -1,9 +1,9 @@
 .. _ssh:
 
-.. versionadded:: 2020.7.0
-
 Managing remote Unix and Windows machines via SSH
 =================================================
+
+.. versionadded:: 2020.7.0
 
 Using *salt-sproxy*, besides regular Minions, regular Proxy Minions, and 
 standalone Proxy Minions (managed by *salt-sproxy* itself), you can also manage 

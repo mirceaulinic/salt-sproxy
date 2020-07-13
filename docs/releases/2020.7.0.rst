@@ -123,8 +123,8 @@ your Master configuration file:
     user: <username>
     passwd: <password>
 
-(You can also use SSH keys for authentication, see the :ref:`ssh` for more
-details, and other available options)
+(You can also use SSH keys for authentication, see :ref:`ssh` for more details,
+and other available options)
 
 The you can start executing Salt commands as usual:
 
