@@ -128,7 +128,7 @@ a custom module in your own environment, you can sync them by running
 ``salt-run saltutil.sync_roster``.
 
 *salt-sproxy* core Runner
------------------------
+-------------------------
 
 Another contributor to the *salt-sproxy* execution speed is the :ref:`runner` 
 which is the very core of *salt-sproxy*. That said, if this Runner is already 
