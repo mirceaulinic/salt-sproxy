@@ -25,7 +25,8 @@ or Pillar.
     The IP address or the hostname of the remove machine to manage.
 
 ``port``
-    Integer, the port number (defaults to 22).
+    Integer, the port number to use when establishing he connection
+    (defaults to 22).
 
 ``user``
     The username required for authentication.
@@ -82,6 +83,9 @@ import json
 import logging
 
 import salt.client.ssh
+import salt.fileclient
+import salt.exceptions
+import salt.utils.path
 from salt.ext import six
 
 __proxyenabled__ = ['ssh']
@@ -98,14 +102,14 @@ def _prep_conn(opts, fun, *args, **kwargs):
     Prepare the connection.
     '''
     opts['_ssh_version'] = salt.client.ssh.ssh_version()
-    argv = [fun]
-    argv.extend(args)
-    argv.extend(
-        ['{key}={val}'.format(key=key, val=val) for key, val in six.iteritems(kwargs)]
-    )
+    fsclient = salt.fileclient.FSClient(opts)
     # TODO: Have here more options to simplify the usage, through features like
     # auto-expand the path to the priv key, auto-discovery, etc.
-    conn = salt.client.ssh.Single(opts, argv, opts['id'], **opts['proxy'])
+    conn = salt.client.ssh.Single(
+        opts, [fun], opts['id'], fsclient=fsclient, **opts['proxy']
+    )
+    conn.args = args
+    conn.kwargs = kwargs
     thin_dir = conn.opts['thin_dir']
     thin_dir = thin_dir.replace('proxy', '')
     conn.opts['thin_dir'] = thin_dir
@@ -119,13 +123,13 @@ def init(opts):
     device is reachable, otherwise throw an error.
     '''
     global CONN, INITIALIZED
+    if not salt.utils.path.which('ssh'):
+        raise salt.exceptions.SaltSystemExit(
+            code=-1,
+            msg='No ssh binary found in path -- ssh must be installed for this Proxy module. Exiting.',
+        )
     CONN = _prep_conn(opts, 'cmd.run', 'echo')
-    ret = CONN.run()
-    log.debug(ret)
-    if ret[2] == 0:
-        INITIALIZED = True
-    else:
-        log.error(ret[1])
+    INITIALIZED = True
 
 
 def initialized():

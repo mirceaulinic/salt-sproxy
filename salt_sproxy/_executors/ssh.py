@@ -29,8 +29,6 @@ def execute(opts, data, func, args, kwargs):
     '''
     Directly calls the given function with arguments
     '''
-    log.error('Executing through ssh.execute')
-    log.error(data, func, args)
     if data['fun'] == 'saltutil.find_job':
         return __executors__['direct_call.execute'](opts, data, func, args, kwargs)
     return __proxy__['ssh.call'](data['fun'], *args, **kwargs)
