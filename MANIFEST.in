@@ -6,3 +6,5 @@ include requirements.txt
 include salt_sproxy/_runners/*
 include salt_sproxy/_modules/*
 include salt_sproxy/_roster/*
+include salt_sproxy/_proxy/*
+include salt_sproxy/_executors/*
