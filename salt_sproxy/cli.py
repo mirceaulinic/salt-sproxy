@@ -328,6 +328,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'pcre',
             'grain_pcre',
             'pillar_pcre',
+            'pillar_target',
             'nodegroup',
         )
         kwargs['tgt_type'] = 'glob'
