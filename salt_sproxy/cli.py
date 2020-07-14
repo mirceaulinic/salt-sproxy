@@ -194,7 +194,18 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         sync_grains = self.config.get('sync_grains', True)
         sync_modules = self.config.get('sync_modules', True)
         sync_roster = self.config.get('sync_roster', True)
-        if any([sync_all, sync_grains, sync_modules, sync_roster]):
+        sync_proxy = self.config.get('sync_proxy', False)
+        sync_executors = self.config.get('sync_executors', False)
+        if any(
+            [
+                sync_all,
+                sync_grains,
+                sync_modules,
+                sync_roster,
+                sync_proxy,
+                sync_executors,
+            ]
+        ):
             runner_client = salt.runner.RunnerClient(self.config)
         if sync_all:
             log.debug('Sync all')
@@ -261,6 +272,44 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                 print_event=False,
             )
             log.debug(sync_roster_ret)
+        if sync_proxy and not sync_all:
+            log.debug('Syncing Proxy modules')
+            proxy_dirs = self.config.get('proxy_dirs', [])
+            proxy_path = os.path.join(curpath, '_proxy')
+            proxy_dirs.append(proxy_path)
+            self.config['proxy_dirs'] = proxy_dirs
+            sync_proxy_ret = runner_client.cmd(
+                'saltutil.sync_proxymodules',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_proxys', [])
+                    ),
+                    'extmod_blacklist': ','.join(self.config.get('disable_proxys', [])),
+                },
+                print_event=False,
+            )
+            log.debug(sync_proxy_ret)
+        if sync_executors and not sync_all:
+            log.debug('Syncing Executors modules')
+            executor_dirs = self.config.get('executor_dirs', [])
+            executor_path = os.path.join(curpath, '_executors')
+            executor_dirs.append(executor_path)
+            self.config['executor_dirs'] = executor_dirs
+            sync_executors_ret = runner_client.cmd(
+                'saltutil.sync_executors',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_executors', [])
+                    ),
+                    'extmod_blacklist': ','.join(
+                        self.config.get('disable_executors', [])
+                    ),
+                },
+                print_event=False,
+            )
+            log.debug(sync_executors_ret)
         if self.config.get('states_dir'):
             states_dirs = self.config.get('states_dirs', [])
             states_dirs.append(self.config['states_dir'])

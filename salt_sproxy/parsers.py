@@ -301,6 +301,18 @@ class SaltStandaloneProxyOptionParser(
             ),
         )
         self.add_option(
+            '--sync-proxy',
+            dest='sync_proxy',
+            action='store_true',
+            help=('Load the salt-sproxy Proxy modules.'),
+        )
+        self.add_option(
+            '--sync-executors',
+            dest='sync_executors',
+            action='store_true',
+            help=('Load the salt-sproxy Executor modules.'),
+        )
+        self.add_option(
             '--saltenv',
             dest='saltenv_cli',
             action='store_true',
