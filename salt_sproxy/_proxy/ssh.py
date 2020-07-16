@@ -161,6 +161,10 @@ def call(fun, *args, **kwargs):
         log.error('[%s] %s', opts['id'], ret[1])
         return ret[0]
     thin_ret = json.loads(ret[0])
+    if '_error' in thin_ret['local']:
+        log.error(thin_ret['local']['_error'])
+        if 'stdout' in thin_ret['local']:
+            log.error(thin_ret['local']['stdout'])
     return thin_ret['local']['return']
 
 
