@@ -511,6 +511,18 @@ class SaltStandaloneProxyOptionParser(
             metavar='RETURNER_KWARGS',
             help='Set Returner options at the command line.',
         )
+        self.add_option(
+            "-d",
+            "--doc",
+            "--documentation",
+            dest="doc",
+            default=False,
+            action="store_true",
+            help=(
+                'Return the documentation for the specified module or for '
+                'all modules if none are specified.'
+            ),
+        )
 
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
@@ -524,6 +536,13 @@ class SaltStandaloneProxyOptionParser(
             # Insert dummy arg when displaying the file_roots
             self.args.append('not_a_valid_target')
             self.args.append('not_a_valid_command')
+        elif self.options.doc:
+            if len(self.args) == 1:
+                self.args.insert(0, 'not_a_valid_target')
+            elif len(self.args) == 0:
+                self.args.append('not_a_valid_target')
+                self.args.append('*')
+
         if self.options.list:
             try:
                 if ',' in self.args[0]:
