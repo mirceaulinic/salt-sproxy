@@ -53,6 +53,42 @@ already familiar with a vast majority of them from the `salt
     exit with non-zero code, and the ``ERROR: Minions returned with non-zero 
     exit code`` message will be displayed at the end.
 
+.. option:: -d, --doc, --documentation
+
+    .. versionadded:: 2020.7.0
+
+    Return the documentation for the module functions available for any Minion 
+    flavour. Note, if a specific function is available only when running under 
+    a specific Minion, you'll need to execute ``sys.doc`` instead.
+
+    Accepted syntax:
+
+    .. code-block:: bash
+
+        $ salt-sproxy <function> -d
+
+        $ salt-sproxy <target> <function> -d
+
+        $ salt-sproxy -d
+
+    (The latter syntax would return the documentation for all the Minion 
+    functions)
+
+    Example:
+
+    .. code-block:: bash
+
+        $ salt-sproxy test.ping -d
+        test.ping:
+
+        Used to make sure the minion is up and responding. Not an ICMP ping.
+
+        Returns ``True``.
+
+        CLI Example:
+
+            salt '*' test.ping
+
 .. option:: -r, --roster
 
     The Roster module to use to compile the list of targeted devices.

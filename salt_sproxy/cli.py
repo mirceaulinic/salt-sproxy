@@ -390,6 +390,15 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
 
+        if self.config.get('doc', True):
+            # late import as salt.loader adds up some execution time, and we
+            # don't want that, but only when displaying docs.
+            from salt.loader import utils, grains, minion_mods
+
+            runner.opts['fun'] = fun
+            runner.opts['grains'] = grains(runner.opts)
+            runner._functions = minion_mods(runner.opts, utils=utils(runner.opts))
+
         # Run this here so SystemExit isn't raised anywhere else when
         # someone tries to use the runners via the python API
         try:
