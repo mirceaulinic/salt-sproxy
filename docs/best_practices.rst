@@ -58,6 +58,36 @@ same time, add the following in the Master config:
 If for some reason you can't do this for one or more of these modules, check out
 the recommendations below for each of them.
 
+*salt-sproxy* core Runner
+-------------------------
+
+Another contributor to the *salt-sproxy* execution speed is the :ref:`runner` 
+which is the very core of *salt-sproxy*. That said, if this Runner is already 
+"well known" to the Salt filesystem, it'll make it more efficient.
+
+.. tip::
+
+    If you have a Master already running, the execution may be up to 5 seconds
+    faster.
+
+In this case, you will need to follow the notes from :ref:`runner` to update 
+your ``file_roots`` settings, and run ``salt-run saltutil.sync_runner``.
+
+Remember that you'll need to re-run that in case you re-install *salt-sproxy*, 
+Salt, or remove the Salt cache.
+
+Of course, you can always have a scheduled job that does it for you, either 
+a cron job, or a `scheduled job 
+<https://docs.saltstack.com/en/latest/topics/jobs/>`__ if you have a Salt 
+Master running, e.g., re-sync Runners every hour:
+
+.. code-block:: yaml
+
+    schedule:
+      sync_runners:
+        function: saltutil.sync_runner
+        minutes: 60
+
 Disable Grains
 --------------
 
@@ -127,30 +157,12 @@ configuration. Similarly to the previous sections, if you'd like to use
 a custom module in your own environment, you can sync them by running 
 ``salt-run saltutil.sync_roster``.
 
-*salt-sproxy* core Runner
--------------------------
+Disable Events
+--------------
 
-Another contributor to the *salt-sproxy* execution speed is the :ref:`runner` 
-which is the very core of *salt-sproxy*. That said, if this Runner is already 
-"well known" to the Salt filesystem, it'll make it more efficient.
-
-In this case, you will need to follow the notes from :ref:`runner` to update 
-your ``file_roots`` settings, and run ``salt-run saltutil.sync_runner``.
-
-Remember that you'll need to re-run that in case you re-install *salt-sproxy*, 
-Salt, or remove the Salt cache.
-
-Of course, you can always have a scheduled job that does it for you, either 
-a cron job, or a `scheduled job 
-<https://docs.saltstack.com/en/latest/topics/jobs/>`__ if you have a Salt 
-Master running, e.g., re-sync Runners every hour:
-
-.. code-block:: yaml
-
-    schedule:
-      sync_runners:
-        function: saltutil.sync_runner
-        minutes: 60
+If you don't need the :ref:`events`, you can gain a few execution seconds by 
+disabling this so *salt-sproxy* doesn't attempt to send execution events to an 
+nonexistent Master (or you simply don't need / use those events).
 
 File open limit
 ---------------
