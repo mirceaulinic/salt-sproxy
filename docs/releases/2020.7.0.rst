@@ -18,7 +18,7 @@ Batch targeting using percent
 
 Similar to the Salt `batch size 
 <https://docs.saltstack.com/en/latest/topics/targeting/batch.html>`__ 
-targeting, through salt-sproxy you can now divide the target in batches of size 
+targeting, through *salt-sproxy* you can now divide the target in batches of size 
 relative to the total number of devices matched by your target. For example, 
 running ``salt-sproxy -G os:junos -b 20% net.cli "show version"`` would execute 
 ``show version`` on the Junos devices, in 5 groups at a time.
@@ -27,10 +27,10 @@ NetBox Roster no longer depending on the NetBox module
 ------------------------------------------------------
 
 In order to reduce the code overlap, the :ref:`netbox-roster` module included 
-in salt-sproxy has been designed to use code from the Salt native NetBox 
+in *salt-sproxy* has been designed to use code from the Salt native NetBox 
 module. Due to bugs in older versions of Salt, the NetBox Roster wasn't 
 properly working, and starting with this release this dependency has been 
-removed, so the salt-sproxy NetBox Roster works equally well regardless on the 
+removed, so the *salt-sproxy* NetBox Roster works equally well regardless on the 
 underlying Salt version you're using.
 
 Merge Pillar/Roster configuration into the Master opts
@@ -86,7 +86,7 @@ Optimise the execution speed
 
 By loading only the Proxy module of choice (see `PR #143 
 <https://github.com/mirceaulinic/salt-sproxy/pull/143>`__), the execution time 
-has been reduced by 2-3 seconds. In a similar way, salt-sproxy is now only 
+has been reduced by 2-3 seconds. In a similar way, *salt-sproxy* is now only 
 loading the Roster module referenced (if any) which speeds up a little the 
 initial startup.
 
@@ -164,8 +164,8 @@ The you can start executing Salt commands as usual:
 
     Please refer to :ref:`ssh` for further details.
 
-Other changes and enhancements
-------------------------------
+Other changes, enhancements, and bug fixes
+------------------------------------------
 
 - Improve the Grains and Pillar cache loading: `PR 
   #117 <https://github.com/mirceaulinic/salt-sproxy/pull/117>`__.
@@ -175,3 +175,10 @@ Other changes and enhancements
   <https://github.com/mirceaulinic/salt-sproxy/pull/128>`__.
 - Ensure that the execution timeout defaults to 60 seconds: `PR #144 
   <https://github.com/mirceaulinic/salt-sproxy/pull/144>`__.
+- Fix issue `#149 <https://github.com/mirceaulinic/salt-sproxy/issues/149>`__: 
+  targeting cached pillar data doesn't appear to be working, in `PR #151
+  <https://github.com/mirceaulinic/salt-sproxy/pull/151>`__.
+- Added ``-async`` CLI argument: `PR #155 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/155>`__.
+- Added ``-d`` / ``--documentation`` CLI argument to display Minion modules
+  docs: `PR #156 <https://github.com/mirceaulinic/salt-sproxy/pull/156>`__.
