@@ -173,6 +173,13 @@ class SaltStandaloneProxyOptionParser(
             help=('Return the data from devices as a group after they all return.'),
         )
         self.add_option(
+            "--async",
+            default=False,
+            dest="async",
+            action="store_true",
+            help=('Run the salt-sproxy command but don\'t wait for a reply.'),
+        )
+        self.add_option(
             '--cache-grains',
             default=False,
             action='store_true',

@@ -132,6 +132,25 @@ already familiar with a vast majority of them from the `salt
     Whether should return the entire output at once, or for every device 
     separately as they return.
 
+.. option:: --async
+
+    .. versionadded:: 2020.7.0
+
+    Instead of waiting for the job to run only print the job id of the started
+    execution and return immediately, while the job continues to run in the 
+    background.
+
+    This will only log a warning like: ``Running in asynchronous mode. Results 
+    of this execution may be collected by attaching to the master event bus or 
+    by examing the master job cache, if configured. This execution is running 
+    under tag salt/run/20200717101228363090``.
+
+    .. tip::
+
+        If you have the ``events: true`` (or ``--events`` on the CLI) option 
+        enabled, you'll also see the individual returns from every device, on 
+        the event bus. See :ref:`events` for more information.
+
 .. option:: --cache-grains
 
     Cache the collected Grains. Beware that this option overwrites the existing
