@@ -192,9 +192,20 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         runner_client = None
         sync_all = self.config.get('sync_all', False)
         sync_grains = self.config.get('sync_grains', True)
-        sync_modules = self.config.get('sync_modules', False)
+        sync_modules = self.config.get('sync_modules', True)
         sync_roster = self.config.get('sync_roster', True)
-        if any([sync_all, sync_grains, sync_modules, sync_roster]):
+        sync_proxy = self.config.get('sync_proxy', False)
+        sync_executors = self.config.get('sync_executors', False)
+        if any(
+            [
+                sync_all,
+                sync_grains,
+                sync_modules,
+                sync_roster,
+                sync_proxy,
+                sync_executors,
+            ]
+        ):
             runner_client = salt.runner.RunnerClient(self.config)
         if sync_all:
             log.debug('Sync all')
@@ -205,7 +216,15 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         if sync_grains and not sync_all:
             log.debug('Syncing grains')
             sync_grains_ret = runner_client.cmd(
-                'saltutil.sync_grains', kwarg={'saltenv': saltenv}, print_event=False
+                'saltutil.sync_grains',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_grains', [])
+                    ),
+                    'extmod_blacklist': ','.join(self.config.get('disable_grains', [])),
+                },
+                print_event=False,
             )
             log.debug(sync_grains_ret)
         if self.config.get('module_dirs_cli'):
@@ -225,12 +244,22 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             # No need to explicitly load the modules here, as during runtime,
             # Salt is anyway going to load the modules on the fly.
             sync_modules_ret = runner_client.cmd(
-                'saltutil.sync_modules', kwarg={'saltenv': saltenv}, print_event=False
+                'saltutil.sync_modules',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_modules', [])
+                    ),
+                    'extmod_blacklist': ','.join(
+                        self.config.get('disable_modules', [])
+                    ),
+                },
+                print_event=False,
             )
             log.debug(sync_modules_ret)
         # Resync Roster module to load the ones we have here in the library, and
         # potentially others provided by the user in their environment
-        if sync_roster and not sync_all:
+        if sync_roster and not sync_all and self.config.get('roster'):
             # Sync Rosters by default
             log.debug('Syncing roster')
             roster_dirs = self.config.get('roster_dirs', [])
@@ -238,9 +267,49 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             roster_dirs.append(roster_path)
             self.config['roster_dirs'] = roster_dirs
             sync_roster_ret = runner_client.cmd(
-                'saltutil.sync_roster', kwarg={'saltenv': saltenv}, print_event=False
+                'saltutil.sync_roster',
+                kwarg={'saltenv': saltenv, 'extmod_whitelist': self.config['roster']},
+                print_event=False,
             )
             log.debug(sync_roster_ret)
+        if sync_proxy and not sync_all:
+            log.debug('Syncing Proxy modules')
+            proxy_dirs = self.config.get('proxy_dirs', [])
+            proxy_path = os.path.join(curpath, '_proxy')
+            proxy_dirs.append(proxy_path)
+            self.config['proxy_dirs'] = proxy_dirs
+            sync_proxy_ret = runner_client.cmd(
+                'saltutil.sync_proxymodules',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_proxys', [])
+                    ),
+                    'extmod_blacklist': ','.join(self.config.get('disable_proxys', [])),
+                },
+                print_event=False,
+            )
+            log.debug(sync_proxy_ret)
+        if sync_executors and not sync_all:
+            log.debug('Syncing Executors modules')
+            executor_dirs = self.config.get('executor_dirs', [])
+            executor_path = os.path.join(curpath, '_executors')
+            executor_dirs.append(executor_path)
+            self.config['executor_dirs'] = executor_dirs
+            sync_executors_ret = runner_client.cmd(
+                'saltutil.sync_executors',
+                kwarg={
+                    'saltenv': saltenv,
+                    'extmod_whitelist': ','.join(
+                        self.config.get('whitelist_executors', [])
+                    ),
+                    'extmod_blacklist': ','.join(
+                        self.config.get('disable_executors', [])
+                    ),
+                },
+                print_event=False,
+            )
+            log.debug(sync_executors_ret)
         if self.config.get('states_dir'):
             states_dirs = self.config.get('states_dirs', [])
             states_dirs.append(self.config['states_dir'])
@@ -259,6 +328,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'pcre',
             'grain_pcre',
             'pillar_pcre',
+            'pillar_target',
             'nodegroup',
         )
         kwargs['tgt_type'] = 'glob'
@@ -319,6 +389,15 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         kwargs['failhard'] = self.config.get('failhard', False)
         self.config['arg'] = [tgt, fun, kwargs]
         runner = salt.runner.Runner(self.config)
+
+        if self.config.get('doc', True):
+            # late import as salt.loader adds up some execution time, and we
+            # don't want that, but only when displaying docs.
+            from salt.loader import utils, grains, minion_mods
+
+            runner.opts['fun'] = fun
+            runner.opts['grains'] = grains(runner.opts)
+            runner._functions = minion_mods(runner.opts, utils=utils(runner.opts))
 
         # Run this here so SystemExit isn't raised anywhere else when
         # someone tries to use the runners via the python API

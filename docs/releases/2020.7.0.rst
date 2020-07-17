@@ -1,0 +1,184 @@
+.. _release-2020.7.0:
+
+================
+Release 2020.7.0
+================
+
+Explicit return when the Minion is not connected
+------------------------------------------------
+
+When using *salt-sproxy* to execute against running (Proxy) Minions, it may 
+happen sometimes that the Minion is not available for various reasons (e.g., 
+key accepted, but the service is not fully started, etc.). When this happens, 
+*salt-sproxy* now returns an explicit message ``Minion did not return. [Not 
+connected]`` for better feedback on the command line.
+
+Batch targeting using percent
+-----------------------------
+
+Similar to the Salt `batch size 
+<https://docs.saltstack.com/en/latest/topics/targeting/batch.html>`__ 
+targeting, through *salt-sproxy* you can now divide the target in batches of size 
+relative to the total number of devices matched by your target. For example, 
+running ``salt-sproxy -G os:junos -b 20% net.cli "show version"`` would execute 
+``show version`` on the Junos devices, in 5 groups at a time.
+
+NetBox Roster no longer depending on the NetBox module
+------------------------------------------------------
+
+In order to reduce the code overlap, the :ref:`netbox-roster` module included 
+in *salt-sproxy* has been designed to use code from the Salt native NetBox 
+module. Due to bugs in older versions of Salt, the NetBox Roster wasn't 
+properly working, and starting with this release this dependency has been 
+removed, so the *salt-sproxy* NetBox Roster works equally well regardless on the 
+underlying Salt version you're using.
+
+Merge Pillar/Roster configuration into the Master opts
+------------------------------------------------------
+
+`PR #115 <https://github.com/mirceaulinic/salt-sproxy/pull/115>`__ and `PR #124 
+<https://github.com/mirceaulinic/salt-sproxy/pull/124>`__ allow one to provide 
+the ``proxy:`` block also / only in the Master configuration, which simplifies
+the usage as you no longer have to provide any Pillar at all, or, at least, put 
+in the Master configuration the details shared across your devices, e.g.,
+username, password, proxy type, etc. For example:
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+  proxy:
+    proxytype: napalm
+    username: test
+    password: test
+
+If you'll want more dynamic data, you'll have to model that through the Pillar, 
+as that's far more flexible than the Master config which is mainly for static 
+data. Up to a degree, however, the Master configuration can be a little bit
+more  dynamic, by making use of the `SDB 
+<https://docs.saltstack.com/en/latest/topics/sdb/>`__ interface. Example:
+
+.. code-block:: yaml
+
+  # Define the "environ" SDB instance, using the env SDB module:
+  # https://docs.saltstack.com/en/latest/ref/sdb/all/salt.sdb.env.html
+
+  environ:
+    driver: env
+
+  proxy:
+    proxytype: napalm
+    username: test
+    password: sdb://environ/NAPALM_PASS
+
+In the snippet above, the password will be dynamically retrieved from the 
+``NAPALM_PASS`` environment variable, so the ``password`` field will render to 
+that value. In a similar way, using SDB modules, you can gather information 
+from other resources, making use of other existing SDB modules, e.g., `Vault 
+<https://docs.saltstack.com/en/latest/ref/sdb/all/salt.sdb.vault.html>`__, or 
+`YAML <https://docs.saltstack.com/en/latest/ref/sdb/all/salt.sdb.yaml.html>`__ 
+using the ``gpg: true`` option to decrypt GPG-encrypted data, or other SDB
+modules defined in your own environment. For greater flexibility, however, 
+remember to use the Pillar features.
+
+Optimise the execution speed
+----------------------------
+
+By loading only the Proxy module of choice (see `PR #143 
+<https://github.com/mirceaulinic/salt-sproxy/pull/143>`__), the execution time 
+has been reduced by 2-3 seconds. In a similar way, *salt-sproxy* is now only 
+loading the Roster module referenced (if any) which speeds up a little the 
+initial startup.
+
+You can further improve the performances in your own environment, by auditing 
+what modules you require and / or if you make use of any custom modules at all. 
+See also the new page :ref:`best-practices` for more detail recommendations.
+
+Managing remote Unix and Windows machines via SSH
+-------------------------------------------------
+
+Using *salt-sproxy*, besides regular Minions, regular Proxy Minions, and 
+standalone Proxy Minions (managed by *salt-sproxy* itself), you can now also
+manage arbitrary machines via SSH, in the same way as you'd normally do through 
+`salt-ssh <https://docs.saltstack.com/en/latest/topics/ssh/>`__. In fact, this
+is actually done through the :ref:`ssh-proxy` shipped together with this 
+package, which in turn invokes *salt-ssh* internals. While *salt-ssh* has 
+been part of the Salt suite for years, it has always been decoupled from the 
+rest. One of the evident implications is that you manage some devices by 
+running ``salt``, and others by running ``salt-ssh``. *salt-sproxy* aims to 
+abstract that away, and provide a single, uniform methodology for managing 
+whatever flavours of Salt you want, through the same command and offering the 
+same features.
+
+The configuration is very simple; for example, you can add the following to 
+your Master configuration file:
+
+``/etc/salt/master``
+
+.. code-block:: yaml
+
+  proxy:
+    proxytype: ssh
+    host: <IP address or hostname>
+    user: <username>
+    passwd: <password>
+
+(You can also use SSH keys for authentication, see :ref:`ssh` for more details,
+and other available options)
+
+The you can start executing Salt commands as usual:
+
+.. code-block:: bash
+
+  $ salt-sproxy 'srv' grains.get manufacturer
+  DigitalOcean
+
+  $ salt-sproxy 'srv' state.apply
+  srv:
+  ----------
+            ID: vim
+      Function: pkg.installed
+        Result: True
+       Comment: All specified packages are already installed
+       Started: 16:38:22.981459
+      Duration: 57.998 ms
+       Changes:   
+  ----------
+            ID: ack
+      Function: pkg.installed
+        Result: True
+       Comment: All specified packages are already installed
+       Started: 16:38:23.039783
+      Duration: 42.267 ms
+       Changes:   
+
+  Summary for sproxy
+  ------------
+  Succeeded: 2
+  Failed:    0
+  ------------
+  Total states run:     2
+  Total run time: 100.265 ms
+
+.. seealso::
+
+    Please refer to :ref:`ssh` for further details.
+
+Other changes, enhancements, and bug fixes
+------------------------------------------
+
+- Improve the Grains and Pillar cache loading: `PR 
+  #117 <https://github.com/mirceaulinic/salt-sproxy/pull/117>`__.
+- Remove the Grains under the proxy Pillar: `PR #114 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/114>`__.
+- Correct nodegroups definition bug: `PR #128 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/128>`__.
+- Ensure that the execution timeout defaults to 60 seconds: `PR #144 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/144>`__.
+- Fix issue `#149 <https://github.com/mirceaulinic/salt-sproxy/issues/149>`__: 
+  targeting cached pillar data doesn't appear to be working, in `PR #151
+  <https://github.com/mirceaulinic/salt-sproxy/pull/151>`__.
+- Added ``-async`` CLI argument: `PR #155 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/155>`__.
+- Added ``-d`` / ``--documentation`` CLI argument to display Minion modules
+  docs: `PR #156 <https://github.com/mirceaulinic/salt-sproxy/pull/156>`__.

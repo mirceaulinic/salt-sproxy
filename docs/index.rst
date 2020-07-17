@@ -10,10 +10,6 @@ flexibility and extensibility of Salt, while you don't have to manage thousands
 of (Proxy) Minion services. However, you are able to use both ``salt-sproxy``
 and your (Proxy) Minions at the same time.
 
-.. note::
-
-    This is NOT a SaltStack product.
-
 Why ``salt-sproxy``
 -------------------
 
@@ -27,12 +23,15 @@ the exact same effect, and result. On top of that, using ``salt-sproxy`` allows
 you to manage other devices for which you don't run (Proxy) Minions for.
 
 Of course, if you don't already have Salt, no problem, you can start managing
-your devices straight away, check out the :ref:`quick-start` steps.
+your devices straight away, check out the `quick 
+start steps <https://github.com/mirceaulinic/salt-sproxy/blob/develop/docs/quick_start.rst>`__.
 
 In brief, here are some benefits you can get by using *salt-sproxy*:
 
 - Say goodbye to the burden of managing hundreds of system services for the
   Proxy Minion processes.
+- Reuse your existing extension modules, templates, Pillars, States, etc., you
+  may have already developed in your environment, transparently.
 - You can run it locally, on your own computer.
 - Python programming made a breeze - might go well with the
   `ISalt <https://github.com/mirceaulinic/isalt>`__ package.
@@ -40,12 +39,33 @@ In brief, here are some benefits you can get by using *salt-sproxy*:
   installing the package on your Salt Master.
 - Can continue to leverage the event-driven automation and orchestration
   methodologies.
-- REST API, see also :ref:`salt-api` documentation.
+- Can continue using any of the usual `targeting mechanisms 
+  <https://salt-sproxy.readthedocs.io/en/latest/targeting.html>`__.
+- REST API, see also
+  `the Salt REST API <https://salt-sproxy.readthedocs.io/en/latest/salt_api.html>`__
+  documentation.
 - By sending events to a Salt Master, you are able to implement whatever
   auditing you need (e.g., what command was executed by who and when, etc.).
 - Benefit from inheriting _all_ the native Salt features and integrations
   contributed by thousands of users, and tested in hundreds of different
   environments, over almost a decade of development.
+
+Is ``salt-sproxy`` a wrapper around ``salt-ssh``?
+-------------------------------------------------
+
+No, nothing to do with *salt-ssh*. The core of *salt-sproxy* is a Runner loaded
+dynamically on runtime, that spins up a pool of child processes, each running
+a temporary light version of the Proxy Minion underneath; as soon as the 
+execution is complete for a device, its associated Proxy Minion is shut down, 
+and another one takes its place into the child processes bucket.
+
+A source of confusion may also be the usage of the `Roster 
+<https://salt-sproxy.readthedocs.io/en/latest/roster.html>`__ interface, which,
+historically has only been used by *salt-ssh*, although the Roster is not 
+tightly coupled with *salt-ssh*: it just happened to be the only use case so 
+far. Essentially, the Roster simply provides a list of devices together with 
+their credentials (e.g., similar to the *inventory* as dubbed in other
+automation frameworks) - and now has another use case in *salt-sproxy*.
 
 Install
 -------
@@ -324,7 +344,10 @@ See Also
    grains
    targeting
    opts
+   ssh
+   best_practices
    runner
+   proxy/index
    events
    salt_api
    mixed_envs

@@ -44,17 +44,20 @@ from salt.minion import SMinion
 from salt.cli.batch import Batch
 import salt.utils.stringutils
 import salt.defaults.exitcodes
-from salt.exceptions import SaltSystemExit
+from salt.exceptions import SaltSystemExit, SaltInvocationError
 from salt.defaults import DEFAULT_TARGET_DELIM
 
 import salt.utils.napalm
 import salt.utils.dictupdate
 
 try:
-    from salt.utils.platform import is_proxy  # pylint: disable=unused-import
+    import salt.utils.platform
     from salt.utils.args import clean_kwargs
+
+    OLD_SALT = False
 except ImportError:
-    from salt.utils import is_proxy  # pylint: disable=unused-import
+    OLD_SALT = True
+    import salt.utils
     from salt.utils import clean_kwargs
 
 try:
@@ -95,12 +98,15 @@ def _is_proxy():
 
 
 # Same rationale as above, for any other Proxy type.
-is_proxy = _is_proxy
+if not OLD_SALT:
+    salt.utils.platform.is_proxy = _is_proxy
+else:
+    salt.utils.is_proxy = _is_proxy
 
 
 def _salt_call_and_return(
     minion_id,
-    function,
+    salt_function,
     ret_queue,
     unreachable_devices,
     failed_devices,
@@ -114,7 +120,7 @@ def _salt_call_and_return(
     opts['jid'] = jid
     ret, retcode = salt_call(
         minion_id,
-        function,
+        salt_function,
         unreachable_devices=unreachable_devices,
         failed_devices=failed_devices,
         **opts
@@ -123,7 +129,7 @@ def _salt_call_and_return(
         __salt__['event.send'](
             'proxy/runner/{jid}/ret/{minion_id}'.format(minion_id=minion_id, jid=jid),
             {
-                'fun': function,
+                'fun': salt_function,
                 'fun_args': arg,
                 'id': minion_id,
                 'jid': jid,
@@ -281,6 +287,7 @@ class SProxyMinion(SMinion):
                 self.opts['pillar']['proxy'], self.opts['roster_opts']
             )
             self.opts['pillar']['proxy'].pop('name', None)
+            self.opts['pillar']['proxy'].pop('grains', None)
 
         if self.opts.get('preload_targeting', False) or self.opts.get(
             'invasive_targeting', False
@@ -310,17 +317,24 @@ class SProxyMinion(SMinion):
             raise SaltSystemExit(code=salt.defaults.exitcodes.EX_GENERIC, msg=errmsg)
 
         if 'proxy' not in self.opts:
-            self.opts['proxy'] = self.opts['pillar']['proxy']
+            self.opts['proxy'] = {}
+        if 'proxy' not in self.opts['pillar']:
+            self.opts['pillar']['proxy'] = {}
+        self.opts['proxy'] = salt.utils.dictupdate.merge(
+            self.opts['proxy'], self.opts['pillar']['proxy']
+        )
 
         # Then load the proxy module
+        fq_proxyname = self.opts['proxy']['proxytype']
         self.utils = salt.loader.utils(self.opts)
-        self.proxy = salt.loader.proxy(self.opts, utils=self.utils)
+        self.proxy = salt.loader.proxy(
+            self.opts, utils=self.utils, whitelist=[fq_proxyname]
+        )
         self.functions = salt.loader.minion_mods(
             self.opts, utils=self.utils, notify=False, proxy=self.proxy
         )
         self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
 
-        fq_proxyname = self.opts['proxy']['proxytype']
         self.functions.pack['__proxy__'] = self.proxy
         self.proxy.pack['__salt__'] = self.functions
         self.proxy.pack['__pillar__'] = self.opts['pillar']
@@ -402,6 +416,14 @@ class SProxyMinion(SMinion):
                 proxy_shut_fn(self.opts)
                 return
 
+        self.module_executors = self.proxy.get(
+            '{0}.module_executors'.format(fq_proxyname), lambda: []
+        )() or self.opts.get('module_executors', [])
+        if self.module_executors:
+            self.executors = salt.loader.executors(
+                self.opts, self.functions, proxy=self.proxy
+            )
+
         # Late load the Returners, as they might need Grains, which may not be
         # properly or completely loaded before this.
         self.returners = None
@@ -432,7 +454,7 @@ class StandaloneProxy(SProxyMinion):
 
 def salt_call(
     minion_id,
-    function=None,
+    salt_function=None,
     unreachable_devices=None,
     failed_devices=None,
     with_grains=True,
@@ -469,7 +491,7 @@ def salt_call(
     minion_id:
         The ID of the Minion to compile Pillar data for.
 
-    function
+    salt_function
         The name of the Salt function to invoke.
 
     preload_grains: ``True``
@@ -559,8 +581,6 @@ def salt_call(
         opts['saltenv'] = 'base'
     if not default_grains:
         default_grains = {}
-    if use_cached_grains or use_cached_pillar:
-        minion_cache = __salt__['cache.fetch']('minions/{}'.format(minion_id), 'data')
     opts['grains'] = default_grains
     if not default_pillar:
         default_pillar = {}
@@ -577,10 +597,14 @@ def salt_call(
     opts['proxy_no_connect'] = no_connect
     opts['proxy_test_ping'] = test_ping
     if use_cached_grains:
-        opts['proxy_cached_grains'] = minion_cache.get('grains')
+        opts['proxy_cached_grains'] = __salt__['cache.fetch'](
+            'minions/{}/data'.format(minion_id), 'grains'
+        )
     opts['proxy_use_cached_pillar'] = use_cached_pillar
     if use_cached_pillar:
-        opts['proxy_cached_pillar'] = minion_cache.get('pillar')
+        opts['proxy_cached_pillar'] = __salt__['cache.fetch'](
+            'minions/{}/data'.format(minion_id), 'pillar'
+        )
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
     if not returner_kwargs:
@@ -599,11 +623,25 @@ def salt_call(
     kwargs = clean_kwargs(**kwargs)
     ret = None
     retcode = 0
+    executors = getattr(sa_proxy, 'module_executors')
     try:
-        ret = sa_proxy.functions[function](*args, **kwargs)
+        if executors:
+            for name in executors:
+                ex_name = '{}.execute'.format(name)
+                if ex_name not in sa_proxy.executors:
+                    raise SaltInvocationError(
+                        "Executor '{0}' is not available".format(name)
+                    )
+                ret = sa_proxy.executors[ex_name](
+                    opts, {'fun': salt_function}, salt_function, args, kwargs
+                )
+                if ret is not None:
+                    break
+        else:
+            ret = sa_proxy.functions[salt_function](*args, **kwargs)
         retcode = sa_proxy.functions.pack['__context__'].get('retcode', 0)
     except Exception as err:
-        log.info('Exception while running %s on %s', function, opts['id'])
+        log.info('Exception while running %s on %s', salt_function, opts['id'])
         if failed_devices is not None:
             failed_devices.append(opts['id'])
         ret = 'The minion function caused an exception: {err}'.format(
@@ -626,7 +664,7 @@ def salt_call(
             ret_data = {
                 'id': opts['id'],
                 'jid': jid,
-                'fun': function,
+                'fun': salt_function,
                 'fun_args': args,
                 'return': ret,
                 'ret_config': returner_config,
@@ -661,7 +699,7 @@ def salt_call(
 
 def execute_devices(
     minions,
-    function,
+    salt_function,
     with_grains=True,
     with_pillar=True,
     preload_grains=True,
@@ -705,7 +743,7 @@ def execute_devices(
     minions
         A list of Minion IDs to invoke ``function`` on.
 
-    function
+    salt_function
         The name of the Salt function to invoke.
 
     preload_grains: ``True``
@@ -840,7 +878,7 @@ def execute_devices(
         __salt__['event.send'](
             'proxy/runner/{jid}/new'.format(jid=jid),
             {
-                'fun': function,
+                'fun': salt_function,
                 'minions': minions,
                 'arg': event_args,
                 'jid': jid,
@@ -874,6 +912,9 @@ def execute_devices(
         thread.start()
 
     ret = {}
+    if '%' in str(batch_size):
+        percent = int(batch_size.replace('%', ''))
+        batch_size = len(minions) * percent / 100
     batch_size = int(batch_size)
     batch_count = int(len(minions) / batch_size) + (
         1 if len(minions) % batch_size else 0
@@ -893,7 +934,7 @@ def execute_devices(
         batch_opts['batch'] = str(existing_batch_size)
         batch_opts['tgt'] = existing_minions
         batch_opts['tgt_type'] = 'list'
-        batch_opts['fun'] = function
+        batch_opts['fun'] = salt_function
         batch_opts['arg'] = event_args
         batch_opts['batch_wait'] = batch_wait
         batch_opts['selected_target_option'] = 'list'
@@ -910,6 +951,14 @@ def execute_devices(
                 ', '.join(cli_batch.down_minions),
             )
             down_minions = cli_batch.down_minions
+            for minion in down_minions:
+                ret_queue.put(
+                    (
+                        {minion: 'Minion did not return. [Not connected]'},
+                        salt.defaults.exitcodes.EX_UNAVAILABLE,
+                    )
+                )
+
     log.info(
         '%d devices matched the target, executing in %d batches',
         len(minions),
@@ -984,7 +1033,7 @@ def execute_devices(
                 name=minion_id,
                 args=(
                     minion_id,
-                    function,
+                    salt_function,
                     ret_queue,
                     unreachable_devices,
                     failed_devices,
@@ -1142,7 +1191,7 @@ def execute_devices(
                     {
                         'tgt': tgt,
                         'tgt_type': tgt_type,
-                        'fun': function,
+                        'fun': salt_function,
                         'fun_args': event_args,
                         'jid': jid,
                         'user': __pub_user,
@@ -1166,7 +1215,7 @@ def execute_devices(
 
 def execute(
     tgt,
-    function=None,
+    salt_function=None,
     tgt_type='glob',
     roster=None,
     preview_target=False,
@@ -1218,7 +1267,7 @@ def execute(
         for a list, etc. The ``tgt_list`` argument must be used accordingly,
         depending on the type of this expression.
 
-    function
+    salt_function
         The name of the Salt function to invoke.
 
     tgt_type: ``glob``
@@ -1401,7 +1450,9 @@ def execute(
             log.debug('Computing the target using the %s Roster', roster)
             __opts__['use_cached_grains'] = use_cached_grains
             __opts__['use_cached_pillar'] = use_cached_pillar
-            roster_modules = salt.loader.roster(__opts__, runner=__salt__)
+            roster_modules = salt.loader.roster(
+                __opts__, runner=__salt__, whitelist=[roster]
+            )
             if '.targets' not in roster:
                 roster = '{mod}.targets'.format(mod=roster)
             rtargets_roster = roster_modules[roster](_tgt, tgt_type=_tgt_type)
@@ -1423,7 +1474,7 @@ def execute(
         return 'No devices matched your target. Please review your tgt / tgt_type arguments, or the Roster data source'
     if preview_target:
         return targets
-    elif not function:
+    elif not salt_function:
         return 'Please specify a Salt function to execute.'
     jid = kwargs.get('__pub_jid')
     if not jid:
@@ -1440,7 +1491,7 @@ def execute(
         __salt__['event.send'](jid, {'minions': targets})
     return execute_devices(
         targets,
-        function,
+        salt_function,
         tgt=tgt,
         tgt_type=tgt_type,
         with_grains=with_grains,

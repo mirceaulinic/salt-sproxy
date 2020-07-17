@@ -173,6 +173,13 @@ class SaltStandaloneProxyOptionParser(
             help=('Return the data from devices as a group after they all return.'),
         )
         self.add_option(
+            "--async",
+            default=False,
+            dest="async",
+            action="store_true",
+            help=('Run the salt-sproxy command but don\'t wait for a reply.'),
+        )
+        self.add_option(
             '--cache-grains',
             default=False,
             action='store_true',
@@ -280,7 +287,6 @@ class SaltStandaloneProxyOptionParser(
             '--sync-grains',
             dest='sync_grains',
             action='store_true',
-            default=False,
             help=(
                 'Re-sync the Grains modules. Useful if you have custom Grains '
                 'modules in your own environment.'
@@ -300,6 +306,18 @@ class SaltStandaloneProxyOptionParser(
                 'Synchronise the Roster modules (both salt-sproxy native '
                 'and provided by the user in their own environment).'
             ),
+        )
+        self.add_option(
+            '--sync-proxy',
+            dest='sync_proxy',
+            action='store_true',
+            help=('Load the salt-sproxy Proxy modules.'),
+        )
+        self.add_option(
+            '--sync-executors',
+            dest='sync_executors',
+            action='store_true',
+            help=('Load the salt-sproxy Executor modules.'),
         )
         self.add_option(
             '--saltenv',
@@ -500,6 +518,18 @@ class SaltStandaloneProxyOptionParser(
             metavar='RETURNER_KWARGS',
             help='Set Returner options at the command line.',
         )
+        self.add_option(
+            "-d",
+            "--doc",
+            "--documentation",
+            dest="doc",
+            default=False,
+            action="store_true",
+            help=(
+                'Return the documentation for the specified module or for '
+                'all modules if none are specified.'
+            ),
+        )
 
     # Everything else that follows here is verbatim copy from
     # https://github.com/saltstack/salt/blob/develop/salt/utils/parsers.py
@@ -513,6 +543,13 @@ class SaltStandaloneProxyOptionParser(
             # Insert dummy arg when displaying the file_roots
             self.args.append('not_a_valid_target')
             self.args.append('not_a_valid_command')
+        elif self.options.doc:
+            if len(self.args) == 1:
+                self.args.insert(0, 'not_a_valid_target')
+            elif len(self.args) == 0:
+                self.args.append('not_a_valid_target')
+                self.args.append('*')
+
         if self.options.list:
             try:
                 if ',' in self.args[0]:
@@ -592,4 +629,6 @@ class SaltStandaloneProxyOptionParser(
                 self.exit(42, '\nIncomplete options passed.\n\n')
 
     def setup_config(self):
-        return config.client_config(self.get_config_file_path())
+        defaults = config.DEFAULT_MASTER_OPTS.copy()
+        defaults['timeout'] = 60
+        return config.client_config(self.get_config_file_path(), defaults=defaults)

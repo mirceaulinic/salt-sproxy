@@ -41,6 +41,54 @@ already familiar with a vast majority of them from the `salt
     Print the complete salt-sproxy configuration values (with the defaults), as 
     YAML.
 
+.. option:: -t, --timeout
+
+    The time in seconds to await for a device to reply. Default: 60 (seconds).
+
+    When a device is not replying within this time, it is a good idea to 
+    increase the timeout value. The return when the device is slowly responding 
+    is ``Minion did not return. [No response]``. When used in conjunction with 
+    ``--summary``, the device will be counted under ``# of devices that did not 
+    return``, but not ``# of devices returned``. Moreover, salt-sproxy will 
+    exit with non-zero code, and the ``ERROR: Minions returned with non-zero 
+    exit code`` message will be displayed at the end.
+
+.. option:: -d, --doc, --documentation
+
+    .. versionadded:: 2020.7.0
+
+    Return the documentation for the module functions available for any Minion 
+    flavour. Note, if a specific function is available only when running under 
+    a specific Minion, you'll need to execute ``sys.doc`` instead.
+
+    Accepted syntax:
+
+    .. code-block:: bash
+
+        $ salt-sproxy <function> -d
+
+        $ salt-sproxy <target> <function> -d
+
+        $ salt-sproxy -d
+
+    (The latter syntax would return the documentation for all the Minion 
+    functions)
+
+    Example:
+
+    .. code-block:: bash
+
+        $ salt-sproxy test.ping -d
+        test.ping:
+
+        Used to make sure the minion is up and responding. Not an ICMP ping.
+
+        Returns ``True``.
+
+        CLI Example:
+
+            salt '*' test.ping
+
 .. option:: -r, --roster
 
     The Roster module to use to compile the list of targeted devices.
@@ -119,6 +167,25 @@ already familiar with a vast majority of them from the `salt
 
     Whether should return the entire output at once, or for every device 
     separately as they return.
+
+.. option:: --async
+
+    .. versionadded:: 2020.7.0
+
+    Instead of waiting for the job to run only print the job id of the started
+    execution and return immediately, while the job continues to run in the 
+    background.
+
+    This will only log a warning like: ``Running in asynchronous mode. Results 
+    of this execution may be collected by attaching to the master event bus or 
+    by examing the master job cache, if configured. This execution is running 
+    under tag salt/run/20200717101228363090``.
+
+    .. tip::
+
+        If you have the ``events: true`` (or ``--events`` on the CLI) option 
+        enabled, you'll also see the individual returns from every device, on 
+        the event bus. See :ref:`events` for more information.
 
 .. option:: --cache-grains
 
