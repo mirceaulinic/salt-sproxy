@@ -1,5 +1,5 @@
 -r requirements.txt
-tox==3.17.0
+tox==3.18.1
 black==19.10b0
 pylint==2.5.3
 SaltPylint==2020.5.22
