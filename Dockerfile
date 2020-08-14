@@ -2,7 +2,7 @@ FROM python:3.6-slim-stretch
 
 MAINTAINER ping@mirceaulinic.net
 
-ARG SALT_VERSION="2019.2.0"
+ARG SALT_VERSION="2019.2.5"
 
 COPY ./ /var/cache/salt-sproxy/
 COPY ./master /etc/salt/master
