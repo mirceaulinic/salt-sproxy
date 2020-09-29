@@ -463,8 +463,8 @@ def salt_call(
     preload_pillar=True,
     default_grains=None,
     default_pillar=None,
-    cache_grains=False,
-    cache_pillar=False,
+    cache_grains=True,
+    cache_pillar=True,
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
@@ -528,19 +528,11 @@ def salt_call(
         Use cached Grains whenever possible. If unable to gather cached data,
         it falls back to collecting Grains.
 
-    cache_pillar: ``False``
+    cache_pillar: ``True``
         Cache the compiled Pillar data before returning.
 
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
-
-    cache_grains: ``False``
+    cache_grains: ``True``
         Cache the collected Grains before returning.
-
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
 
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an
@@ -714,8 +706,8 @@ def execute_devices(
     tgt_type=None,
     jid=None,
     events=True,
-    cache_grains=False,
-    cache_pillar=False,
+    cache_grains=True,
+    cache_pillar=True,
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
@@ -797,19 +789,11 @@ def execute_devices(
         Use cached Grains whenever possible. If unable to gather cached data,
         it falls back to collecting Grains.
 
-    cache_pillar: ``False``
+    cache_pillar: ``True``
         Cache the compiled Pillar data before returning.
 
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
-
-    cache_grains: ``False``
+    cache_grains: ``True``
         Cache the collected Grains before returning.
-
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
 
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an
@@ -1232,8 +1216,8 @@ def execute(
     batch_wait=0,
     static=False,
     events=True,
-    cache_grains=False,
-    cache_pillar=False,
+    cache_grains=True,
+    cache_pillar=True,
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
@@ -1330,19 +1314,11 @@ def execute(
         Use cached Grains whenever possible. If unable to gather cached data,
         it falls back to collecting Grains.
 
-    cache_pillar: ``False``
+    cache_pillar: ``True``
         Cache the compiled Pillar data before returning.
 
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
-
-    cache_grains: ``False``
+    cache_grains: ``True``
         Cache the collected Grains before returning.
-
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
 
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an

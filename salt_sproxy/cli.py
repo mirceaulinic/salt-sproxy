@@ -339,8 +339,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'preview_target',
             'batch_size',
             'batch_wait',
-            'cache_grains',
-            'cache_pillar',
             'roster',
             'timeout',
             'static',
@@ -365,6 +363,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_cached_pillar': 'use_cached_pillar',
             'no_grains': 'with_grains',
             'no_pillar': 'with_pillar',
+            'dont_cache_grains': 'cache_grains',
+            'dont_cache_pillar': 'cache_pillar',
         }
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):

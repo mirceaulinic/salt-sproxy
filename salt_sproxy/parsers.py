@@ -180,21 +180,19 @@ class SaltStandaloneProxyOptionParser(
             help=('Run the salt-sproxy command but don\'t wait for a reply.'),
         )
         self.add_option(
-            '--cache-grains',
+            '--dont-cache-grains',
             default=False,
             action='store_true',
             help=(
-                'Cache the collected Grains. This is going to override the '
-                'existing cached Grains.'
+                'Do not cache the collected Grains for the sproxy devices.'
             ),
         )
         self.add_option(
-            '--cache-pillar',
+            '--dont-cache-pillar',
             default=False,
             action='store_true',
             help=(
-                'Cache the compiled Pillar. This is going to override the '
-                'existing cached Pillar.'
+                'Do not cache the compiled Pillar for the sproxy devices.'
             ),
         )
         self.add_option(
