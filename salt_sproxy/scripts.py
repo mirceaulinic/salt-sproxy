@@ -19,7 +19,7 @@ def _prep_kwargs(kwargs, opts):
     '''
     Gather the sproxy execute argument from the Master opts when available.
     '''
-    execute_args = set(inspect.getargspec(sproxy_execute)[0])
+    execute_args = set(inspect.getfullargspec(sproxy_execute)[0])
     sapi_args = execute_args - {'tgt', 'salt_function', 'tgt_type', 'static', 'timeout'}
     for arg in sapi_args:
         if arg not in kwargs and arg in opts:
@@ -33,9 +33,7 @@ def sapi_sproxy(
     '''
     Shortcut to invoke an arbitrary Salt function via sproxy.
     '''
-    kwargs.update(
-        {'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True,}
-    )
+    kwargs.update({'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True})
     kwargs = _prep_kwargs(kwargs, self.opts)
     log.debug('New kwargs:')
     log.debug(kwargs)
@@ -50,9 +48,7 @@ def sapi_sproxy_async(
     '''
     Shortcut to invoke an arbitrary Salt function via sproxy, asynchronously.
     '''
-    kwargs.update(
-        {'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True,}
-    )
+    kwargs.update({'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True})
     kwargs = _prep_kwargs(kwargs, self.opts)
     log.debug('New kwargs:')
     log.debug(kwargs)
