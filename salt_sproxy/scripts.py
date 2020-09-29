@@ -10,8 +10,21 @@ import salt.scripts
 from salt.ext import six
 import salt.utils.parsers
 from salt.scripts import _install_signal_handlers
+from salt_sproxy._runners.proxy import execute as sproxy_execute
 
 log = logging.getLogger(__name__)
+
+
+def _prep_kwargs(kwargs, opts):
+    '''
+    Gather the sproxy execute argument from the Master opts when available.
+    '''
+    execute_args = set(inspect.getargspec(sproxy_execute)[0])
+    sapi_args = execute_args - {'tgt', 'salt_function', 'tgt_type', 'static', 'timeout'}
+    for arg in sapi_args:
+        if arg not in kwargs and arg in opts:
+            kwargs[arg] = opts[arg]
+    return kwargs
 
 
 def sapi_sproxy(
@@ -21,14 +34,11 @@ def sapi_sproxy(
     Shortcut to invoke an arbitrary Salt function via sproxy.
     '''
     kwargs.update(
-        {
-            'function': fun,
-            'tgt': tgt,
-            'tgt_type': tgt_type,
-            'static': True,
-            'sync_roster': True,
-        }
+        {'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True,}
     )
+    kwargs = _prep_kwargs(kwargs, self.opts)
+    log.debug('New kwargs:')
+    log.debug(kwargs)
     return salt.netapi.NetapiClient.runner(
         self, 'proxy.execute', timeout=timeout, full_return=full_return, **kwargs
     )
@@ -41,14 +51,11 @@ def sapi_sproxy_async(
     Shortcut to invoke an arbitrary Salt function via sproxy, asynchronously.
     '''
     kwargs.update(
-        {
-            'function': fun,
-            'tgt': tgt,
-            'tgt_type': tgt_type,
-            'static': True,
-            'sync_roster': True,
-        }
+        {'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True,}
     )
+    kwargs = _prep_kwargs(kwargs, self.opts)
+    log.debug('New kwargs:')
+    log.debug(kwargs)
     return salt.netapi.NetapiClient.runner_async(
         self, 'proxy.execute', timeout=timeout, full_return=full_return, **kwargs
     )
