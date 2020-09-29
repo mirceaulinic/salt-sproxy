@@ -183,17 +183,13 @@ class SaltStandaloneProxyOptionParser(
             '--dont-cache-grains',
             default=False,
             action='store_true',
-            help=(
-                'Do not cache the collected Grains for the sproxy devices.'
-            ),
+            help=('Do not cache the collected Grains for the sproxy devices.'),
         )
         self.add_option(
             '--dont-cache-pillar',
             default=False,
             action='store_true',
-            help=(
-                'Do not cache the compiled Pillar for the sproxy devices.'
-            ),
+            help=('Do not cache the compiled Pillar for the sproxy devices.'),
         )
         self.add_option(
             '--no-cached-grains',
