@@ -184,7 +184,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --cache-grains
 
-    .. versionremoved:: 2020.10.0
+    .. deprecated:: 2020.10.0
 
         This argument has been defaulted to ``True``, and replaced with 
         ``--dont-cache-grains``, having a flipped action (i.e., do not attempt
@@ -209,7 +209,7 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --cache-pillar
 
-    .. versionremoved:: 2020.10.0
+    .. deprecated:: 2020.10.0
 
         This argument has been defaulted to ``True``, and replaced with 
         ``--dont-cache-pillar``, having a flipped action (i.e., do not attempt
