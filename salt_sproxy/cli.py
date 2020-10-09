@@ -196,11 +196,13 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         sync_roster = self.config.get('sync_roster', True)
         sync_proxy = self.config.get('sync_proxy', False)
         sync_executors = self.config.get('sync_executors', False)
-        kwargs.update({
-            'sync_all': sync_all,
-            'sync_roster': sync_roster,
-            'sync_modules': sync_modules,
-        })
+        kwargs.update(
+            {
+                'sync_all': sync_all,
+                'sync_roster': sync_roster,
+                'sync_modules': sync_modules,
+            }
+        )
         if any(
             [
                 sync_all,
