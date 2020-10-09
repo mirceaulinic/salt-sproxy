@@ -275,6 +275,7 @@ class SProxyMinion(SMinion):
             )
             self.opts['pillar']['proxy'].pop('name', None)
             self.opts['pillar']['proxy'].pop('grains', None)
+            self.opts['pillar']['proxy'].pop('pillar', None)
 
         if self.opts.get('preload_targeting', False) or self.opts.get(
             'invasive_targeting', False
