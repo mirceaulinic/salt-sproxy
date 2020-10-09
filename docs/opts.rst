@@ -126,12 +126,7 @@ already familiar with a vast majority of them from the `salt
         retrieve all this data, *salt-sproxy* initiates the connection with ALL 
         the devices provided through the Roster interface. That means, not only 
         that resources consumption is expected to increase, but also the
-        execution time would similarlly be higher. Depending on your setup and
-        use case, you may want to consider using ``--cache-grains`` and / or 
-        ``--cache-pillar``. The idea is to firstly run ``--invasive-targeting``
-        together with ``--cache-grains`` and / or ``--cache-pillar``, in order
-        to cache your data, and the subsequent executions through *salt-sproxy* 
-        are going to use that data, device target matching included.
+        execution time would similarlly be higher.
 
 .. option:: --preload-targeting
 
@@ -189,6 +184,12 @@ already familiar with a vast majority of them from the `salt
 
 .. option:: --cache-grains
 
+    .. deprecated:: 2020.10.0
+
+        This argument has been defaulted to ``True``, and replaced with 
+        ``--dont-cache-grains``, having a flipped action (i.e., do not attempt
+        to cache the Grains).
+
     Cache the collected Grains. Beware that this option overwrites the existing
     Grains. This may be helpful when using the ``salt-sproxy`` only, but may 
     lead to unexpected results when running in :ref:`mixed-environments`. That 
@@ -198,7 +199,21 @@ already familiar with a vast majority of them from the `salt
     which is a safe operation in this case (i.e., it won't overwrite the Grains 
     of an existing Minion).
 
+.. option:: --dont-cache-grains
+
+    .. versionadded:: 2020.10.0
+
+    Do not attempt to cache the Grains after execution is complete. This is 
+    generally discouraged, particularly if you want to use the ``-G`` or any 
+    targeting combination that requires Grains.
+
 .. option:: --cache-pillar
+
+    .. deprecated:: 2020.10.0
+
+        This argument has been defaulted to ``True``, and replaced with 
+        ``--dont-cache-pillar``, having a flipped action (i.e., do not attempt
+        to cache the Pillar).
 
     Cache the collected Pillar. Beware that this option overwrites the existing
     Pillar. This may be helpful when using the ``salt-sproxy`` only, but may 
@@ -208,6 +223,14 @@ already familiar with a vast majority of them from the `salt
     Minion if any, otherwise it will write the compiled Pillar to the cache, 
     which is a safe operation in this case (i.e., it won't overwrite the cached
     Pillar of an existing Minion).
+
+.. option:: --dont-cache-pillar
+
+    .. versionadded:: 2020.10.0
+
+    Do not attempt to cache the Pillar after execution is complete. This is 
+    generally discouraged, particularly if you want to use the ``-I`` or any 
+    targeting combination that requires Pillar.
 
 .. option:: --no-cached-grains
 
