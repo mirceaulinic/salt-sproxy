@@ -1351,9 +1351,9 @@ def execute(
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
 
     saltenv = __opts__.get('saltenv', 'base')
-    if sync_roster:
+    if sync_roster and not sync_all:
         __salt__['saltutil.sync_roster'](saltenv=saltenv)
-    if sync_modules:
+    if sync_modules and not sync_all:
         __salt__['saltutil.sync_modules'](saltenv=saltenv)
     if sync_all:
         __salt__['saltutil.sync_all'](saltenv=saltenv)
