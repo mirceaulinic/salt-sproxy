@@ -105,8 +105,18 @@ def _prep_conn(opts, fun, *args, **kwargs):
     fsclient = salt.fileclient.FSClient(opts)
     # TODO: Have here more options to simplify the usage, through features like
     # auto-expand the path to the priv key, auto-discovery, etc.
+    argv = [fun]
+    argv.extend([salt.utils.json.dumps(arg) for arg in args])
+    argv.extend(
+        [
+            "{0}={1}".format(
+                salt.utils.stringutils.to_str(key), salt.utils.json.dumps(val)
+            )
+            for key, val in six.iteritems(kwargs)
+        ]
+    )
     conn = salt.client.ssh.Single(
-        opts, [fun], opts['id'], fsclient=fsclient, **opts['proxy']
+        opts, argv, opts['id'], fsclient=fsclient, **opts['proxy']
     )
     conn.args = args
     conn.kwargs = kwargs
