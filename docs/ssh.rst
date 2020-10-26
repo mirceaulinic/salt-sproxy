@@ -87,6 +87,10 @@ or Pillar.
     situations where ssh-agent offers many different identities and allow ssh
     to ignore those identities and use the only one specified in options.
 
+``ignore_host_keys``: ``False``
+    By default ssh host keys are honored and connections will ask for approval.
+    Use this option to disable ``StrictHostKeyChecking``.
+
 ``winrm``: ``False``
     Flag that tells Salt to connect to a Windows machine. This option requires
     the ``saltwinshell`` to be installed.

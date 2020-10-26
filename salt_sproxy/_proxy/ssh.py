@@ -62,6 +62,10 @@ or Pillar.
     situations where ssh-agent offers many different identities and allow ssh
     to ignore those identities and use the only one specified in options.
 
+``ignore_host_keys``: ``False``
+    By default ssh host keys are honored and connections will ask for approval.
+    Use this option to disable ``StrictHostKeyChecking``.
+
 ``winrm``: ``False``
     Flag that tells Salt to connect to a Windows machine. This option requires
     the ``saltwinshell`` to be installed.
@@ -115,6 +119,10 @@ def _prep_conn(opts, fun, *args, **kwargs):
             for key, val in six.iteritems(kwargs)
         ]
     )
+    if not opts['proxy'].get('ssh_options'):
+        opts['proxy']['ssh_options'] = []
+    if opts['proxy'].get('ignore_host_keys', False):
+        opts['proxy']['ssh_options'].append('StrictHostKeyChecking=no')
     conn = salt.client.ssh.Single(
         opts, argv, opts['id'], fsclient=fsclient, **opts['proxy']
     )
