@@ -501,6 +501,41 @@ already familiar with a vast majority of them from the `salt
     This option is going to add the salt-sproxy installation path to your
     existing ``file_roots``.
 
+.. option:: -i, --ignore-host-keys
+
+    .. versionadded:: 2020.10.0
+
+    By default ssh host keys are honored and connections will ask for approval.
+    Use this option to disable ``StrictHostKeyChecking``.
+
+.. option:: --no-host-keys
+
+    .. versionadded:: 2020.10.0
+
+    Fully ignores ssh host keys which by default are honored and connections
+    would ask for approval. Useful if the host key of a remote server has
+    changed and would still error with ``--ignore-host-keys``.
+
+.. option:: --identities-only
+
+    .. versionadded:: 2020.10.0
+
+    Execute SSH with ``-o IdentitiesOnly=yes``. This option is intended for
+    situations where ssh-agent offers many different identities and allow ssh
+    to ignore those identities and use the only one specified in options.
+
+.. option:: --priv
+
+    .. versionadded:: 2020.10.0
+
+    Specify the SSH private key file to be used for authentication.
+
+.. option:: --priv-passwd
+
+    .. versionadded:: 2020.10.0
+
+    Specify the SSH private key file's passphrase when required.
+
 .. _logging-opts:
 
 Logging Options

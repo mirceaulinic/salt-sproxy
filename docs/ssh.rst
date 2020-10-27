@@ -46,6 +46,11 @@ The configuration is aligned to the general Proxy Minion standards: put the
 connection details and credentials under the ``proxy`` key in the Proxy config
 or Pillar.
 
+.. important:
+
+    Local (i.e., per Proxy) option override the global configuration or CLI
+    options.
+
 ``host``
     The IP address or the hostname of the remove machine to manage.
 
@@ -90,6 +95,11 @@ or Pillar.
 ``ignore_host_keys``: ``False``
     By default ssh host keys are honored and connections will ask for approval.
     Use this option to disable ``StrictHostKeyChecking``.
+
+``no_host_keys``: ``False``
+    Fully ignores ssh host keys which by default are honored and connections
+    would ask for approval. Useful if the host key of a remote server has
+    changed and would still error with ``ignore_host_keys``.
 
 ``winrm``: ``False``
     Flag that tells Salt to connect to a Windows machine. This option requires
