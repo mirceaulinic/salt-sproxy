@@ -16,6 +16,9 @@ mkdir -p /tmp/sproxy-run/cache \
          /tmp/sproxy-run/master \
          /tmp/sproxy-run/extmods
 
+echo "Salt SProxy Version"
+salt-sproxy -V
+
 echo "Starting a Salt Master"
 salt-master --pid-file /tmp/sproxy-run/salt-master.pid -l $LOG_LEVEL &
 echo "Starting the Salt SAPI"
