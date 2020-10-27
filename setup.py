@@ -20,7 +20,7 @@ repo_url = 'https://github.com/{}'.format(repo_slug)
 
 setup(
     name=name,
-    version='2020.7.0',
+    version='2020.10.0',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
