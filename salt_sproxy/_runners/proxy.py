@@ -803,7 +803,7 @@ def execute_devices(
         if salt.version.__version_info__ >= (2018, 3, 0):
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
-            jid = salt.utils.jid.gen_jid()
+            jid = salt.utils.jid.gen_jid()  # pylint: disable=no-value-for-parameter
     event_args = list(args[:])
     if kwargs:
         event_kwargs = {'__kwarg__': True}
@@ -1436,7 +1436,7 @@ def execute(
         if salt.version.__version_info__ >= (2018, 3, 0):
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
-            jid = salt.utils.jid.gen_jid()
+            jid = salt.utils.jid.gen_jid()  # pylint: disable=no-value-for-parameter
     if verbose or show_jid:
         salt.utils.stringutils.print_cli('Executing job with jid {0}'.format(jid))
         salt.utils.stringutils.print_cli(
