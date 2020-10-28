@@ -1,0 +1,72 @@
+.. _release-2020.10.0:
+
+=========
+2020.10.0
+=========
+
+New Features
+------------
+
+Added new arguments for the SSH functionality (which are similar to the Salt 
+SSH options with the same naming):
+
+- ``--ignore-host-keys``: By default ssh host keys are honored and connections
+  will ask for approval. Use this option to disable ``StrictHostKeyChecking``.
+- ``--no-host-keys``: Fully ignores ssh host keys which by default are honored
+  and connections would ask for approval. Useful if the host key of a remote
+  server has changed and would still error with ``--ignore-host-keys``.
+- ``--identities-only``: Execute SSH with ``-o IdentitiesOnly=yes``. This option
+  is intended for situations where ssh-agent offers many different identities
+  and allow ssh to ignore those identities and use the only one specified
+  in options.
+- ``--priv``: Specify the SSH private key file to be used for authentication.
+- ``--priv-password``: Specify the SSH private key file's passphrase when
+  required.
+
+Any of these CLI arguments can also be provided into the (Master) configuration 
+file as global arguments for all the Minions, as well as individually, for 
+every Proxy Minion.
+
+Deprecations
+------------
+
+The ``--cache-grains`` and ``--cache-pillar`` CLI arguments have been 
+deprecated, as any Minion managed through salt-sproxy now caches the Grains and 
+Pillars by default. If you want to prevent this, you can use the new 
+``--dont-cache-grains`` and / or ``--dont-cache-pillar`` options, or simply 
+configure ``cache_grains: false`` and / or ``cache_pillar: false`` into the 
+(Master) configuration.
+
+See :ref:`opts` for more details.
+
+Improvements
+------------
+
+When using the :ref:`salt-sapi` endpoint for the REST API, in order to have 
+access to the ``sproxy`` and ``sproxy_async`` clients over HTTP calls, any 
+configuration option is now passed on to :ref:`runner`.
+
+Bug Fixes
+---------
+
+- `#176 <https://github.com/mirceaulinic/salt-sproxy/issues/176>`__ "*custom 
+  execution modules not working*".
+- `#169 <https://github.com/mirceaulinic/salt-sproxy/issues/169>`__ "*Pillar 
+  targeting broken*" - which was due to an incorrectly handled caching 
+  mechanism. Pillar targeting should now work well (with the caveats documented 
+  in :ref:`targeting`).
+- `#179 <https://github.com/mirceaulinic/salt-sproxy/issues/179>`__ "*using 
+  salt-sproxy as a replacement for salt-ssh*" - which was fixed in `#185 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/185>`__. Thanks `@dmacvicar 
+  <https://github.com/dmacvicar>`__!
+- `#181 <https://github.com/mirceaulinic/salt-sproxy/issues/181>`__ "*napalm 
+  grains not available during template rendering*" - fixed via `#187 
+  <https://github.com/mirceaulinic/salt-sproxy/pull/187>`__.
+
+Questions
+---------
+
+I would like to engage the community to discuss around the following question:
+*should enforce (internally) to -t 0 (i.e., wait till the device replies) on state.\* functions?*
+`#182 <https://github.com/mirceaulinic/salt-sproxy/issues/182>`__. Any thoughts 
+would be very welcome, or just a simple vote would be sufficient.

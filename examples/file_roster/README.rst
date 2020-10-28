@@ -120,7 +120,7 @@ of managing the list of devices manually, have it auto-generated:
 
 ``/etc/salt/roster``:
 
-.. code-block:: yaml
+.. code-block:: sls
 
   {%- for i in range(50) %}
   device{{ i }}:

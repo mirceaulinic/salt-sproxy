@@ -196,6 +196,13 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
         sync_roster = self.config.get('sync_roster', True)
         sync_proxy = self.config.get('sync_proxy', False)
         sync_executors = self.config.get('sync_executors', False)
+        kwargs.update(
+            {
+                'sync_all': sync_all,
+                'sync_roster': sync_roster,
+                'sync_modules': sync_modules,
+            }
+        )
         if any(
             [
                 sync_all,
@@ -339,8 +346,6 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'preview_target',
             'batch_size',
             'batch_wait',
-            'cache_grains',
-            'cache_pillar',
             'roster',
             'timeout',
             'static',
@@ -365,6 +370,8 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'no_cached_pillar': 'use_cached_pillar',
             'no_grains': 'with_grains',
             'no_pillar': 'with_pillar',
+            'dont_cache_grains': 'cache_grains',
+            'dont_cache_pillar': 'cache_pillar',
         }
         for opt, kwarg in six.iteritems(reverse_opts):
             if getattr(self.options, opt):
@@ -424,4 +431,4 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
                     )
 
         except SaltClientError as exc:
-            raise SystemExit(six.text_type(exc))
+            raise SystemExit from exc

@@ -242,15 +242,9 @@ class SProxyMinion(SMinion):
 
             salt '*' sys.reload_modules
         '''
-        cached_grains = None
-        if self.opts.get('proxy_use_cached_grains', True):
-            cached_grains = self.opts.pop('proxy_cached_grains', None)
-
-        if not cached_grains and self.opts.get('proxy_preload_grains', True):
+        if self.opts.get('proxy_preload_grains', True):
             loaded_grains = salt.loader.grains(self.opts)
             self.opts['grains'].update(loaded_grains)
-        elif cached_grains:
-            self.opts['grains'].update(cached_grains)
 
         if (
             self.opts['roster_opts']
@@ -264,10 +258,7 @@ class SProxyMinion(SMinion):
                 self.opts['roster_opts']['grains'], self.opts['grains']
             )
 
-        cached_pillar = None
-        if self.opts.get('proxy_use_cached_pillar', True):
-            cached_pillar = self.opts.pop('proxy_cached_pillar', None)
-        if not cached_pillar and self.opts.get('proxy_load_pillar', True):
+        if self.opts.get('proxy_load_pillar', True):
             self.opts['pillar'] = salt.pillar.get_pillar(
                 self.opts,
                 self.opts['grains'],
@@ -275,10 +266,6 @@ class SProxyMinion(SMinion):
                 saltenv=self.opts['saltenv'],
                 pillarenv=self.opts.get('pillarenv'),
             ).compile_pillar()
-        elif cached_pillar:
-            self.opts['pillar'] = salt.utils.dictupdate.merge(
-                cached_pillar, self.opts['pillar']
-            )
 
         if self.opts['roster_opts'] and self.opts.get('proxy_merge_roster_opts', True):
             if 'proxy' not in self.opts['pillar']:
@@ -288,6 +275,7 @@ class SProxyMinion(SMinion):
             )
             self.opts['pillar']['proxy'].pop('name', None)
             self.opts['pillar']['proxy'].pop('grains', None)
+            self.opts['pillar']['proxy'].pop('pillar', None)
 
         if self.opts.get('preload_targeting', False) or self.opts.get(
             'invasive_targeting', False
@@ -384,7 +372,7 @@ class SProxyMinion(SMinion):
                 if self.unreachable_devices is not None:
                     self.unreachable_devices.append(self.opts['id'])
                 raise
-            if not cached_grains and self.opts.get('proxy_load_grains', True):
+            if self.opts.get('proxy_load_grains', True):
                 # When the Grains are loaded from the cache, no need to re-load them
                 # again.
 
@@ -396,7 +384,17 @@ class SProxyMinion(SMinion):
                 # may contain other grains from different sources, e.g., roster.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
                 self.opts['grains'] = salt.utils.dictupdate.merge(grains, loaded_grains)
+            if self.opts.get('proxy_load_pillar', True):
+                self.opts['pillar'] = salt.pillar.get_pillar(
+                    self.opts,
+                    self.opts['grains'],
+                    self.opts['id'],
+                    saltenv=self.opts['saltenv'],
+                    pillarenv=self.opts.get('pillarenv'),
+                ).compile_pillar()
+            self.functions.pack['__opts__'] = self.opts
             self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
+            self.functions.pack['__pillar__'] = copy.deepcopy(self.opts['pillar'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
         if self.opts.get('invasive_targeting', False):
@@ -463,8 +461,8 @@ def salt_call(
     preload_pillar=True,
     default_grains=None,
     default_pillar=None,
-    cache_grains=False,
-    cache_pillar=False,
+    cache_grains=True,
+    cache_pillar=True,
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
@@ -528,19 +526,11 @@ def salt_call(
         Use cached Grains whenever possible. If unable to gather cached data,
         it falls back to collecting Grains.
 
-    cache_pillar: ``False``
+    cache_pillar: ``True``
         Cache the compiled Pillar data before returning.
 
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
-
-    cache_grains: ``False``
+    cache_grains: ``True``
         Cache the collected Grains before returning.
-
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
 
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an
@@ -596,15 +586,6 @@ def salt_call(
     opts['proxy_use_cached_grains'] = use_cached_grains
     opts['proxy_no_connect'] = no_connect
     opts['proxy_test_ping'] = test_ping
-    if use_cached_grains:
-        opts['proxy_cached_grains'] = __salt__['cache.fetch'](
-            'minions/{}/data'.format(minion_id), 'grains'
-        )
-    opts['proxy_use_cached_pillar'] = use_cached_pillar
-    if use_cached_pillar:
-        opts['proxy_cached_pillar'] = __salt__['cache.fetch'](
-            'minions/{}/data'.format(minion_id), 'pillar'
-        )
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
     if not returner_kwargs:
@@ -714,8 +695,8 @@ def execute_devices(
     tgt_type=None,
     jid=None,
     events=True,
-    cache_grains=False,
-    cache_pillar=False,
+    cache_grains=True,
+    cache_pillar=True,
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
@@ -797,19 +778,11 @@ def execute_devices(
         Use cached Grains whenever possible. If unable to gather cached data,
         it falls back to collecting Grains.
 
-    cache_pillar: ``False``
+    cache_pillar: ``True``
         Cache the compiled Pillar data before returning.
 
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
-
-    cache_grains: ``False``
+    cache_grains: ``True``
         Cache the collected Grains before returning.
-
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
 
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an
@@ -840,7 +813,7 @@ def execute_devices(
         if salt.version.__version_info__ >= (2018, 3, 0):
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
-            jid = salt.utils.jid.gen_jid()
+            jid = salt.utils.jid.gen_jid()  # pylint: disable=no-value-for-parameter
     event_args = list(args[:])
     if kwargs:
         event_kwargs = {'__kwarg__': True}
@@ -1232,8 +1205,8 @@ def execute(
     batch_wait=0,
     static=False,
     events=True,
-    cache_grains=False,
-    cache_pillar=False,
+    cache_grains=True,
+    cache_pillar=True,
     use_cached_grains=True,
     use_cached_pillar=True,
     use_existing_proxy=False,
@@ -1330,19 +1303,11 @@ def execute(
         Use cached Grains whenever possible. If unable to gather cached data,
         it falls back to collecting Grains.
 
-    cache_pillar: ``False``
+    cache_pillar: ``True``
         Cache the compiled Pillar data before returning.
 
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
-
-    cache_grains: ``False``
+    cache_grains: ``True``
         Cache the collected Grains before returning.
-
-        .. warning::
-            This option may be dangerous when targeting a device that already
-            has a Proxy Minion associated, however recommended otherwise.
 
     use_existing_proxy: ``False``
         Use the existing Proxy Minions when they are available (say on an
@@ -1375,9 +1340,9 @@ def execute(
     roster = roster or __opts__.get('proxy_roster', __opts__.get('roster'))
 
     saltenv = __opts__.get('saltenv', 'base')
-    if sync_roster:
+    if sync_roster and not sync_all:
         __salt__['saltutil.sync_roster'](saltenv=saltenv)
-    if sync_modules:
+    if sync_modules and not sync_all:
         __salt__['saltutil.sync_modules'](saltenv=saltenv)
     if sync_all:
         __salt__['saltutil.sync_all'](saltenv=saltenv)
@@ -1481,7 +1446,7 @@ def execute(
         if salt.version.__version_info__ >= (2018, 3, 0):
             jid = salt.utils.jid.gen_jid(__opts__)
         else:
-            jid = salt.utils.jid.gen_jid()
+            jid = salt.utils.jid.gen_jid()  # pylint: disable=no-value-for-parameter
     if verbose or show_jid:
         salt.utils.stringutils.print_cli('Executing job with jid {0}'.format(jid))
         salt.utils.stringutils.print_cli(

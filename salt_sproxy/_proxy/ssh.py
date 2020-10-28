@@ -21,6 +21,11 @@ The configuration is aligned to the general Proxy Minion standards: put the
 connection details and credentials under the ``proxy`` key in the Proxy config
 or Pillar.
 
+.. important:
+
+    Local (i.e., per Proxy) option override the global configuration or CLI
+    options.
+
 ``host``
     The IP address or the hostname of the remove machine to manage.
 
@@ -61,6 +66,15 @@ or Pillar.
     Execute SSH with ``-o IdentitiesOnly=yes``. This option is intended for
     situations where ssh-agent offers many different identities and allow ssh
     to ignore those identities and use the only one specified in options.
+
+``ignore_host_keys``: ``False``
+    By default ssh host keys are honored and connections will ask for approval.
+    Use this option to disable ``StrictHostKeyChecking``.
+
+``no_host_keys``: ``False``
+    Fully ignores ssh host keys which by default are honored and connections
+    would ask for approval. Useful if the host key of a remote server has
+    changed and would still error with ``ignore_host_keys``.
 
 ``winrm``: ``False``
     Flag that tells Salt to connect to a Windows machine. This option requires
@@ -105,8 +119,29 @@ def _prep_conn(opts, fun, *args, **kwargs):
     fsclient = salt.fileclient.FSClient(opts)
     # TODO: Have here more options to simplify the usage, through features like
     # auto-expand the path to the priv key, auto-discovery, etc.
+    argv = [fun]
+    argv.extend([salt.utils.json.dumps(arg) for arg in args])
+    argv.extend(
+        [
+            "{0}={1}".format(
+                salt.utils.stringutils.to_str(key), salt.utils.json.dumps(val)
+            )
+            for key, val in six.iteritems(kwargs)
+        ]
+    )
+    if not opts['proxy'].get('ssh_options'):
+        opts['proxy']['ssh_options'] = []
+    if opts['proxy'].get('ignore_host_keys', False):
+        opts['proxy']['ssh_options'].append('StrictHostKeyChecking=no')
+    if opts['proxy'].get('no_host_keys', False):
+        opts['proxy']['ssh_options'].extend(
+            ["StrictHostKeyChecking=no", "UserKnownHostsFile=/dev/null"]
+        )
+    for cli_opt in ('identities_only', 'priv', 'priv_passwd'):
+        if opts.get(cli_opt) and not opts['proxy'].get(cli_opt):
+            opts['proxy'][cli_opt] = opts[cli_opt]
     conn = salt.client.ssh.Single(
-        opts, [fun], opts['id'], fsclient=fsclient, **opts['proxy']
+        opts, argv, opts['id'], fsclient=fsclient, **opts['proxy']
     )
     conn.args = args
     conn.kwargs = kwargs

@@ -180,22 +180,16 @@ class SaltStandaloneProxyOptionParser(
             help=('Run the salt-sproxy command but don\'t wait for a reply.'),
         )
         self.add_option(
-            '--cache-grains',
+            '--dont-cache-grains',
             default=False,
             action='store_true',
-            help=(
-                'Cache the collected Grains. This is going to override the '
-                'existing cached Grains.'
-            ),
+            help=('Do not cache the collected Grains for the sproxy devices.'),
         )
         self.add_option(
-            '--cache-pillar',
+            '--dont-cache-pillar',
             default=False,
             action='store_true',
-            help=(
-                'Cache the compiled Pillar. This is going to override the '
-                'existing cached Pillar.'
-            ),
+            help=('Do not cache the compiled Pillar for the sproxy devices.'),
         )
         self.add_option(
             '--no-cached-grains',
@@ -217,6 +211,49 @@ class SaltStandaloneProxyOptionParser(
                 'Do not attempt to collect Grains at all. Use with care, it '
                 'may lead to unexpected results.'
             ),
+        )
+        self.add_option(
+            '-i',
+            '--ignore-host-keys',
+            default=False,
+            action='store_true',
+            dest='ignore_host_keys',
+            help=(
+                'By default ssh host keys are honored and connections will ask '
+                'for approval. Use this option to disable StrictHostKeyChecking.'
+            ),
+        )
+        self.add_option(
+            '--no-host-keys',
+            default=False,
+            action='store_true',
+            dest='no_host_keys',
+            help=(
+                'Fully ignores ssh host keys which by default are honored and '
+                'connections would ask for approval. Useful if the host key of '
+                'a remote server has changed and would still error with '
+                '--ignore-host-keys.'
+            ),
+        )
+        self.add_option(
+            '--identities-only',
+            default=False,
+            action='store_true',
+            dest='identities_only',
+            help=(
+                'Use the only authentication identity files configured in the '
+                'ssh_config files. See ``IdentitiesOnly`` flag in man ssh_config.'
+            ),
+        )
+        self.add_option(
+            '--priv',
+            dest='priv',
+            help=('Specify the SSH private key file to be used for authentication.'),
+        )
+        self.add_option(
+            '--priv-passwd',
+            dest='priv_passwd',
+            help=('Specify the SSH private key file\'s passphrase when required.'),
         )
         self.add_option(
             '--preload-targeting',
