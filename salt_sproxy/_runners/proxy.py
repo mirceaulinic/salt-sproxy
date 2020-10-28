@@ -392,6 +392,7 @@ class SProxyMinion(SMinion):
                     saltenv=self.opts['saltenv'],
                     pillarenv=self.opts.get('pillarenv'),
                 ).compile_pillar()
+            self.functions.pack['__opts__'] = self.opts
             self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
             self.functions.pack['__pillar__'] = copy.deepcopy(self.opts['pillar'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
