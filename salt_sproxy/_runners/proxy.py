@@ -384,7 +384,17 @@ class SProxyMinion(SMinion):
                 # may contain other grains from different sources, e.g., roster.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
                 self.opts['grains'] = salt.utils.dictupdate.merge(grains, loaded_grains)
+            if self.opts.get('proxy_load_pillar', True):
+                self.opts['pillar'] = salt.pillar.get_pillar(
+                    self.opts,
+                    self.opts['grains'],
+                    self.opts['id'],
+                    saltenv=self.opts['saltenv'],
+                    pillarenv=self.opts.get('pillarenv'),
+                ).compile_pillar()
+            self.functions.pack['__opts__'] = self.opts
             self.functions.pack['__grains__'] = copy.deepcopy(self.opts['grains'])
+            self.functions.pack['__pillar__'] = copy.deepcopy(self.opts['pillar'])
         self.grains_cache = copy.deepcopy(self.opts['grains'])
 
         if self.opts.get('invasive_targeting', False):
