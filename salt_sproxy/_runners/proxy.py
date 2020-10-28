@@ -384,7 +384,7 @@ class SProxyMinion(SMinion):
                 # may contain other grains from different sources, e.g., roster.
                 loaded_grains = salt.loader.grains(self.opts, proxy=self.proxy)
                 self.opts['grains'] = salt.utils.dictupdate.merge(grains, loaded_grains)
-             if self.opts.get('proxy_load_pillar', True):
+            if self.opts.get('proxy_load_pillar', True):
                 self.opts['pillar'] = salt.pillar.get_pillar(
                     self.opts,
                     self.opts['grains'],
