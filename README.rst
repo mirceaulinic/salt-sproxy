@@ -61,6 +61,12 @@ In brief, here are some benefits you can get by using *salt-sproxy*:
 - Reuse your existing extension modules, templates, Pillars, States, etc., you
   may have already developed in your environment, transparently.
 - You can run it locally, on your own computer.
+- You can use *salt-sproxy* to uniformly manage network devices, servers 
+  (either using regular Minions, or `SSH 
+  <https://salt-sproxy.readthedocs.io/en/latest/ssh.html>`_), applications 
+  (e.g., Docker containers, VMWare ESXi clusters and vCenters, Marathon or 
+  Chronos clusters, etc.), and virtually anything that has a programmable 
+  interface.
 - Python programming made a breeze - might go well with the
   `ISalt <https://github.com/mirceaulinic/isalt>`__ package.
 - Integrates easily with your existing Salt environment (if you have), by
