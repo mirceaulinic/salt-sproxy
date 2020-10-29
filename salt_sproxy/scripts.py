@@ -33,7 +33,9 @@ def sapi_sproxy(
     '''
     Shortcut to invoke an arbitrary Salt function via sproxy.
     '''
-    kwargs.update({'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True})
+    kwargs.update(
+        {'salt_function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True}
+    )
     kwargs = _prep_kwargs(kwargs, self.opts)
     log.debug('New kwargs:')
     log.debug(kwargs)
@@ -48,7 +50,9 @@ def sapi_sproxy_async(
     '''
     Shortcut to invoke an arbitrary Salt function via sproxy, asynchronously.
     '''
-    kwargs.update({'function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True})
+    kwargs.update(
+        {'salt_function': fun, 'tgt': tgt, 'tgt_type': tgt_type, 'static': True}
+    )
     kwargs = _prep_kwargs(kwargs, self.opts)
     log.debug('New kwargs:')
     log.debug(kwargs)
