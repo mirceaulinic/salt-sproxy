@@ -93,7 +93,7 @@ The following targeting options are available:
 
 .. warning::
 
-    Some of the targeting options above may not be avaialble for some Roster
+    Some of the targeting options above may not be available for some Roster
     modules.
 
 To use a specific Roster, configure the ``proxy_roster`` option into your
