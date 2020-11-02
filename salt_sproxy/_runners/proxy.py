@@ -258,10 +258,21 @@ class SProxyMinion(SMinion):
                 self.opts['roster_opts']['grains'], self.opts['grains']
             )
 
+        cached_grains = None
+        if self.opts.get('proxy_use_cached_grains', True):
+            cached_grains = self.opts.pop('proxy_cached_grains', None)
+
+        initial_grains = copy.deepcopy(self.opts['grains'])
+        if cached_grains:
+            # Merging the collected Grains into the cached Grains, but only for
+            # the initial Pillar compilation, to ensure we only do so to avoid
+            # any processing errors.
+            initial_grains = salt.utils.dictupdate.merge(cached_grains, initial_grains)
+
         if self.opts.get('proxy_load_pillar', True):
             self.opts['pillar'] = salt.pillar.get_pillar(
                 self.opts,
-                self.opts['grains'],
+                initial_grains,
                 self.opts['id'],
                 saltenv=self.opts['saltenv'],
                 pillarenv=self.opts.get('pillarenv'),
@@ -583,9 +594,13 @@ def salt_call(
     opts['proxy_cache_pillar'] = cache_pillar
     opts['preload_targeting'] = preload_targeting
     opts['invasive_targeting'] = invasive_targeting
-    opts['proxy_use_cached_grains'] = use_cached_grains
     opts['proxy_no_connect'] = no_connect
     opts['proxy_test_ping'] = test_ping
+    opts['proxy_use_cached_grains'] = use_cached_grains
+    if use_cached_grains:
+        opts['proxy_cached_grains'] = __salt__['cache.fetch'](
+            'minions/{}/data'.format(minion_id), 'grains'
+        )
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
     if not returner_kwargs:
@@ -1353,6 +1368,15 @@ def execute(
         # to multiprocessing's join() method to wait for the devices to reply
         # indefinitely.
         timeout = None
+
+    if tgt_type == 'pillar_target':
+        # When using the -I option on the CLI, the tgt_type passed on is called
+        # `pillar_target`:
+        # https://github.com/saltstack/salt/blob/e9e48b7fb6a688f4f22d74a849d58c1c156563d1/salt/utils/parsers.py#L1266
+        # While if we want to use this against existing Minions, the option
+        # needs to be just `pillar`:
+        # https://github.com/saltstack/salt/blob/99385b50718d70d93fd5b83e61c0f4b3a402490c/salt/utils/minions.py#L359
+        tgt_type = 'pillar'
 
     if preload_targeting or invasive_targeting:
         _tgt = '*'

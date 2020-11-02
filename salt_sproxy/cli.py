@@ -334,6 +334,7 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             'grain',
             'pcre',
             'grain_pcre',
+            'pillar',
             'pillar_pcre',
             'pillar_target',
             'nodegroup',
