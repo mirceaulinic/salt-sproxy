@@ -174,3 +174,50 @@ depending on your operating system and configuration, you may hit the hard
 limit for max open files. For example, on Unix operating systems, ``ulimit 
 -Hn`` will tell you the max open files number. If you hit any issues, consider 
 increasing this limit.
+
+Pillar Compilation Errors
+-------------------------
+
+Proxy Minions typically require Pillars for the authentication details. It 
+often happens that you may want your Pillars to use Grain data; but Grains are 
+typically collected *after* the connection has been established, or for the 
+connection to be established it requires the authentication details from the 
+Pillar. This results in a chicken and egg type dependency.
+
+If in your Pillar you have a block requiring device-specific Grains 
+like:
+
+.. code-block:: sls
+
+  {% if grains['model'] == 'VMX' %}
+  target_software_version: 17.4
+  {% endif %}
+
+During the first execution, at least, you'll see an error looking as below:
+
+.. code-block:: text
+
+  Traceback (most recent call last):
+    File "/usr/local/lib/python3.7/dist-packages/salt/pillar/__init__.py", line 884, in render_pstate
+      **defaults
+    File "/usr/local/lib/python3.7/dist-packages/salt/template.py", line 101, in compile_template
+      ret = render(input_data, saltenv, sls, **render_kwargs)
+    File "/usr/local/lib/python3.7/dist-packages/salt/renderers/jinja.py", line 79, in render
+      **kws
+    File "/usr/local/lib/python3.7/dist-packages/salt/utils/templates.py", line 260, in render_tmpl
+      output = render_str(tmplstr, context, tmplpath)
+    File "/usr/local/lib/python3.7/dist-packages/salt/utils/templates.py", line 505, in render_jinja_tmpl
+      raise SaltRenderError("Jinja variable {}{}".format(exc, out), buf=tmplstr)
+  salt.exceptions.SaltRenderError: Jinja variable 'salt.utils.odict.OrderedDict object' has no attribute 'model'
+
+This is normal, a cosmetical error, raised during the first Pillar compilation, 
+which you can ignore.
+
+To avoid having this sort of errors, you will want to have your Pillar 
+transformed to:
+
+.. code-block:: sls
+
+  {% if grains.get('model') == 'VMX' %}
+  target_software_version: 17.4
+  {% endif %}
