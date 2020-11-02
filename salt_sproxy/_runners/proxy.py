@@ -1354,6 +1354,15 @@ def execute(
         # indefinitely.
         timeout = None
 
+    if tgt_type == 'pillar_target':
+        # When using the -I option on the CLI, the tgt_type passed on is called
+        # `pillar_target`:
+        # https://github.com/saltstack/salt/blob/e9e48b7fb6a688f4f22d74a849d58c1c156563d1/salt/utils/parsers.py#L1266
+        # While if we want to use this against existing Minions, the option
+        # needs to be just `pillar`:
+        # https://github.com/saltstack/salt/blob/99385b50718d70d93fd5b83e61c0f4b3a402490c/salt/utils/minions.py#L359
+        tgt_type = 'pillar'
+
     if preload_targeting or invasive_targeting:
         _tgt = '*'
         _tgt_type = 'glob'
