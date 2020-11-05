@@ -273,7 +273,6 @@ class SProxyMinion(SMinion):
             self.opts['pillar']['proxy'] = salt.utils.dictupdate.merge(
                 self.opts['pillar']['proxy'], self.opts['roster_opts']
             )
-            self.opts['pillar']['proxy'].pop('name', None)
             self.opts['pillar']['proxy'].pop('grains', None)
             self.opts['pillar']['proxy'].pop('pillar', None)
 
