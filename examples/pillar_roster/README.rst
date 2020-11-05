@@ -25,7 +25,7 @@ devices you're aiming to manage:
 
     $ salt-run pillar.show_pillar
     devices:
-      - name: device1
+      - id: device1
       ...
 
 It really doesn't matter where is Salt pulling this data from.
@@ -47,7 +47,7 @@ e.g., using ``curl``:
 .. code-block:: bash
 
     $ curl http://example.com/devices
-    {"devices": [{"name": "router1"}, {"name": "router2"}, {"name": "switch1"}]}
+    {"devices": [{"id": "router1"}, {"id": "router2"}, {"id": "switch1"}]}
 
 That being available, we can configure the ``http_json`` External Pillar:
 
@@ -67,9 +67,9 @@ Now, let's verify that the data is pulled properly into the Pillar:
 
   $ salt-run pillar.show_pillar
   devices:
-    - name: router1
-    - name: router2
-    - name: switch1
+    - id: router1
+    - id: router2
+    - id: switch1
 
 That being validated, salt-sproxy is now aware of all the devices to be 
 managed:
@@ -91,7 +91,7 @@ As well as other target types such as ``list`` or ``PCRE``:
   - router1
   - router2
 
-  # target all devices with the name starting with "router",
+  # target all devices with the Minion ID starting with "router",
   # followed by one or more numbers:
   
   $ salt-sproxy -E 'router\d+' --preview-target
