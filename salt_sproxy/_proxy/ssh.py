@@ -140,8 +140,9 @@ def _prep_conn(opts, fun, *args, **kwargs):
     for cli_opt in ('identities_only', 'priv', 'priv_passwd'):
         if opts.get(cli_opt) and not opts['proxy'].get(cli_opt):
             opts['proxy'][cli_opt] = opts[cli_opt]
+    ext_mods = salt.client.ssh.mod_data(fsclient)
     conn = salt.client.ssh.Single(
-        opts, argv, opts['id'], fsclient=fsclient, **opts['proxy']
+        opts, argv, opts['id'], fsclient=fsclient, mods=ext_mods, **opts['proxy']
     )
     conn.args = args
     conn.kwargs = kwargs
