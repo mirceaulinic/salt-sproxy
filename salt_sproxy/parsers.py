@@ -302,7 +302,7 @@ class SaltStandaloneProxyOptionParser(
             dest='batch_size',
             help=(
                 'The number of devices to connect to in parallel. '
-                'Default: {}'.format(CPU_COUNT)
+                'Default: {} (number of CPUs on your machine)'.format(CPU_COUNT)
             ),
         )
         self.add_option(
