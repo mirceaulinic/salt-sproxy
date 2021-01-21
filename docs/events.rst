@@ -192,8 +192,8 @@ function:
   shutdown_interface:
     runner.proxy.execute:
       - tgt: {{ data.host }}
-      - function: net.load_template
       - kwarg:
+          salt_function: net.load_template
           template_name: salt://templates/shut_interface.jinja
           interface_name: {{ data.yang_message.interfaces.interface.keys()[0] }}
 
