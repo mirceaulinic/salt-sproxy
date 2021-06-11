@@ -35,6 +35,7 @@ import multiprocessing
 # Import Salt modules
 import salt.cache
 import salt.loader
+import salt.client
 import salt.output
 import salt.version
 import salt.utils.jid
@@ -202,6 +203,25 @@ def _receive_replies_sync(ret_queue, static_queue, progress_bar):
             break
         if progress_bar:
             progress_bar.update(count)
+
+
+class NoPingBatch(Batch):
+    '''
+    Similar to the native Salt Batch. but without issuing test.ping to ensure
+    that the Minions are up and running.
+    '''
+
+    def __init__(self, opts, eauth=None, quiet=False, parser=None):
+        self.opts = opts
+        self.eauth = eauth if eauth else {}
+        self.pub_kwargs = eauth if eauth else {}
+        self.quiet = quiet
+        self.local = salt.client.get_local_client(opts['conf_file'])
+        self.minions, self.ping_gen, self.down_minions = self.__gather_minions()
+        self.options = parser
+
+    def __gather_minions(self):
+        return self.opts['tgt'], [], []
 
 
 # The SProxyMinion class is back-ported from Salt 2019.2.0 (to be released soon)
@@ -928,7 +948,10 @@ def execute_devices(
         batch_opts['return'] = returner
         batch_opts['ret_config'] = returner_config
         batch_opts['ret_kwargs'] = returner_kwargs
-        cli_batch = Batch(batch_opts, quiet=True)
+        if test_ping:
+            cli_batch = Batch(batch_opts, quiet=True)
+        else:
+            cli_batch = NoPingBatch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
         log.debug(cli_batch.minions)
         if cli_batch.down_minions:
