@@ -168,7 +168,7 @@ def _existing_proxy_cli_batch(
     batch_stop_queue.put(cumulative_retcode)
 
 
-def _receive_replies_async(ret_queue, progress_bar):
+def _receive_replies_async(ret_queue, done_queue, progress_bar):
     '''
     '''
     count = 0
@@ -188,9 +188,10 @@ def _receive_replies_async(ret_queue, progress_bar):
             salt.utils.stringutils.print_cli(out_fmt)
         if progress_bar:
             progress_bar.update(count)
+    done_queue.put(_SENTINEL)
 
 
-def _receive_replies_sync(ret_queue, static_queue, progress_bar):
+def _receive_replies_sync(ret_queue, static_queue, done_queue, progress_bar):
     '''
     '''
     count = 0
@@ -203,6 +204,7 @@ def _receive_replies_sync(ret_queue, static_queue, progress_bar):
             break
         if progress_bar:
             progress_bar.update(count)
+    done_queue.put(_SENTINEL)
 
 
 class NoPingBatch(Batch):
@@ -906,16 +908,18 @@ def execute_devices(
             max_value=len(minions), enable_colors=True, redirect_stdout=True
         )
     ret_queue = multiprocessing.Queue()
+    done_queue = multiprocessing.Queue()
     if not static:
         thread = threading.Thread(
-            target=_receive_replies_async, args=(ret_queue, progress_bar)
+            target=_receive_replies_async, args=(ret_queue, done_queue, progress_bar)
         )
         thread.daemon = True
         thread.start()
     else:
         static_queue = multiprocessing.Queue()
         thread = threading.Thread(
-            target=_receive_replies_sync, args=(ret_queue, static_queue, progress_bar)
+            target=_receive_replies_sync,
+            args=(ret_queue, static_queue, done_queue, progress_bar),
         )
         thread.daemon = True
         thread.start()
@@ -1144,7 +1148,7 @@ def execute_devices(
         ret_queue.put((_SENTINEL, 0))
         # Wait a little to dequeue and print before throwing the progressbar,
         # the summary, etc.
-        while not ret_queue.empty():
+        while done_queue.empty():
             time.sleep(0.001)
 
         if progress_bar:
