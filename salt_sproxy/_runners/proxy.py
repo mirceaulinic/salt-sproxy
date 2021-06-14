@@ -211,7 +211,9 @@ class NoPingBatch(Batch):
     that the Minions are up and running.
     '''
 
-    def __init__(self, opts, eauth=None, quiet=False, parser=None):
+    def __init__(
+        self, opts, eauth=None, quiet=False, parser=None
+    ):  # pylint: disable=super-init-not-called
         self.opts = opts
         self.eauth = eauth if eauth else {}
         self.pub_kwargs = eauth if eauth else {}
