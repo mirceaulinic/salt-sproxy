@@ -41,14 +41,19 @@ salt-sproxy \* test.ping -p --static --out=json -l $LOG_LEVEL | jq -e '. | lengt
 echo "Testing batch size execution as percentage"
 salt-sproxy \* test.ping -b 20% -p --static --out=json -l $LOG_LEVEL | jq -e '. | length == 105'
 
-echo "Test invasive targeting"
+echo "Test invasive targeting, no cache"
 # the nodename Grain is collected only on Minion startup, which helps validate
 # whether the --invasive-targeting works well
-salt-sproxy -G nodename:$(hostname) test.ping --invasive-targeting --cache-grains -p --static --out=json -l $LOG_LEVEL | jq -e '. | length == 105'
+salt-sproxy -G nodename:$(hostname) test.ping --invasive-targeting -p --static --dont-cache-grains --out=json -l $LOG_LEVEL | jq -e '. | length == 105'
+
+echo "Test invasive targeting, cache Grains"
+# the nodename Grain is collected only on Minion startup, which helps validate
+# whether the --invasive-targeting works well
+salt-sproxy -G nodename:$(hostname) test.ping --invasive-targeting -p --static --out=json -l $LOG_LEVEL | jq -e '. | length == 105'
 
 echo "Test targeting using cached grains"
-# The exact query as above, now targeting using the cached Grains (saved earlier
-# through the --cache-grains option from the previous run).
+# The exact query as above, now targeting using the cached Grains (saved by the
+# previous execution, by default).
 salt-sproxy -G nodename:$(hostname) test.ping -p --static --out=json -l $LOG_LEVEL | jq -e '. | length == 105'
 
 echo "Test execution through the salt-sapi"
