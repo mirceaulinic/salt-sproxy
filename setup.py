@@ -58,7 +58,15 @@ setup(
     ],
     url='https://github.com/mirceaulinic/salt-sproxy',
     license="Apache License 2.0",
-    keywords=('salt', 'network', 'automation', 'cli', 'proxy', 'minion', 'salt-extension'),
+    keywords=(
+        'salt',
+        'network',
+        'automation',
+        'cli',
+        'proxy',
+        'minion',
+        'salt-extension',
+    ),
     project_urls={
         'CI: GitHub Actions': '{}/actions'.format(repo_url),
         'Docs: RTD': 'https://salt-sproxy.readthedocs.io/',

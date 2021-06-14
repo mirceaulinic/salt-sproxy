@@ -722,7 +722,7 @@ def execute_devices(
     default_grains=None,
     default_pillar=None,
     args=(),
-    batch_size=10,
+    batch_size=None,
     batch_wait=0,
     static=False,
     tgt=None,
@@ -793,7 +793,7 @@ def execute_devices(
     kwargs
         Key-value arguments to send to the Salt function.
 
-    batch_size: ``10``
+    batch_size: None
         The size of each batch to execute.
 
     static: ``False``
@@ -919,18 +919,29 @@ def execute_devices(
         thread.start()
 
     ret = {}
-    if '%' in str(batch_size):
-        percent = int(batch_size.replace('%', ''))
-        batch_size = len(minions) * percent / 100
-    batch_size = int(batch_size)
-    batch_count = int(len(minions) / batch_size) + (
-        1 if len(minions) % batch_size else 0
-    )
-    existing_batch_size = int(
-        math.ceil(len(existing_minions) * batch_size / float(len(minions)))
-    )
-    sproxy_batch_size = batch_size - existing_batch_size
     sproxy_minions = list(set(minions) - set(existing_minions))
+    if batch_size:
+        if '%' in str(batch_size):
+            percent = int(batch_size.replace('%', ''))
+            batch_size = len(minions) * percent / 100
+        batch_size = int(batch_size)
+        batch_count = int(len(minions) / batch_size) + (
+            1 if len(minions) % batch_size else 0
+        )
+        existing_batch_size = int(
+            math.ceil(len(existing_minions) * batch_size / float(len(minions)))
+        )
+        sproxy_batch_size = batch_size - existing_batch_size
+    else:
+        # when no explicit batch requested, we'll execute the command on the
+        # existing minions without any batching (i.e., on all the matched
+        # minions at once), while sproxy ones are executed in as many CPUs are
+        # available.
+        sproxy_batch_size = multiprocessing.cpu_count()
+        existing_batch_size = len(existing_minions)
+        batch_count = int(len(sproxy_minions) / sproxy_batch_size) + (
+            1 if len(sproxy_minions) % sproxy_batch_size else 0
+        )
     cli_batch = None
     if existing_batch_size > 0:
         # When there are existing Minions matching the target, use the native
@@ -1034,7 +1045,7 @@ def execute_devices(
         while not sproxy_execute_queue.empty() and not stop_iteration:
             if len(sproxy_processes) >= sproxy_batch_size:
                 # Wait for the bucket to make room for another process.
-                time.sleep(0.02)
+                time.sleep(0.001)
                 continue
             minion_id, device_opts = sproxy_execute_queue.get()
             log.debug('Starting execution for %s', minion_id)
@@ -1123,7 +1134,7 @@ def execute_devices(
 
         # Waiting for the existing proxy batch to finish.
         while batch_stop_queue.empty():
-            time.sleep(0.02)
+            time.sleep(0.001)
         batch_retcode = batch_stop_queue.get()
         retcode = max(retcode, batch_retcode)
 
@@ -1131,7 +1142,9 @@ def execute_devices(
         ret_queue.put((_SENTINEL, 0))
         # Wait a little to dequeue and print before throwing the progressbar,
         # the summary, etc.
-        time.sleep(0.02)
+        while not ret_queue.empty():
+            time.sleep(0.001)
+
         if progress_bar:
             progress_bar.finish()
 
@@ -1238,7 +1251,7 @@ def execute(
     default_grains=None,
     default_pillar=None,
     args=(),
-    batch_size=10,
+    batch_size=None,
     batch_wait=0,
     static=False,
     events=True,
@@ -1321,7 +1334,7 @@ def execute(
     kwargs
         Key-value arguments to send to the Salt function.
 
-    batch_size: ``10``
+    batch_size: None
         The size of each batch to execute.
 
     static: ``False``
