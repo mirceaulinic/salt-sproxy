@@ -298,7 +298,6 @@ class SaltStandaloneProxyOptionParser(
             '-b',
             '--batch',
             '--batch-size',
-            default=CPU_COUNT,
             dest='batch_size',
             help=(
                 'The number of devices to connect to in parallel. '
