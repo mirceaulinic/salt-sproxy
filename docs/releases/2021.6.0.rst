@@ -1,0 +1,35 @@
+.. _release-2021.6.0:
+
+================
+Release 2021.6.0
+================
+
+While this release doesn't bring any particularly new features, it provides 
+several performance improvements which are easily noticeable, from an user 
+perspective (when transitioning from a previous *salt-sproxy* version to 
+2021.6.0):
+
+- Batch execution is no longer the default behaviour when targeting against 
+  running Proxy Minions (i.e., when using the ``--use-existing-proxy`` CLI 
+  option, or setting the configuration to ``use_existing_proxy: true`` into the 
+  Master config file). That is, when executing *salt-sproxy* in an environment 
+  where you have a Salt Master running and managing running Proxy or regular
+  Minions, and your targeting expression matches some or all of those Minions,
+  the execution is spread out to all the Minions at once. If you want to 
+  execute in batches, you will need to explicitly use the ``-b`` (or 
+  ``--batch-size`` CLI argument). Note however, that for devices that don't 
+  have a (Proxy) Minion running, the batch continues to default to the number 
+  of CPUs available on the local machine. As always, for a quicker execution 
+  (yet more resource intensive) you may want to set a higher batch size value.
+
+- Whenever targeting against running (Proxy) Minions, in case you want to 
+  perform a survey against your Minions and determine which ones are alive, you 
+  can use the ``--test-ping`` CLI option (or set ``test_ping: true`` in the 
+  Master configuration file). Before this release, this option was the default 
+  behaviour. While this allows you to know in advance which Minions are going 
+  to reply, and which are unresponsive, it is more resource consuming, as it 
+  spreads an additional set of events, by executing a ``test.ping`` across your 
+  fleet.
+
+Among a few bug fixes, it's worth noting that extension modules you may have in 
+your own environment should now be working well when :ref:`ssh`.

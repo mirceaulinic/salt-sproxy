@@ -1,0 +1,8 @@
+.. _release-2019.6.0:
+
+================
+Release 2019.6.0
+================
+
+This is the initial release. Please explore the documentation and usage 
+examples to get familiar with *salt-sproxy*.

@@ -20,7 +20,7 @@ repo_url = 'https://github.com/{}'.format(repo_slug)
 
 setup(
     name=name,
-    version='2020.10.2',
+    version='2021.6.0',
     namespace_packages=['salt_sproxy'],
     packages=find_packages(),
     author='Mircea Ulinic',
@@ -58,7 +58,15 @@ setup(
     ],
     url='https://github.com/mirceaulinic/salt-sproxy',
     license="Apache License 2.0",
-    keywords=('salt', 'network', 'automation', 'cli', 'proxy', 'minion'),
+    keywords=(
+        'salt',
+        'network',
+        'automation',
+        'cli',
+        'proxy',
+        'minion',
+        'salt-extension',
+    ),
     project_urls={
         'CI: GitHub Actions': '{}/actions'.format(repo_url),
         'Docs: RTD': 'https://salt-sproxy.readthedocs.io/',

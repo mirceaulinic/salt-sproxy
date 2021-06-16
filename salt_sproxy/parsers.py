@@ -298,11 +298,10 @@ class SaltStandaloneProxyOptionParser(
             '-b',
             '--batch',
             '--batch-size',
-            default=CPU_COUNT,
             dest='batch_size',
             help=(
                 'The number of devices to connect to in parallel. '
-                'Default: {}'.format(CPU_COUNT)
+                'Default: {} (number of CPUs on your machine)'.format(CPU_COUNT)
             ),
         )
         self.add_option(
@@ -359,7 +358,6 @@ class SaltStandaloneProxyOptionParser(
         self.add_option(
             '--saltenv',
             dest='saltenv_cli',
-            action='store_true',
             help='The Salt environment name to load module and files from',
         )
         self.add_option(
