@@ -79,6 +79,7 @@ setup(
         'console_scripts': [
             'salt-sapi=salt_sproxy.scripts:salt_sapi',
             'salt-sproxy=salt_sproxy.scripts:salt_sproxy',
+            'salt-lproxy=salt_sproxy.scripts:salt_lproxy',
         ]
     },
     extras_require={
