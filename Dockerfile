@@ -1,4 +1,4 @@
-FROM python:3.7.9-slim-stretch
+FROM python:3.7.11-slim-stretch
 
 MAINTAINER ping@mirceaulinic.net
 
