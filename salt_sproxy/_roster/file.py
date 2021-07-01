@@ -29,6 +29,7 @@ def targets(tgt, tgt_type='glob', **kwargs):
     '''
     template = get_roster_file(__opts__)
     rend = salt.loader.render(__opts__, {})
+    __runner__.name = '__salt__'
     kwargs['__salt__'] = __runner__
     pool = compile_template(
         template,
