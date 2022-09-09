@@ -30,6 +30,7 @@ from salt.exceptions import SaltClientError
 from salt.ext import six
 import salt.defaults.exitcodes  # pylint: disable=W0611
 import salt.utils.stringutils
+import salt.version
 
 try:
     from salt.utils.files import fopen
@@ -62,9 +63,11 @@ class SaltStandaloneProxy(SaltStandaloneProxyOptionParser):
             sys.stdout.write(safe_dump(self.config, default_flow_style=False))
             return self.config
 
-        # Setup file logging!
-        self.setup_logfile_logger()
-        verify_log(self.config)
+        if salt.version.__saltstack_version__.major < 3005:
+            # Setup file logging!
+            self.setup_logfile_logger()
+            verify_log(self.config)
+
         profiling_enabled = self.options.profiling_enabled
         curpath = os.path.dirname(os.path.realpath(__file__))
         saltenv = self.config.get('saltenv_cli', self.config.get('saltenv'))
