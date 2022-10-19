@@ -207,6 +207,22 @@ def _receive_replies_sync(ret_queue, static_queue, done_queue, progress_bar):
     done_queue.put(_SENTINEL)
 
 
+class PingBatch(Batch):
+    def __init__(
+        self, opts, eauth=None, quiet=False, parser=None
+    ):  # pylint: disable=super-init-not-called
+        self.opts = opts
+        self.eauth = eauth if eauth else {}
+        self.pub_kwargs = eauth if eauth else {}
+        self.quiet = quiet
+        self.local = salt.client.get_local_client(opts['conf_file'])
+        self.minions, self.ping_gen, self.down_minions = self.gather_minions()
+        self.options = parser
+
+    def _gather_minions(self):
+        return self.minions, self.ping_gen, self.down_minions
+
+
 class NoPingBatch(Batch):
     '''
     Similar to the native Salt Batch. but without issuing test.ping to ensure
@@ -221,11 +237,11 @@ class NoPingBatch(Batch):
         self.pub_kwargs = eauth if eauth else {}
         self.quiet = quiet
         self.local = salt.client.get_local_client(opts['conf_file'])
-        self.minions, self.ping_gen, self.down_minions = self.__gather_minions()
+        self.minions, self.ping_gen, self.down_minions = self.opts['tgt'], [], []
         self.options = parser
 
-    def __gather_minions(self):
-        return self.opts['tgt'], [], []
+    def gather_minions(self):
+        return self.minions, self.ping_gen, self.down_minions
 
 
 # The SProxyMinion class is back-ported from Salt 2019.2.0 (to be released soon)
@@ -958,17 +974,19 @@ def execute_devices(
         log.debug(existing_minions)
         batch_opts = copy.deepcopy(__opts__)
         batch_opts['batch'] = str(existing_batch_size)
-        batch_opts['tgt'] = existing_minions
-        batch_opts['tgt_type'] = 'list'
+        batch_opts['tgt'] = tgt
+        batch_opts['tgt_type'] = tgt_type
         batch_opts['fun'] = salt_function
         batch_opts['arg'] = event_args
         batch_opts['batch_wait'] = batch_wait
-        batch_opts['selected_target_option'] = 'list'
+        batch_opts['selected_target_option'] = tgt_type
         batch_opts['return'] = returner
         batch_opts['ret_config'] = returner_config
         batch_opts['ret_kwargs'] = returner_kwargs
         if test_ping:
-            cli_batch = Batch(batch_opts, quiet=True)
+            cli_batch = PingBatch(batch_opts, quiet=True)
+            cli_batch.minions, cli_batch.ping_gen, cli_batch.down_minions = cli_batch.gather_minions()
+            cli_batch.gather_minions = cli_batch._gather_minions
         else:
             cli_batch = NoPingBatch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
