@@ -621,9 +621,11 @@ def salt_call(
     opts['proxy_test_ping'] = test_ping
     opts['proxy_use_cached_grains'] = use_cached_grains
     if use_cached_grains:
-        opts['proxy_cached_grains'] = __salt__['cache.fetch'](
-            'minions/{}/data'.format(minion_id), 'grains'
+        cache_data = __salt__['cache.fetch'](
+            'minions/{}'.format(minion_id), 'data'
         )
+        if cache_data and 'grains' in cache_data:
+            opts['proxy_cached_grains'] = cache_data['grains']
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
     if not returner_kwargs:
@@ -702,17 +704,17 @@ def salt_call(
             log.warning(
                 'Returner %s is not available. Check that the dependencies are properly installed'
             )
+    cache_data = {}
     if cache_grains:
         log.debug('Caching Grains for %s', minion_id)
         log.debug(sa_proxy.opts['grains'])
-        cache_store = __salt__['cache.store'](
-            'minions/{}/data'.format(minion_id), 'grains', sa_proxy.opts['grains']
-        )
+        cache_data['grains'] = copy.deepcopy(sa_proxy.opts['grains'])
     if cache_pillar:
         log.debug('Caching Pillar for %s', minion_id)
-        cached_store = __salt__['cache.store'](
-            'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
-        )
+        cache_data['pillar'] = copy.deepcopy(sa_proxy.opts['pillar'])
+    cached_store = __salt__['cache.store'](
+        'minions/{}'.format(minion_id), 'data', cache_data
+    )
     return ret, retcode
 
 
