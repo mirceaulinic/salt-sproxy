@@ -207,6 +207,22 @@ def _receive_replies_sync(ret_queue, static_queue, done_queue, progress_bar):
     done_queue.put(_SENTINEL)
 
 
+class PingBatch(Batch):
+    def __init__(
+        self, opts, eauth=None, quiet=False, parser=None
+    ):  # pylint: disable=super-init-not-called
+        self.opts = opts
+        self.eauth = eauth if eauth else {}
+        self.pub_kwargs = eauth if eauth else {}
+        self.quiet = quiet
+        self.local = salt.client.get_local_client(opts['conf_file'])
+        self.minions, self.ping_gen, self.down_minions = self.gather_minions()
+        self.options = parser
+
+    def _gather_minions(self):
+        return self.minions, self.ping_gen, self.down_minions
+
+
 class NoPingBatch(Batch):
     '''
     Similar to the native Salt Batch. but without issuing test.ping to ensure
@@ -221,11 +237,11 @@ class NoPingBatch(Batch):
         self.pub_kwargs = eauth if eauth else {}
         self.quiet = quiet
         self.local = salt.client.get_local_client(opts['conf_file'])
-        self.minions, self.ping_gen, self.down_minions = self.__gather_minions()
+        self.minions, self.ping_gen, self.down_minions = self.opts['tgt'], [], []
         self.options = parser
 
-    def __gather_minions(self):
-        return self.opts['tgt'], [], []
+    def gather_minions(self):
+        return self.minions, self.ping_gen, self.down_minions
 
 
 # The SProxyMinion class is back-ported from Salt 2019.2.0 (to be released soon)
@@ -621,9 +637,11 @@ def salt_call(
     opts['proxy_test_ping'] = test_ping
     opts['proxy_use_cached_grains'] = use_cached_grains
     if use_cached_grains:
-        opts['proxy_cached_grains'] = __salt__['cache.fetch'](
-            'minions/{}/data'.format(minion_id), 'grains'
+        cache_data = __salt__['cache.fetch'](
+            'minions/{}'.format(minion_id), 'data'
         )
+        if cache_data and 'grains' in cache_data:
+            opts['proxy_cached_grains'] = cache_data['grains']
     opts['roster_opts'] = roster_opts
     opts['returner'] = returner
     if not returner_kwargs:
@@ -702,17 +720,17 @@ def salt_call(
             log.warning(
                 'Returner %s is not available. Check that the dependencies are properly installed'
             )
+    cache_data = {}
     if cache_grains:
         log.debug('Caching Grains for %s', minion_id)
         log.debug(sa_proxy.opts['grains'])
-        cache_store = __salt__['cache.store'](
-            'minions/{}/data'.format(minion_id), 'grains', sa_proxy.opts['grains']
-        )
+        cache_data['grains'] = copy.deepcopy(sa_proxy.opts['grains'])
     if cache_pillar:
         log.debug('Caching Pillar for %s', minion_id)
-        cached_store = __salt__['cache.store'](
-            'minions/{}/data'.format(minion_id), 'pillar', sa_proxy.opts['pillar']
-        )
+        cache_data['pillar'] = copy.deepcopy(sa_proxy.opts['pillar'])
+    cached_store = __salt__['cache.store'](
+        'minions/{}'.format(minion_id), 'data', cache_data
+    )
     return ret, retcode
 
 
@@ -966,7 +984,9 @@ def execute_devices(
         batch_opts['ret_config'] = returner_config
         batch_opts['ret_kwargs'] = returner_kwargs
         if test_ping:
-            cli_batch = Batch(batch_opts, quiet=True)
+            cli_batch = PingBatch(batch_opts, quiet=True)
+            cli_batch.minions, cli_batch.ping_gen, cli_batch.down_minions = cli_batch.gather_minions()
+            cli_batch.gather_minions = cli_batch._gather_minions
         else:
             cli_batch = NoPingBatch(batch_opts, quiet=True)
         log.debug('Batching detected the following Minions responsive')
