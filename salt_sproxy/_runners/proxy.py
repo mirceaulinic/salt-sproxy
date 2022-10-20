@@ -974,12 +974,12 @@ def execute_devices(
         log.debug(existing_minions)
         batch_opts = copy.deepcopy(__opts__)
         batch_opts['batch'] = str(existing_batch_size)
-        batch_opts['tgt'] = tgt
-        batch_opts['tgt_type'] = tgt_type
+        batch_opts['tgt'] = existing_minions
+        batch_opts['tgt_type'] = 'list'
         batch_opts['fun'] = salt_function
         batch_opts['arg'] = event_args
         batch_opts['batch_wait'] = batch_wait
-        batch_opts['selected_target_option'] = tgt_type
+        batch_opts['selected_target_option'] = 'list'
         batch_opts['return'] = returner
         batch_opts['ret_config'] = returner_config
         batch_opts['ret_kwargs'] = returner_kwargs
