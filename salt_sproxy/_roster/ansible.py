@@ -161,9 +161,9 @@ def _get_hosts_from_group(group):
 def _get_hostvars(host):
     hostvars = __context__["inventory"]["_meta"].get("hostvars", {}).get(host, {})
     ret = copy.deepcopy(__opts__.get("roster_defaults", {}))
-    for value in CONVERSION:
-        if value in hostvars:
-            ret[CONVERSION[value]] = hostvars.pop(value)
+    for key, value in CONVERSION.items():
+        if key in hostvars:
+            ret[value] = hostvars.pop(key)
     ret["minion_opts"] = hostvars
     if "host" not in ret:
         ret["host"] = host

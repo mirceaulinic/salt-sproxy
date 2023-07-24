@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import sys
-import optparse
+import optparse  # pylint: disable=deprecated-module
 import multiprocessing
 
 import salt_sproxy.version
@@ -43,7 +43,7 @@ def dependency_information(include_salt_cloud=False):
     libraries that may be necessary for various Proxy (or Execution) Modules.
     """
     libs = [
-        ("Python", None, sys.version.rsplit("\n")[0].strip()),
+        ("Python", None, sys.version.rsplit("\n", maxsplit=1)[0].strip()),
         ("NAPALM", "napalm", "__version__"),
         ("Netmiko", "netmiko", "__version__"),
         ("junos-eznc", None, jnpr_version),
