@@ -59,7 +59,7 @@ In brief, here are some benefits you can get by using *salt-sproxy*:
 - Say goodbye to the burden of managing hundreds of system services for the
   Proxy Minion processes.
 - Reuse your existing extension modules, templates, Pillars, States, etc., you
-  may have already developed in your environment, transparently.
+  may have already developed in your Salt environment, transparently.
 - You can run it locally, on your own computer.
 - You can use *salt-sproxy* to uniformly manage network devices, servers 
   (either using regular Minions, or `SSH 
