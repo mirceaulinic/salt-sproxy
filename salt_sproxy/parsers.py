@@ -8,8 +8,8 @@ import multiprocessing
 import salt_sproxy.version
 
 import six
-from six.moves import map
-from six.moves import range
+from six.moves import map  # pylint: disable=W8410
+from six.moves import range  # pylint: disable=W8410
 import salt.version
 import salt.utils.args
 import salt.utils.parsers
