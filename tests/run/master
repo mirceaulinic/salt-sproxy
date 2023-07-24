@@ -50,3 +50,16 @@ grains:
 disable_grains:
   # disabling ESXI Grain module load due to https://github.com/saltstack/salt/issues/57811
   - esxi
+
+netapi_enable_clients:
+  - local
+  - local_async
+  - local_batch
+  - local_subset
+  - runner
+  - runner_async
+  - ssh
+  - wheel
+  - wheel_async
+  - sproxy
+  - sproxy_async
