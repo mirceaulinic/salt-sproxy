@@ -23,11 +23,11 @@ import os
 import sys
 import logging
 
+import six
 import salt.runner
 import salt.utils.parsers
 from salt.utils.verify import check_user, verify_log
 from salt.exceptions import SaltClientError
-from salt.ext import six
 import salt.defaults.exitcodes  # pylint: disable=W0611
 import salt.utils.stringutils
 import salt.version

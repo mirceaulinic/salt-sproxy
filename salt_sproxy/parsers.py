@@ -7,13 +7,13 @@ import multiprocessing
 
 import salt_sproxy.version
 
-from salt.ext import six
+import six
+from six.moves import map
+from six.moves import range
 import salt.version
 import salt.utils.args
 import salt.utils.parsers
 import salt.config as config
-from salt.ext.six.moves import map
-from salt.ext.six.moves import range
 
 try:
     from jnpr.junos import __version__ as jnpr_version

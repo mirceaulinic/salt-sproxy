@@ -8,8 +8,8 @@ import re
 import fnmatch
 import logging
 
+import six
 import salt.cache
-from salt.ext import six
 import salt.utils.minions
 
 import salt.utils.dictupdate

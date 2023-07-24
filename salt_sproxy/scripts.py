@@ -5,9 +5,9 @@ import sys
 import inspect
 import logging
 
+import six
 import salt.netapi
 import salt.scripts
-from salt.ext import six
 import salt.utils.parsers
 from salt.scripts import _install_signal_handlers
 from salt_sproxy._runners.proxy import execute as sproxy_execute

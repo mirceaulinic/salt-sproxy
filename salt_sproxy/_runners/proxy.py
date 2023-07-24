@@ -32,6 +32,8 @@ import threading
 import traceback
 import multiprocessing
 
+import six
+
 # Import Salt modules
 import salt.cache
 import salt.loader
@@ -50,12 +52,6 @@ from salt.defaults import DEFAULT_TARGET_DELIM
 
 import salt.utils.napalm
 import salt.utils.dictupdate
-
-### from salt 3006 and on salt.ext.six is removed
-try:
-    from salt.ext import six
-except ImportError:
-    import six
 
 try:
     import salt.utils.platform

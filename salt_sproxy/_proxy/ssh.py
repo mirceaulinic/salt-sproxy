@@ -96,11 +96,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 import json
 import logging
 
+import six
 import salt.client.ssh
 import salt.fileclient
 import salt.exceptions
 import salt.utils.path
-from salt.ext import six
 
 __proxyenabled__ = ['ssh']
 
