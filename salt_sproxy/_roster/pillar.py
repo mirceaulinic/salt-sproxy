@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Load the list of devices from the Pillar.
 
 Simply configure the ``roster`` option to point to this module, while making
@@ -40,35 +40,35 @@ list of devices / Minions you want to manage.
     External Pillars. Check out
     https://docs.saltstack.com/en/latest/ref/pillar/all/index.html
     for the complete list of available Pillar modules you can use.
-'''
+"""
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals
 import logging
 
 import salt_sproxy._roster
 
-__virtualname__ = 'pillar'
+__virtualname__ = "pillar"
 
 log = logging.getLogger(__name__)
 
 
-def targets(tgt, tgt_type='glob', **kwargs):
-    '''
+def targets(tgt, tgt_type="glob", **kwargs):
+    """
     Return the targets from External Pillar requested.
-    '''
-    roster_opts = __opts__.get('roster_pillar', {})
-    minion_id = roster_opts.get('minion_id', kwargs.get('minion_id', '*'))
-    pillar_key = roster_opts.get('pillar_key', kwargs.get('pillar_key', 'devices'))
-    saltenv = roster_opts.get('saltenv', kwargs.get('saltenv', 'base'))
-    pillarenv = roster_opts.get('pillarenv', kwargs.get('pillarenv'))
-    pillar = __runner__['pillar.show_pillar'](
+    """
+    roster_opts = __opts__.get("roster_pillar", {})
+    minion_id = roster_opts.get("minion_id", kwargs.get("minion_id", "*"))
+    pillar_key = roster_opts.get("pillar_key", kwargs.get("pillar_key", "devices"))
+    saltenv = roster_opts.get("saltenv", kwargs.get("saltenv", "base"))
+    pillarenv = roster_opts.get("pillarenv", kwargs.get("pillarenv"))
+    pillar = __runner__["pillar.show_pillar"](
         minion=minion_id, saltenv=saltenv, pillarenv=pillarenv
     )
     pillar_devices = pillar[pillar_key]
-    log.debug('Compiled the following list of devices from the Pillar')
+    log.debug("Compiled the following list of devices from the Pillar")
     log.debug(pillar_devices)
     pool = {
-        device.pop('id', device.pop('name')): {'minion_opts': device}
+        device.pop("id", device.pop("name")): {"minion_opts": device}
         for device in pillar_devices
     }
     pool = salt_sproxy._roster.load_cache(

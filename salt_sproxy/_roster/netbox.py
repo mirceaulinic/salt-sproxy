@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Load devices from `NetBox <https://github.com/digitalocean/netbox>`__, and make
 them available for salt-ssh or salt-sproxy (or any other program that doesn't
 require (Proxy) Minions running).
@@ -38,7 +38,7 @@ database available in NetBox, you can configure another key, ``filters``, under
     file to change this behavior.
     See https://github.com/netbox-community/netbox/releases/tag/v2.6.0 for more
     information
-'''
+"""
 # Import Python libs
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -56,25 +56,25 @@ from salt.exceptions import CommandExecutionError
 
 import salt_sproxy._roster
 
-__virtualname__ = 'netbox'
+__virtualname__ = "netbox"
 
 log = logging.getLogger(__name__)
 
-AUTH_ENDPOINTS = ('secrets',)
+AUTH_ENDPOINTS = ("secrets",)
 
 
 def __virtual__():
     if not HAS_PYNETBOX:
-        return (False, 'Please install pynetbox to be able to use the NetBox Roster')
+        return (False, "Please install pynetbox to be able to use the NetBox Roster")
     return __virtualname__
 
 
-def _setval(key, val, dict_=None, delim=':'):
-    '''
+def _setval(key, val, dict_=None, delim=":"):
+    """
     Set a value under the dictionary hierarchy identified
     under the key. The target 'foo:bar:baz' returns the
     dictionary hierarchy {'foo': {'bar': {'baz': {}}}}.
-    '''
+    """
     if not dict_:
         dict_ = {}
     prev_hier = dict_
@@ -92,10 +92,10 @@ def _setval(key, val, dict_=None, delim=':'):
 
 
 def _netbox_config():
-    config = __opts__.get('netbox')
+    config = __opts__.get("netbox")
     if not config:
         raise CommandExecutionError(
-            'NetBox configuration could not be found in the Master config'
+            "NetBox configuration could not be found in the Master config"
         )
     return config
 
@@ -103,15 +103,15 @@ def _netbox_config():
 def _nb_obj(auth_required=False):
     pynb_kwargs = {}
     nb_config = _netbox_config()
-    pynb_kwargs['token'] = nb_config.get('token')
+    pynb_kwargs["token"] = nb_config.get("token")
     if auth_required:
-        pynb_kwargs['private_key_file'] = nb_config.get('keyfile')
-    return pynetbox.api(nb_config.get('url'), **pynb_kwargs)
+        pynb_kwargs["private_key_file"] = nb_config.get("keyfile")
+    return pynetbox.api(nb_config.get("url"), **pynb_kwargs)
 
 
 def _strip_url_field(input_dict):
-    if 'url' in input_dict.keys():
-        del input_dict['url']
+    if "url" in input_dict.keys():
+        del input_dict["url"]
     for k, v in input_dict.items():
         if isinstance(v, dict):
             _strip_url_field(v)
@@ -119,7 +119,7 @@ def _strip_url_field(input_dict):
 
 
 def _netbox_filter(app, endpoint, **kwargs):
-    '''
+    """
     Get a list of items from NetBox.
 
     app
@@ -135,7 +135,7 @@ def _netbox_filter(app, endpoint, **kwargs):
         and clicking Filters. e.g., ``role=router``
 
     Returns a list of dictionaries.
-    '''
+    """
     ret = []
     nb = _nb_obj(auth_required=True if app in AUTH_ENDPOINTS else False)
     clean_kwargs = salt.utils.args.clean_kwargs(**kwargs)
@@ -148,31 +148,31 @@ def _netbox_filter(app, endpoint, **kwargs):
     return ret
 
 
-def targets(tgt, tgt_type='glob', **kwargs):
-    '''
+def targets(tgt, tgt_type="glob", **kwargs):
+    """
     Return the targets from NetBox.
-    '''
-    netbox_filters = __opts__.get('netbox', {}).get('filters', {})
+    """
+    netbox_filters = __opts__.get("netbox", {}).get("filters", {})
     netbox_filters.update(**kwargs)
     filtered = False
-    if tgt_type == 'list' or (
-        tgt_type == 'glob' and not any([char in tgt for char in '*?[!'])
+    if tgt_type == "list" or (
+        tgt_type == "glob" and not any([char in tgt for char in "*?[!"])
     ):
-        netbox_filters['name'] = tgt
+        netbox_filters["name"] = tgt
         filtered = True
-    elif tgt_type == 'grain' and tgt.startswith('netbox:'):
-        levels = tgt.split('netbox:')[1].split(':')
+    elif tgt_type == "grain" and tgt.startswith("netbox:"):
+        levels = tgt.split("netbox:")[1].split(":")
         if len(levels) > 2:
-            netbox_filters[levels[0]] = _setval(':'.join(levels[1:-1]), levels[-1])
+            netbox_filters[levels[0]] = _setval(":".join(levels[1:-1]), levels[-1])
             filtered = True
         elif len(levels) == 2:
             netbox_filters[levels[0]] = levels[1]
             filtered = True
-    log.debug('Querying NetBox with the following filters')
+    log.debug("Querying NetBox with the following filters")
     log.debug(netbox_filters)
-    netbox_devices = _netbox_filter('dcim', 'devices', **netbox_filters)
+    netbox_devices = _netbox_filter("dcim", "devices", **netbox_filters)
     pool = {
-        device['name']: {'minion_opts': {'grains': {'netbox': device}}}
+        device["name"]: {"minion_opts": {"grains": {"netbox": device}}}
         for device in netbox_devices
     }
     if filtered:

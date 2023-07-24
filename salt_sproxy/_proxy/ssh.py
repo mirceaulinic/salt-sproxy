@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 SSH Proxy
 =========
 
@@ -90,7 +90,7 @@ Example Pillar:
     user: test
     passwd: test
     port: 2022
-'''
+"""
 from __future__ import absolute_import, print_function, unicode_literals
 
 import json
@@ -102,7 +102,7 @@ import salt.fileclient
 import salt.exceptions
 import salt.utils.path
 
-__proxyenabled__ = ['ssh']
+__proxyenabled__ = ["ssh"]
 
 log = logging.getLogger(__name__)
 
@@ -112,10 +112,10 @@ GRAINS_CACHE = {}
 
 
 def _prep_conn(opts, fun, *args, **kwargs):
-    '''
+    """
     Prepare the connection.
-    '''
-    opts['_ssh_version'] = salt.client.ssh.ssh_version()
+    """
+    opts["_ssh_version"] = salt.client.ssh.ssh_version()
     fsclient = salt.fileclient.FSClient(opts)
     # TODO: Have here more options to simplify the usage, through features like
     # auto-expand the path to the priv key, auto-discovery, etc.
@@ -129,88 +129,88 @@ def _prep_conn(opts, fun, *args, **kwargs):
             for key, val in six.iteritems(kwargs)
         ]
     )
-    if not opts['proxy'].get('ssh_options'):
-        opts['proxy']['ssh_options'] = []
-    if opts['proxy'].get('ignore_host_keys', False):
-        opts['proxy']['ssh_options'].append('StrictHostKeyChecking=no')
-    if opts['proxy'].get('no_host_keys', False):
-        opts['proxy']['ssh_options'].extend(
+    if not opts["proxy"].get("ssh_options"):
+        opts["proxy"]["ssh_options"] = []
+    if opts["proxy"].get("ignore_host_keys", False):
+        opts["proxy"]["ssh_options"].append("StrictHostKeyChecking=no")
+    if opts["proxy"].get("no_host_keys", False):
+        opts["proxy"]["ssh_options"].extend(
             ["StrictHostKeyChecking=no", "UserKnownHostsFile=/dev/null"]
         )
-    for cli_opt in ('identities_only', 'priv', 'priv_passwd'):
-        if opts.get(cli_opt) and not opts['proxy'].get(cli_opt):
-            opts['proxy'][cli_opt] = opts[cli_opt]
+    for cli_opt in ("identities_only", "priv", "priv_passwd"):
+        if opts.get(cli_opt) and not opts["proxy"].get(cli_opt):
+            opts["proxy"][cli_opt] = opts[cli_opt]
     ext_mods = salt.client.ssh.mod_data(fsclient)
     conn = salt.client.ssh.Single(
-        opts, argv, opts['id'], fsclient=fsclient, mods=ext_mods, **opts['proxy']
+        opts, argv, opts["id"], fsclient=fsclient, mods=ext_mods, **opts["proxy"]
     )
     conn.args = args
     conn.kwargs = kwargs
-    thin_dir = conn.opts['thin_dir']
-    thin_dir = thin_dir.replace('proxy', '')
-    conn.opts['thin_dir'] = thin_dir
+    thin_dir = conn.opts["thin_dir"]
+    thin_dir = thin_dir.replace("proxy", "")
+    conn.opts["thin_dir"] = thin_dir
     conn.thin_dir = thin_dir
     return conn
 
 
 def init(opts):
-    '''
+    """
     Init the SSH connection, and execute a simple call to ensure that the remote
     device is reachable, otherwise throw an error.
-    '''
+    """
     global CONN, INITIALIZED
-    if not salt.utils.path.which('ssh'):
+    if not salt.utils.path.which("ssh"):
         raise salt.exceptions.SaltSystemExit(
             code=-1,
-            msg='No ssh binary found in path -- ssh must be installed for this Proxy module. Exiting.',
+            msg="No ssh binary found in path -- ssh must be installed for this Proxy module. Exiting.",
         )
-    CONN = _prep_conn(opts, 'cmd.run', 'echo')
+    CONN = _prep_conn(opts, "cmd.run", "echo")
     INITIALIZED = True
 
 
 def initialized():
-    '''
+    """
     Proxy initialized properly?
-    '''
+    """
     return INITIALIZED
 
 
 def module_executors():
-    '''
+    """
     Return the list of executors that should invoke the Salt functions.
-    '''
-    return ['ssh']
+    """
+    return ["ssh"]
 
 
 def call(fun, *args, **kwargs):
-    '''
+    """
     Call an arbitrary Salt function and return the output.
-    '''
+    """
     global CONN, INITIALIZED
     if not CONN or not INITIALIZED:
         return
     opts = CONN.opts
-    opts['output'] = 'json'
+    opts["output"] = "json"
     ssh_conn = _prep_conn(opts, fun, *args, **kwargs)
     ret = ssh_conn.run()
     if ret[2] != 0:
-        log.error('[%s] %s', opts['id'], ret[1])
+        log.error("[%s] %s", opts["id"], ret[1])
         return ret[0]
     thin_ret = json.loads(ret[0])
-    if '_error' in thin_ret['local']:
-        log.error(thin_ret['local']['_error'])
-        if 'stdout' in thin_ret['local']:
-            log.error(thin_ret['local']['stdout'])
-    return thin_ret['local']['return']
+    if "_error" in thin_ret["local"]:
+        log.error(thin_ret["local"]["_error"])
+        if "stdout" in thin_ret["local"]:
+            log.error(thin_ret["local"]["stdout"])
+    return thin_ret["local"]["return"]
 
 
 def ping():
-    '''
+    """
     Execute "echo" on the remote host to ensure it's still accessible.
-    '''
+    """
     global CONN, INITIALIZED
     if not CONN or not INITIALIZED:
-        log.debug('Not connected, or not initialized')
+        log.debug("Not connected, or not initialized")
         return False
     ret = CONN.run()
     log.debug(ret)
@@ -218,20 +218,20 @@ def ping():
 
 
 def grains():
-    '''
+    """
     Invoke grains.items from the thin Salt on the remote machine, in order to
     return here the Grains.
-    '''
+    """
     global GRAINS_CACHE
     if not GRAINS_CACHE:
-        GRAINS_CACHE = call('grains.items')
+        GRAINS_CACHE = call("grains.items")
     return GRAINS_CACHE
 
 
 def shutdown(opts):
-    '''
+    """
     Buh-bye...
-    '''
+    """
     global CONN, INITIALIZED
     if CONN and INITIALIZED:
         del CONN
