@@ -271,18 +271,14 @@ Docker
 ------
 
 There are Docker images available should you need or prefer: 
-https://hub.docker.com/r/mirceaulinic/salt-sproxy.
+https://github.com/mirceaulinic/salt-sproxy/pkgs/container/salt-sproxy.
 
 You can see here the available tags: 
-https://hub.docker.com/r/mirceaulinic/salt-sproxy/tags. ``latest`` provides the
-code merged into the ``master`` branch, and ``allinone-latest`` is the code
-merged into the ``master`` branch with several libraries such as
-`NAPALM <https://github.com/napalm-automation/napalm>`__,
-`Netmiko <https://github.com/ktbyers/netmiko>`__, 
-`ciscoconfparse <http://www.pennington.net/py/ciscoconfparse/>`__, or Ansible
-which you may need for your modules or Roster (if you'd want to use the 
-`Ansible Roster <https://salt-sproxy.readthedocs.io/en/latest/roster/ansible.html>`__,
-for  example).
+https://github.com/mirceaulinic/salt-sproxy/pkgs/container/salt-sproxy. Beware 
+that the `develop 
+<https://github.com/mirceaulinic/salt-sproxy/pkgs/container/salt-sproxy/112145156?tag=develop>`__ 
+tag can be unstable so it's recommended to rather use one of the specific tags 
+corresponding to one of the latest versions.
 
 These can be used in various scenarios. For example, if you would like to use
 ``salt-proxy`` but without installing it, and prefer to use Docker instead, you
@@ -290,7 +286,7 @@ can define the following convoluted alias:
 
 .. code-block:: bash
 
-  alias salt-sproxy='f(){ docker run --rm --network host -v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ -ti mirceaulinic/salt-sproxy salt-sproxy $@; }; f'
+  alias salt-sproxy='f(){ docker run --rm --network host -v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ -ti ghcr.io/mirceaulinic/salt-sproxy:develop salt-sproxy $@; }; f'
 
 And in the ``SALT_PROXY_PILLAR_DIR`` environment variable, you set the path to
 the directory where you have the Pillars, e.g.,

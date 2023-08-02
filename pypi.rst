@@ -7,9 +7,6 @@ Salt plugin for interacting with network devices, without running Minions.
 
     This is NOT a SaltStack product.
 
-    This package may eventually be integrated in a future version of the 
-    official Salt releases, in this form or slightly different.
-
 Install
 -------
 

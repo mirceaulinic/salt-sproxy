@@ -24,9 +24,9 @@ from shutil import copyfile
 
 import jinja2
 
-sys.path.insert(0, os.path.abspath('../'))
-sys.path.insert(0, os.path.abspath('../salt_sproxy'))
-sys.path.insert(0, os.path.abspath('_themes'))
+sys.path.insert(0, os.path.abspath("../"))
+sys.path.insert(0, os.path.abspath("../salt_sproxy"))
+sys.path.insert(0, os.path.abspath("_themes"))
 
 log = logging.getLogger(__name__)
 
@@ -40,30 +40,30 @@ log = logging.getLogger(__name__)
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.coverage",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.githubpages",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'salt-sproxy'
-copyright = u'2019-2020, Mircea Ulinic'
-author = u'Mircea Ulinic'
+project = "salt-sproxy"
+copyright = "2019-2020, Mircea Ulinic"
+author = "Mircea Ulinic"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -84,10 +84,10 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'flask_theme_support.FlaskyStyle'
+pygments_style = "flask_theme_support.FlaskyStyle"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -97,24 +97,24 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'show_powered_by': False,
-    'github_user': 'mirceaulinic',
-    'github_repo': 'salt-sproxy',
-    'github_banner': True,
-    'show_related': False,
+    "show_powered_by": False,
+    "github_user": "mirceaulinic",
+    "github_repo": "salt-sproxy",
+    "github_banner": True,
+    "show_related": False,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -122,13 +122,13 @@ html_static_path = ['_static']
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'links.html',
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-        'donate.html',
+    "**": [
+        "about.html",
+        "navigation.html",
+        "links.html",
+        "relations.html",  # needs 'show_related': True theme option to display
+        "searchbox.html",
+        "donate.html",
     ]
 }
 
@@ -144,7 +144,7 @@ html_show_copyright = True
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'salt-sproxy'
+htmlhelp_basename = "salt-sproxy"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -170,10 +170,10 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        'salt-sproxy.tex',
-        u'salt-sproxy Documentation',
-        u'Mircea Ulinic',
-        'manual',
+        "salt-sproxy.tex",
+        "salt-sproxy Documentation",
+        "Mircea Ulinic",
+        "manual",
     )
 ]
 
@@ -183,8 +183,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'salt-sproxy', u'salt-sproxy Documentation', [author], 1),
-    ('salt_sapi', 'salt-sapi', u'salt-sapi Documentation', [author], 1),
+    (master_doc, "salt-sproxy", "salt-sproxy Documentation", [author], 1),
+    ("salt_sapi", "salt-sapi", "salt-sapi Documentation", [author], 1),
 ]
 
 
@@ -196,12 +196,12 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        'salt-sproxy',
-        u'salt-sproxy Documentation',
+        "salt-sproxy",
+        "salt-sproxy Documentation",
         author,
-        'salt-sproxy',
-        'Salt plugin for interacting with network devices, without running Minions',
-        'Miscellaneous',
+        "salt-sproxy",
+        "Salt plugin for interacting with network devices, without running Minions",
+        "Miscellaneous",
     )
 ]
 
@@ -223,15 +223,15 @@ epub_copyright = copyright
 # epub_uid = ''
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
+epub_exclude_files = ["search.html"]
 
 curdir = os.path.abspath(os.path.dirname(__file__))
-doc_examples_dir = os.path.join(curdir, 'examples')
+doc_examples_dir = os.path.join(curdir, "examples")
 try:
     os.mkdir(doc_examples_dir)
 except OSError:
     pass
-examples_path = os.path.abspath(os.path.join(curdir, os.path.pardir, 'examples'))
+examples_path = os.path.abspath(os.path.join(curdir, os.path.pardir, "examples"))
 examples_dirs = [
     name
     for name in os.listdir(examples_path)
@@ -240,15 +240,15 @@ examples_dirs = [
 examples = []
 
 for example_dir in examples_dirs:
-    example_readme = os.path.join(examples_path, example_dir, 'README.rst')
-    example_doc = os.path.join(doc_examples_dir, '{}.rst'.format(example_dir))
+    example_readme = os.path.join(examples_path, example_dir, "README.rst")
+    example_doc = os.path.join(doc_examples_dir, "{}.rst".format(example_dir))
     if os.path.exists(example_readme):
         copyfile(example_readme, example_doc)
         examples.append(example_dir)
 
-env = jinja2.Environment(loader=jinja2.FileSystemLoader('.'))
-examples_template = env.get_template('examples_index.jinja')
+env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+examples_template = env.get_template("examples_index.jinja")
 rendered_template = examples_template.render(examples=examples)
-examples_index = os.path.join(doc_examples_dir, 'index.rst')
-with open(examples_index, 'w') as rst_fh:
+examples_index = os.path.join(doc_examples_dir, "index.rst")
+with open(examples_index, "w") as rst_fh:
     rst_fh.write(rendered_template)
