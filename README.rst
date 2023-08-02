@@ -350,8 +350,8 @@ Docker
 ------
 
 A Docker image is available at 
-https://hub.docker.com/r/mirceaulinic/salt-sproxy, and you can pull it, e.g.,
-``docker pull mirceaulinic/salt-sproxy``. See 
+https://github.com/mirceaulinic/salt-sproxy/pkgs/container/salt-sproxy, and you can pull it, e.g.,
+``docker pull ghcr.io/mirceaulinic/salt-sproxy:develop``. See 
 https://salt-sproxy.readthedocs.io/en/latest/#docker for further usage 
 instructions and examples.
 

@@ -52,6 +52,26 @@ together with *salt-sproxy*. Everything stay the exact same as usually, the
 only difference being the special ``sproxy`` and ``sproxy_async`` clients for 
 simplified usage.
 
+.. important::
+
+    Beginning with Salt release 3006, in order to have enable the ``sproxy`` 
+    and ``sproxy_async`` clients, you need to explicitly list them under the 
+    ``netapi_enable_clients`` configuration option, otherwise, Salt will reject 
+    any API requests to either of these.
+    See 
+    https://docs.saltproject.io/en/master/topics/netapi/netapi-enable-clients.html 
+    for more details.
+
+    Example: ``/etc/salt/master``
+
+    .. code-block:: yaml
+
+        netapi_enable_clients:
+          - local
+          - local_async
+          - sproxy
+          - sproxy_async
+
 A major advantage of using the ``sproxy`` / ``sproxy_async`` clients is that 
 the usage is very similar to the ``local`` / ``local_async`` clients (see 
 https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html#usage), 

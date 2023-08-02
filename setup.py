@@ -20,7 +20,7 @@ repo_url = "https://github.com/{}".format(repo_slug)
 
 setup(
     name=name,
-    version="2022.10.0",
+    version="2023.8.0",
     namespace_packages=["salt_sproxy"],
     packages=find_packages(),
     author="Mircea Ulinic",
@@ -40,13 +40,12 @@ setup(
         "Topic :: System :: Systems Administration",
         "Programming Language :: Python",
         "Programming Language :: Cython",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS",
@@ -82,7 +81,7 @@ setup(
         ]
     },
     extras_require={
-        "api": ["cherrypy"],
+        "api": ["cherrypy>=18.8.0"],
         "netbox": ["pynetbox"],
         "napalm": ["napalm"],
         "junos": ["junos-eznc"],
