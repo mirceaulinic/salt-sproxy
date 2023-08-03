@@ -2,5 +2,5 @@
 tox==4.6.4
 black==23.7.0
 pylint==2.9.6
-SaltPylint==2020.9.28
+SaltPylint==2023.8.3
 CherryPy==18.8.0
