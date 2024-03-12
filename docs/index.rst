@@ -286,7 +286,7 @@ can define the following convoluted alias:
 
 .. code-block:: bash
 
-  alias salt-sproxy='f(){ docker run --rm --network host -v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ -ti ghcr.io/mirceaulinic/salt-sproxy:develop salt-sproxy $@; }; f'
+  alias salt-sproxy='f(){ docker run --rm --network host -v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ -ti ghcr.io/mirceaulinic/salt-sproxy:master salt-sproxy "$@"; }; f'
 
 And in the ``SALT_PROXY_PILLAR_DIR`` environment variable, you set the path to
 the directory where you have the Pillars, e.g.,
