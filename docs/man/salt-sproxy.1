@@ -301,7 +301,7 @@ can define the following convoluted alias:
 .sp
 .nf
 .ft C
-alias salt\-sproxy=\(aqf(){ docker run \-\-rm \-\-network host \-v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ \-ti mirceaulinic/salt\-sproxy salt\-sproxy $@; }; f\(aq
+alias salt\-sproxy=\(aqf(){ docker run \-\-rm \-\-network host \-v $SALT_PROXY_PILLAR_DIR:/etc/salt/pillar/ \-ti mirceaulinic/salt\-sproxy salt\-sproxy "$@"; }; f\(aq
 .ft P
 .fi
 .UNINDENT
