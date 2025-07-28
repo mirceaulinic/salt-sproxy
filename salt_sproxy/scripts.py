@@ -45,7 +45,7 @@ def sapi_sproxy(
 
 
 def sapi_sproxy_async(
-    self, tgt, fun, tgt_type="glob", timeout=None, full_return=False, **kwargs
+    self, tgt, fun, tgt_type="glob", **kwargs
 ):
     """
     Shortcut to invoke an arbitrary Salt function via sproxy, asynchronously.
@@ -57,7 +57,7 @@ def sapi_sproxy_async(
     log.debug("New kwargs:")
     log.debug(kwargs)
     return salt.netapi.NetapiClient.runner_async(
-        self, "proxy.execute", timeout=timeout, full_return=full_return, **kwargs
+        self, "proxy.execute", **kwargs
     )
 
 
